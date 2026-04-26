@@ -496,12 +496,16 @@ function nextMaze() {
       }
   });
 
-  instructionsPanel.style.display = player.mazes === 1 ? 'flex' : 'none';
+  dismissInstructions(player.mazes > 1);
 
   gameWindow.focus();
   render();
   updateGameState(player);
   play();
+}
+
+function dismissInstructions(dismiss = true) {
+  instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
 }
 
 function showGameMessage(text, duration = 0) {
@@ -785,6 +789,7 @@ const instructionsPanel = gameWindow.document.getElementById("instructionsPanel"
 const enterLink = gameWindow.document.getElementById("enterLink");
 const restartGameLink = gameWindow.document.getElementById("restartGameLink");
 const nextMazeLink = gameWindow.document.getElementById("nextMazeLink");
+const dismissInstructionsLink = gameWindow.document.getElementById("dismissInstructionsLink");
 
 gameWindow.document.addEventListener("keydown", e => onKeyEvent(e, true));
 gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));
@@ -792,3 +797,4 @@ gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));
 enterLink.addEventListener("click", enterSpiderCave);
 restartGameLink.addEventListener("click", restartGame);
 nextMazeLink.addEventListener("click", goDeeper);
+dismissInstructionsLink.addEventListener("click", dismissInstructions);

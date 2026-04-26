@@ -207,10 +207,24 @@
 }
 
 #bio {
-    position: relative;
-    width: 350px;
+    position: absolute;
     display: flex;
+    height: 350px;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-end;
     backdrop-filter: var(--backdrop-blur);
+    overflow: hidden;
+}
+
+#bioContent {
+    height: 24px;
+    width: 320px;
+    font-family: 'Crimson Text', serif;
+    overflow: hidden;
+    transition: height 30s ease-out;
+}
+
+#bioContent.open {
+    height: 350px;
 }

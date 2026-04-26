@@ -178,7 +178,7 @@ function playerRespawn() {
   player.respawn();
   Sound.respawn();
   keysPressed.clear();
-  
+
   updateGameState(player);
   return true;
 }

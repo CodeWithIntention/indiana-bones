@@ -16,12 +16,20 @@
     <script type="module" src="./player.js"></script>
     <script type="module" src="./grid.js"></script>
     <script type="module" src="./settings.js"></script>
+
+    <script>
+        function showBioContent() {
+            const bioContent = document.getElementById("bioContent");
+
+            bioContent.classList.toggle("open");
+        }
+    </script>
 </head>
 
-<body>
+<body onload="showBioContent()">
     <div id="border">
         <div id="bio">
-            <div>
+            <div id="bioContent">
                 <p>Indian Bones (IB, as we call him) is a bastard spawned from a torid
                 love triangle between a Portuguese Jesuit, an Amazon witch, and the Church.</p>
                 <p>He possesses the power of immortality (though limited),

@@ -505,6 +505,8 @@ function nextMaze() {
 }
 
 function dismissInstructions(dismiss = true) {
+  if (instructionsPanel.dismissed === true) return;
+  instructionsPanel.dismissed = dismiss;
   instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
 }
 
@@ -718,6 +720,8 @@ function startGame() {
 
 function setGameOver() {
   restartGamePanel.style.display = 'flex';
+  dismissInstructions();
+
   gameOver = true;
   Sound.gameover();
   saveHighScore(settings.highScore);

@@ -177,7 +177,8 @@ function playerRespawn() {
 
   player.respawn();
   Sound.respawn();
-
+  keysPressed.clear();
+  
   updateGameState(player);
   return true;
 }
@@ -534,6 +535,8 @@ function play() {
     let lastTime = gameWindow.document.timeline.currentTime;
     const mazes = player.mazes;
 
+    keysPressed.clear();
+
     function gameLoop(time) {
         if (gameOver || player.exitMaze || mazes !== player.mazes) return;
 
@@ -653,6 +656,10 @@ const keysPressed = {
     ArrowRight: false,
     Space: false,
     NextMaze: false,
+}
+
+keysPressed.clear = () => {
+  Object.entries(keysPressed).forEach(([key, value]) => typeof(value) === "boolean" && (keysPressed[key] = false));
 }
 
 function onKeyEvent(event, pressed) {

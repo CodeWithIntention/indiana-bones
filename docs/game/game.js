@@ -797,4 +797,4 @@ gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));
 enterLink.addEventListener("click", enterSpiderCave);
 restartGameLink.addEventListener("click", restartGame);
 nextMazeLink.addEventListener("click", goDeeper);
-dismissInstructionsLink.addEventListener("click", dismissInstructions);
+dismissInstructionsLink.addEventListener("click", () => dismissInstructions());

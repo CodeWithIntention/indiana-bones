@@ -1,1 +1,75 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Indiana Bones & A-Maze-In Spider Caves</title>
+    <link rel="stylesheet" href="assets/game-ui.css"/>
+    
+    <script type="module" src="./util.js"></script>
+    <script type="module" src="./config.js"></script>
+    <script type="module" src="./sound.js"></script>
+    <script type="module" src="./character.js"></script>
+    <script type="module" src="./characters.js"></script>
+    <script type="module" src="./player.js"></script>
+    <script type="module" src="./grid.js"></script>
+    <script type="module" src="./settings.js"></script>
+</head>
+
+<body>
+    <div id="border">
+        <div id="bio">
+            <div>
+                <p>Indian Bones (IB, as we call him) is a bastard spawned from a torid
+                love triangle between a Portuguese Jesuit, an Amazon witch, and the Church.</p>
+                <p>He possesses the power of immortality (though limited),
+                and is prone to busts of rage when he drinks water. While enraged,
+                he is invincible and has an insatiable appitite.</p>
+                <p>He is a freelance archaeologist and adventure insearch of ancient
+                artifacts and rare animals to sell to the highest bidder.</p>
+                <p>He hates spiders and anything that has venom because getting bit 
+                or stung by one will kill him.</p>
+            </div>
+            <div>
+                <a id="enterLink" class="shadowGlow pulse">Enter the Spider Cave</a>
+            </div>
+        </div>
+        <div id="dashboard">
+            <div class="label">HIGH SCORE</div>
+            <div id="highScoreStatusLine" class="score"></div>
+        </div>
+        <div id="game" class="shadowGlow" hidden>
+            <div id="playerStatusLine" hidden></div>
+            <div id="scoreStatusLine" class="score" hidden></div>
+            <div id="mazeStatusLine" hidden></div>
+            <div id="bagStatusLine" hidden></div>
+            <div id="maze"></div>
+            <div id="overlay">
+                <div id="scoreboard" class="shadowGlow">
+                    <div id="scorecard"></div>
+                    <div>
+                        <a id="nextMazeLink" class="shadowGlow">Go Deeper</a>
+                    </div>
+                </div>
+                <div id="restartGamePanel" class="shadowGlow">
+                    <div>
+                        <a id="restartGameLink">G A M E O V E R</a>
+                    </div>
+                    <div>Press Space to restart.</div>
+                </div>
+                <div id="gameMessagePanel"></div>
+            </div>
+        </div>
+        <div id="instructionsPanel" class="shadowGlow">
+            <div>Use Arrow keys to move.</div>
+            <div>Press Space to use TNT (<b>🧨</b>) to blow up<br />bugs and things around you.</div>
+            <div>Press Space to respawn when killed (<b>⚰️</b>).</div>
+            <div>Collect artifacts and furry animals.<br />Bugs kill and nasty things slow you down.</div>
+            <div>Enter the cave when the coast is clear.<br/>Clear the maze and get a BIG BONUS!</div>
+        </div>
+    </div>
+    <script type="module" src="game.js"></script>
+</body>
+</html>

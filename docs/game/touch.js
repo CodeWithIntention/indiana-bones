@@ -3,71 +3,112 @@ import { overlay, keysPressed } from "./game.js";
 let touchStartX = 0;
 let touchStartY = 0;
 let touchStartTime = 0;
+let lastTapTime = 0;
 
+const DOUBLE_TAP_DELAY = 300; // ms
 const SWIPE_MIN_DISTANCE = 30;
 const TAP_MAX_DISTANCE = 10;
 const TAP_MAX_TIME = 250;
 
-let lastDirection = null;
+let touchDirection = null;
 
-function updateDirection(direction) {
-  if (direction !== lastDirection) {
-    if (lastDirection) {
-        keysPressed[lastDirection] = false;
+function updateTouchDirection(direction) {
+  if (direction !== touchDirection) {
+    if (touchDirection) {
+        keysPressed[touchDirection] = false;
     }
     if (direction) {
         keysPressed[direction] = true;
     }
-    lastDirection = direction;
+    touchDirection = direction;
   }
 }
 
-overlay.addEventListener("touchstart", (event) => {
-  const touch = event.changedTouches[0];
+function beginMouseMove(event) {
+  if (!isTrackingMouseMove(event)) {
+    overlay.setPointerCapture(event.pointerId);
+    updateTouchDirection(null);
+  }
+  updateMouseMove(event);
+}
 
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
+function updateMouseMove(event) {
+  touchStartX = event.clientX;
+  touchStartY = event.clientY;
   touchStartTime = Date.now();
-}, { passive: true });
+}
 
-overlay.addEventListener("touchend", (event) => {
-  const touch = event.changedTouches[0];
+function endMouseMove(event) {
+  if (isTrackingMouseMove(event)) {
+      overlay.releasePointerCapture(event.pointerId);
+  }
+}
 
-  const dx = touch.clientX - touchStartX;
-  const dy = touch.clientY - touchStartY;
-  const elapsed = Date.now() - touchStartTime;
+function isTrackingMouseMove(event) {
+    return overlay.hasPointerCapture(event.pointerId);
+}
+
+overlay.addEventListener("pointerdown", (event) => {
+  if (event.target !== overlay) return;
+
+  event.preventDefault();
+  beginMouseMove(event);
+});
+
+overlay.addEventListener("pointermove", (event) => {
+  if (!(event.target === overlay && isTrackingMouseMove(event))) return;
+
+  event.preventDefault();
+
+  const dx = event.clientX - touchStartX;
+  const dy = event.clientY - touchStartY;
 
   const absX = Math.abs(dx);
   const absY = Math.abs(dy);
 
-  // Tap = action
-  if (absX < TAP_MAX_DISTANCE && absY < TAP_MAX_DISTANCE && elapsed < TAP_MAX_TIME) {
-    keysPressed["Space"] = true; // same logic as Space
-    return;
-  }
-
-  // Swipe = movement
   if (Math.max(absX, absY) < SWIPE_MIN_DISTANCE) return;
 
   if (absX > absY) {
-    if (dx > 0) {
-      updateDirection("ArrowRight");
-    } else {
-      updateDirection("ArrowLeft");
-    }
+    updateTouchDirection(dx > 0 ? "ArrowRight" : "ArrowLeft");
   } else {
-    if (dy > 0) {
-      updateDirection("ArrowDown");
-    } else {
-      updateDirection("ArrowUp");
-    }
+    updateTouchDirection(dy > 0 ? "ArrowDown" : "ArrowUp");
   }
-}, { passive: true });
-
-overlay.addEventListener("touchcancel", () => {
-  updateDirection(null);
+  updateMouseMove(event);
 });
 
-overlay.addEventListener("touchstart", () => {
-  updateDirection(null);
+overlay.addEventListener("pointerup", (event) => {
+  if (!(event.target === overlay && isTrackingMouseMove(event))) return;
+  
+  event.preventDefault();
+  endMouseMove(event);
+
+  const now = Date.now();
+  const timeSinceLastTap = now - lastTapTime;
+
+  const dx = event.clientX - touchStartX;
+  const dy = event.clientY - touchStartY;
+
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+
+  // Detect tap (not swipe)
+  const isTap = absX < TAP_MAX_DISTANCE && absY < TAP_MAX_DISTANCE;
+
+  if (isTap) {
+    if (timeSinceLastTap < DOUBLE_TAP_DELAY) {
+      keysPressed.Space = true; // 🔥 double tap triggers action
+      lastTapTime = 0; // reset
+      return;
+    }
+
+    lastTapTime = now;
+    return;
+  }
+});
+
+overlay.addEventListener("pointercancel", (event) => {
+  if (event.target !== overlay) return;
+
+  event.preventDefault();
+  updateTouchDirection(null);
 });

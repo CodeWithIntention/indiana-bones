@@ -89,6 +89,7 @@
     flex-direction: column;
     justify-content: center;
     font-family: var(--game-font-family);
+    touch-action: none;
 }
 
 #overlay a {

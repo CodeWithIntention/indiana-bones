@@ -7,6 +7,8 @@ import { Player } from "./player.js";
 import { Spider, Scorpion, Cat, Monkey, Mouse, Rat } from "./characters.js";
 import { Grid } from "./grid.js";
 
+export { overlay, keysPressed }
+
 const gameWindow = window;
 
 Grid.canMoveTo = (row, col, isPlayer = false) => {

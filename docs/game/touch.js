@@ -84,6 +84,8 @@ overlay.addEventListener("pointerup", (event) => {
 
   const now = Date.now();
   const timeSinceLastTap = now - lastTapTime;
+  
+  if (timeSinceLastTap < TAP_MAX_TIME) return;
 
   const dx = event.clientX - touchStartX;
   const dy = event.clientY - touchStartY;
@@ -95,10 +97,9 @@ overlay.addEventListener("pointerup", (event) => {
   const isTap = absX < TAP_MAX_DISTANCE && absY < TAP_MAX_DISTANCE;
 
   if (isTap) {
-    if (timeSinceLastTap < TAP_MAX_TIME) {
-      keysPressed.Space = true; // 🔥 double tap triggers action
-    }
+    keysPressed.Space = true;
   }
+  lastTapTime = now;
 });
 
 overlay.addEventListener("pointercancel", (event) => {

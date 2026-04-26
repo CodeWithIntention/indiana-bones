@@ -1,0 +1,64 @@
+@import "effects.css";
+@import "maze.css";
+
+.cell.pooped,
+.cell.webbed {
+    animation: shakeOffWeb 0.5s ease-in-out infinite;
+}
+
+.cell.web {
+    font-size: 20px;
+}
+
+.cell.webbed::after,
+.cell.web::after {
+    content: var(--sym-web);
+    margin-bottom: 6px;
+}
+
+.cell.pooped::after,
+.cell.poop::after {
+    content: var(--sym-poop);
+    font-size: 10px;
+}
+
+.cell.gem {
+    background-color: var(--maze-wall);
+}
+
+.cell.gem::before {
+    font-size: 12px;
+    content: var(--sym-gem);
+}
+
+.cell.tnt::after {
+    content: var(--sym-tnt);
+}
+
+.cell.bone::after {
+    content: var(--sym-bone);
+}
+
+.cell.fountain::after {
+    content: var(--sym-fountain);
+}
+
+.cell.cheese::before {
+    content: var(--sym-cheese);
+}
+
+.cell.banana::before {
+    content: var(--sym-banana);
+}
+
+.cell.exit {
+    background-color: var(--maze-path);
+    animation: glow 1s infinite alternate;
+}
+
+.cell.exit::after {
+    content: var(--sym-exit);
+    color: var(--maze-bg);
+    font-size: 22px;
+}
+

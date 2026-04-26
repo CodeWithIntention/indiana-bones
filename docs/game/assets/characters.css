@@ -1,0 +1,103 @@
+@import "effects.css";
+@import "maze.css";
+
+.character {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    display: inline-block;
+    justify-content: center;
+    background: transparent;
+    transform: 1s linear;
+    transform-origin: center center;
+}
+
+.character.label,
+.character span {
+    font-size: 10px;
+}
+
+.character.player {
+    align-self: center;
+    transition: transform 1s ease;
+    transform-style: preserve-3d;
+}
+
+.character.entrance {
+    background-color: var(--maze-path);
+}
+
+.character.entrance {
+    animation: glow 1s infinite alternate;
+}
+
+.character.player::before {
+    content: var(--sym-player);
+}
+
+.character.powerup::before {
+    content: var(--sym-powerup);
+}
+
+.character.dead::before {
+    content: var(--sym-dead);
+    font-size: 32px;
+}
+
+.character.buried::before {
+    content: var(--sym-buried);
+    font-size: 32px;
+}
+
+.character.player,
+.character.powerup,
+.character.dead,
+.character.buried {
+    z-index: 4
+}
+
+.character.scorpion {
+    z-index: 5;
+}
+
+.character.cat,
+.character.mouse,
+.character.monkey,
+.character.rat {
+    z-index: 3;
+}
+
+.character.spider {
+    z-index: 2;
+}
+
+
+.character.spider::before {
+    content: var(--sym-spider);
+}
+
+.character.cat::before {
+    content: var(--sym-cat);
+}
+
+.character.mouse::before {
+    content: var(--sym-mouse);
+}
+
+.character.rat::before {
+    content: var(--sym-rat);
+}
+
+.character.monkey::before {
+    content: var(--sym-monkey);
+}
+
+.character.scorpion::before {
+    content: var(--sym-scorpion);
+}
+
+.character.dead::before,
+.character.powerup::before {
+    animation: glow 1s infinite alternate;
+}

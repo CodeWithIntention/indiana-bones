@@ -1,0 +1,32 @@
+@import "config.css";
+
+.cell {
+    position: relative;
+    width: var(--cell-size);
+    height: var(--cell-size);
+    display: flex;
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--maze-path);
+}
+
+.cell.edge {
+    background-color: var(--maze-edge);
+    box-shadow: inset 0 0 var(--maze-edge-inset);
+}
+
+.cell.wall {
+    background-color: var(--maze-wall);
+}
+
+.cell.edge,
+.cell.wall {
+    opacity: .25;
+}
+
+.cell.exit,
+.cell.path {
+    background-color: var(--maze-path);
+}
+

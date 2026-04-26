@@ -1,0 +1,62 @@
+
+.spin {
+    transform: rotateY(360deg);
+}
+
+.flatten {
+    transform: scaleY(0);
+    transform-origin: bottom;
+}
+
+.down {
+    transition: top 2s ease-in;
+}
+
+.cell.exit,
+.cell.entrance,
+.pulse {
+    background: transparent;
+    animation: glow 1s infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        opacity: 0.75;
+        box-shadow: 0 0 10px;
+    }
+
+    to {
+        opacity: 1;
+        box-shadow: 0 0 40px;
+    }
+}
+
+@keyframes shakeOffWeb {
+    0% {
+        transform: translate(0px, 0px) rotate(0deg);
+    }
+
+    15% {
+        transform: translate(-2px, 0px) rotate(-8deg);
+    }
+
+    30% {
+        transform: translate(2px, 0px) rotate(8deg);
+    }
+
+    45% {
+        transform: translate(-2px, 0px) rotate(-6deg);
+    }
+
+    60% {
+        transform: translate(2px, 0px) rotate(6deg);
+    }
+
+    75% {
+        transform: translate(-1px, 0px) rotate(-4deg);
+    }
+
+    100% {
+        transform: translate(0px, 0px) rotate(0deg);
+    }
+}

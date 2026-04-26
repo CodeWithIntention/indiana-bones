@@ -1,0 +1,58 @@
+@import "config.css";
+@import "effects.css";
+@import "characters.css";
+@import "items.css";
+
+body {
+    background-image: var(--body-bg-image);
+    background-color: var(--maze-bg);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 500px 700px;
+    font-family: var(--game-font-family);
+    color: #e6dccb;
+}
+
+.shadowGlow {
+    box-shadow: var(--shadow-glow);
+    cursor: default;
+}
+
+.shadowGlow a {
+    color: var(--shadow-glow-color);
+    animation: glow 1s infinite alternate;
+    cursor: pointer;
+}
+
+.zoomIn {
+    width: 0;
+    height: 0;
+    background-color: transparent;
+    transition: width 10s ease, height 10s ease, font-size 10s, transform 5s ease-in-out;
+}
+
+.zoomIn.expanded {
+    width: 500px;
+    height: 500px;
+    font-size: 325px;
+    transform: rotate(720deg);
+}
+
+.zoomIn.expanded.zoom::after {
+    content: "💀";
+    color: rgba(0, 0, 0, 0.75);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.score {
+    color: var(--score-color);
+    font-weight: bold;
+    align-self: center;
+}
+
+.score.minus {
+    color: var(--score-minus-color);
+}

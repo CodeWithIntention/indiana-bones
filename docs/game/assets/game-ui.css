@@ -1,0 +1,201 @@
+@import "game.css";
+@import "maze.css";
+@import "characters.css";
+
+#border {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    gap: 8px;
+}
+
+#controls {
+    position: relative;
+    gap: 8px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+#game {
+    position: relative;
+    border: 4px solid var(--maze-edge);
+    border-radius: var(--border-radius);
+    background-color: transparent;
+    backdrop-filter: var(--backdrop-blur);
+    overflow: hidden;
+}
+
+#game #playerStatusLine {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    padding: 0px;
+    z-index: 2;
+}
+
+#game #scoreStatusLine {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    padding: 0px;
+    z-index: 2;
+}
+
+#game #bagStatusLine {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    padding: 0px;
+    z-index: 2;
+}
+
+#bagStatusLine b,
+#playerStatusLine b {
+    font-size: var(--small-font-size);
+}
+
+#game #mazeStatusLine {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    padding: 0px;
+    z-index: 2;
+}
+
+#mazeStatusLine b {
+    font-size: var(--message-font-size);
+}
+
+#maze {
+    position: relative;
+    display: grid;
+    gap: 1px;
+    width: max-content;
+    z-index: 1;
+}
+
+#overlay {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-family: var(--game-font-family);
+}
+
+#overlay a {
+    font-size: var(--medium-font-size);
+    align-self: center;
+    width: max-content;
+}
+
+#dashboard {
+    position: relative;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    color: var(--shadow-glow-color);
+    backdrop-filter: var(--backdrop-blur);
+    padding-left: 18px;
+    padding-right: 18px;
+    border-radius: var(--border-radius);
+}
+
+#dashboard .label {
+    padding-top: 8px;
+    font-weight: bold;
+    font-size: var(--medium-font-size);
+}
+
+#dashboard .score {
+    font-weight: bold;
+    font-size: var(--medium-font-size);
+}
+
+#gameMessagePanel,
+#restartGamePanel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--message-font-size);
+    background-color: var(--maze-bg);
+    gap: 8px;
+    padding: 8px 8px 8px 8px;
+    overflow: hidden;
+}
+
+#gameMessagePanel {
+    color: var(--shadow-glow-color);
+}
+
+#restartGamePanel a {
+    cursor: pointer;
+}
+
+#overlay a:hover {
+    animation: glow 0.5s infinite alternate;
+}
+
+#scorecard {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    gap: 8px;
+    color: var(--shadow-glow-color);
+}
+
+#scorecard .score {
+    justify-self: right;
+}
+
+#scoreboard {
+    position: relative;
+    height: fit-content;
+    width: fit-content;
+    align-self: center;
+    display: none;
+    flex-direction: column;
+    height: fit-content;
+    align-items: center;
+    background-color: var(--maze-bg);
+    border: 4px solid var(--maze-path);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    gap: 16px;
+    padding: 16px;
+}
+
+#instructionsPanel {
+    display: none;
+    flex-direction: column;
+    align-items: left;
+    margin-top: 18px;
+    padding: 8px;
+    gap: 8px;
+    font-size: var(--message-font-size);
+    color: var(--shadow-glow-color);
+    background: var(--maze-bg);
+    border-radius: var(--border-radius);
+}
+
+#instructionsPanel b {
+    font-size: var(--medium-font-size)
+}
+
+#bio {
+    position: relative;
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    backdrop-filter: var(--backdrop-blur);
+}

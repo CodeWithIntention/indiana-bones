@@ -5,10 +5,9 @@ let touchStartY = 0;
 let touchStartTime = 0;
 let lastTapTime = 0;
 
-const DOUBLE_TAP_DELAY = 300; // ms
 const SWIPE_MIN_DISTANCE = 30;
-const TAP_MAX_DISTANCE = 10;
-const TAP_MAX_TIME = 250;
+const TAP_MAX_DISTANCE = 3;
+const TAP_MAX_TIME = 150;
 
 let touchDirection = null;
 
@@ -26,6 +25,7 @@ function updateTouchDirection(direction) {
 
 function beginMouseMove(event) {
   if (!isTrackingMouseMove(event)) {
+    lastTapTime = Date.now();
     overlay.setPointerCapture(event.pointerId);
     updateTouchDirection(null);
   }
@@ -95,14 +95,9 @@ overlay.addEventListener("pointerup", (event) => {
   const isTap = absX < TAP_MAX_DISTANCE && absY < TAP_MAX_DISTANCE;
 
   if (isTap) {
-    if (timeSinceLastTap < DOUBLE_TAP_DELAY) {
+    if (timeSinceLastTap < TAP_MAX_TIME) {
       keysPressed.Space = true; // 🔥 double tap triggers action
-      lastTapTime = 0; // reset
-      return;
     }
-
-    lastTapTime = now;
-    return;
   }
 });
 

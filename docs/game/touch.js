@@ -100,7 +100,7 @@ overlay.addEventListener("pointerup", (event) => {
 });
 
 overlay.addEventListener("pointercancel", (event) => {
-  if (!(event.target === overlay && isTrackingMouseMove(event))) return;
+  if (!(event.target === overlay)) return;
 
   event.preventDefault();
   endMouseMove(event);

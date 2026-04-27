@@ -5,8 +5,8 @@ let touchStartY = 0;
 let lastTapTime = 0;
 
 const SWIPE_MIN_DISTANCE = 20;
-const TAP_MAX_DISTANCE = 100;
-const TAP_MAX_TIME = 500;
+const TAP_MAX_DISTANCE = 10;
+const TAP_MAX_TIME = 250;
 
 let touchDirection = null;
 
@@ -75,7 +75,7 @@ overlay.addEventListener("pointermove", (event) => {
 });
 
 overlay.addEventListener("pointerup", (event) => {
-  if (!(event.target === overlay && isTrackingMouseMove(event))) return;
+  if (!(event.target === overlay)) return;
   
   event.preventDefault();
   endMouseMove(event);

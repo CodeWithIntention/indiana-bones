@@ -23,11 +23,9 @@ function updateTouchDirection(direction) {
 }
 
 function beginMouseMove(event) {
-  if (!isTrackingMouseMove(event)) {
-    lastTapTime = Date.now();
-    overlay.setPointerCapture(event.pointerId);
-    updateTouchDirection(null);
-  }
+  lastTapTime = Date.now();
+  overlay.setPointerCapture(event.pointerId);
+  updateTouchDirection(null);
   updateMouseMove(event);
 }
 

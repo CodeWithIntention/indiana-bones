@@ -83,7 +83,7 @@ overlay.addEventListener("pointerup", (event) => {
   const now = Date.now();
   const timeSinceLastTap = now - lastTapTime;
   
-  if (timeSinceLastTap > TAP_MAX_TIME) return;
+  //if (timeSinceLastTap > TAP_MAX_TIME) return;
 
   const dx = event.clientX - touchStartX;
   const dy = event.clientY - touchStartY;

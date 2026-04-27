@@ -5,7 +5,7 @@ let touchStartY = 0;
 let lastTapTime = 0;
 
 const SWIPE_MIN_DISTANCE = 20;
-const TAP_MAX_DISTANCE = 10;
+const TAP_MAX_DISTANCE = 5;
 const TAP_MAX_TIME = 250;
 
 let touchDirection = null;
@@ -54,7 +54,7 @@ overlay.addEventListener("pointerdown", (event) => {
 });
 
 overlay.addEventListener("pointermove", (event) => {
-  if (!(event.target === overlay && isTrackingMouseMove(event))) return;
+  if (!(event.target === overlay)) return;
 
   event.preventDefault();
 
@@ -81,7 +81,7 @@ overlay.addEventListener("pointerup", (event) => {
   const now = Date.now();
   const timeSinceLastTap = now - lastTapTime;
   
-  //if (timeSinceLastTap > TAP_MAX_TIME) return;
+  if (timeSinceLastTap > TAP_MAX_TIME) return;
 
   const dx = event.clientX - touchStartX;
   const dy = event.clientY - touchStartY;
@@ -98,8 +98,6 @@ overlay.addEventListener("pointerup", (event) => {
 });
 
 overlay.addEventListener("pointercancel", (event) => {
-  if (!(event.target === overlay)) return;
-
   event.preventDefault();
   endMouseMove(event);
   updateTouchDirection(null);

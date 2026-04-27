@@ -209,7 +209,7 @@
 #bio {
     position: absolute;
     display: flex;
-    height: 400px;
+    height: 500px;
     flex-direction: column;
     align-items: center;
     justify-content: flex-end;

@@ -2,12 +2,11 @@ import { overlay, keysPressed } from "./game.js";
 
 let touchStartX = 0;
 let touchStartY = 0;
-let touchStartTime = 0;
 let lastTapTime = 0;
 
 const SWIPE_MIN_DISTANCE = 20;
-const TAP_MAX_DISTANCE = 100;
-const TAP_MAX_TIME = 350;
+const TAP_MAX_DISTANCE = 10;
+const TAP_MAX_TIME = 500;
 
 let touchDirection = null;
 
@@ -35,7 +34,6 @@ function beginMouseMove(event) {
 function updateMouseMove(event) {
   touchStartX = event.clientX;
   touchStartY = event.clientY;
-  touchStartTime = Date.now();
 }
 
 function endMouseMove(event) {

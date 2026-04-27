@@ -54,7 +54,7 @@ overlay.addEventListener("pointerdown", (event) => {
 });
 
 overlay.addEventListener("pointermove", (event) => {
-  if (!(event.target === overlay && isTrackingMouseMove(event))) return;
+  if (!isTrackingMouseMove(event)) return;
 
   event.preventDefault();
 

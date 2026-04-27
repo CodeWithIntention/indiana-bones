@@ -37,13 +37,11 @@ function updateMouseMove(event) {
 }
 
 function endMouseMove(event) {
-  if (isTrackingMouseMove(event)) {
-      overlay.releasePointerCapture(event.pointerId);
-  }
+  overlay.releasePointerCapture(event.pointerId);
 }
 
 function isTrackingMouseMove(event) {
-    return overlay.hasPointerCapture(event.pointerId);
+  return overlay.hasPointerCapture(event.pointerId);
 }
 
 overlay.addEventListener("pointerdown", (event) => {
@@ -71,7 +69,6 @@ overlay.addEventListener("pointermove", (event) => {
   } else {
     updateTouchDirection(dy > 0 ? "ArrowDown" : "ArrowUp");
   }
-  updateMouseMove(event);
 });
 
 overlay.addEventListener("pointerup", (event) => {

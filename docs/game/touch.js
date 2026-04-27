@@ -75,8 +75,6 @@ overlay.addEventListener("pointermove", (event) => {
 });
 
 overlay.addEventListener("pointerup", (event) => {
-  if (!isTrackingMouseMove(event)) return;
-
   event.preventDefault();
   endMouseMove(event);
 

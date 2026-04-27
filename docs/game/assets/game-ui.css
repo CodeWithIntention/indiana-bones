@@ -230,8 +230,6 @@
 }
 
 #copyright {
-    position: absolute;
-    bottom: 0;
     padding: 8px;
     font-size: var(--small-font-size);
 }

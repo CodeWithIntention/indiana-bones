@@ -228,3 +228,10 @@
 #bioContent.open {
     height: 450px;
 }
+
+#copyright {
+    position: absolute;
+    bottom: 0;
+    padding: 8px;
+    font-size: var(--small-font-size);
+}

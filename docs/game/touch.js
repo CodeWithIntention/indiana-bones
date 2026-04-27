@@ -7,7 +7,7 @@ let lastTapTime = 0;
 
 const SWIPE_MIN_DISTANCE = 20;
 const TAP_MAX_DISTANCE = 10;
-const TAP_MAX_TIME = 150;
+const TAP_MAX_TIME = 250;
 
 let touchDirection = null;
 

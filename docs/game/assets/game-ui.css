@@ -2,6 +2,10 @@
 @import "maze.css";
 @import "characters.css";
 
+body {
+    overflow: hidden;
+}
+
 #border {
     display: flex;
     flex-direction: column;
@@ -230,6 +234,9 @@
 }
 
 #copyright {
+    position: absolute;
+    bottom: 0;
+    align-self: center;
     padding: 8px;
     font-size: var(--small-font-size);
 }

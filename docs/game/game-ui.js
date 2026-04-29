@@ -43,6 +43,7 @@ function enterSpiderCave(source) {
 function restartGame() {
   if (restartGamePanel.style.display === 'none') return;
   
+  restartGamePanel.style.display = 'none';
   mazeGrid.innerHTML = "";
   showGameUI(false);
 
@@ -101,6 +102,7 @@ gameScreen.overlay = overlay;
 gameScreen.scoreboard = scoreboard;
 gameScreen.scorecard = scorecard;
 gameScreen.restartGamePanel = restartGamePanel;
+gameScreen.instructionsPanel = instructionsPanel;
 gameScreen.playerStatusLine = playerStatusLine;
 gameScreen.highScoreStatusLine = highScoreStatusLine;
 gameScreen.scoreStatusLine = scoreStatusLine;

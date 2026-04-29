@@ -647,8 +647,8 @@ function startGame() {
 }
 
 function setGameOver() {
-  restartGamePanel.style.display = 'flex';
-  gameScreen.dismissInstructions();
+  gameScreen.restartGamePanel.style.display = 'flex';
+  dismissInstructions();
 
   gameOver = true;
   Sound.gameover();
@@ -656,9 +656,9 @@ function setGameOver() {
 }
 
 function dismissInstructions(dismiss = true) {
-  if (instructionsPanel.dismissed === true) return;
-  instructionsPanel.dismissed = dismiss;
-  instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
+  if (gameScreen.instructionsPanel.dismissed === true) return;
+  gameScreen.instructionsPanel.dismissed = dismiss;
+  gameScreen.instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
 }
 
 const keysPressed = {

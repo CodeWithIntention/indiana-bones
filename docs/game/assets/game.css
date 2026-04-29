@@ -4,14 +4,14 @@
 @import "items.css";
 
 body {
-    background-image: var(--body-bg-image);
+    background-image: var(--background-image);
     background-color: var(--maze-bg);
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 500px 700px;
+    background-size: var(--background-width) var(--background-height);
     font-family: var(--game-font-family);
-    color: #e6dccb;
+    color: var(--game-text-color);
 }
 
 .shadowGlow {

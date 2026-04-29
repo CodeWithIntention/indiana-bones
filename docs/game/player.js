@@ -1,6 +1,5 @@
 import { Direction } from "./util.js";
 import { OBJECTS } from "./config.js";
-import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 
 export { Player }
@@ -59,7 +58,6 @@ class Player extends Character {
         this.lives += Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife)
         this.tnts += this.#settings.freeTNTsWithLife;
         this.#lastFreeLifeScore = value;
-        Sound.dingDing();
       }
     }
   }
@@ -168,3 +166,4 @@ class Player extends Character {
     this.#bag = [];
   }
 }
+

@@ -54,3 +54,10 @@ class Label extends Character {
   }
 }
 
+// Map class to configurations for screen intialization
+CHARACTERS.scorpion.class = Scorpion;
+CHARACTERS.spider.class = Spider;
+CHARACTERS.cat.class = Cat;
+CHARACTERS.rat.class = Rat;
+CHARACTERS.mouse.class = Mouse;
+CHARACTERS.monkey.class = Monkey;

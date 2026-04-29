@@ -1,4 +1,5 @@
-import { overlay, keysPressed } from "./game.js";
+import { gameScreen } from "./game-ui.js";
+import { keysPressed } from "./game.js";
 
 let touchStartX = 0;
 let touchStartY = 0;
@@ -24,7 +25,7 @@ function updateTouchDirection(direction) {
 
 function beginMouseMove(event) {
   lastTapTime = Date.now();
-  overlay.setPointerCapture(event.pointerId);
+  gameScreen.overlay.setPointerCapture(event.pointerId);
   updateTouchDirection(null);
   updateMouseMove(event);
 }
@@ -35,21 +36,21 @@ function updateMouseMove(event) {
 }
 
 function endMouseMove(event) {
-  overlay.releasePointerCapture(event.pointerId);
+  gameScreen.overlay.releasePointerCapture(event.pointerId);
 }
 
 function isTrackingMouseMove(event) {
-  return overlay.hasPointerCapture(event.pointerId);
+  return gameScreen.overlay.hasPointerCapture(event.pointerId);
 }
 
-overlay.addEventListener("pointerdown", (event) => {
-  if (event.target !== overlay) return;
+gameScreen.overlay.addEventListener("pointerdown", (event) => {
+  if (event.target !== gameScreen.overlay) return;
 
   event.preventDefault();
   beginMouseMove(event);
 });
 
-overlay.addEventListener("pointermove", (event) => {
+gameScreen.overlay.addEventListener("pointermove", (event) => {
   if (!isTrackingMouseMove(event)) return;
 
   event.preventDefault();
@@ -69,7 +70,7 @@ overlay.addEventListener("pointermove", (event) => {
   }
 });
 
-overlay.addEventListener("pointerup", (event) => {
+gameScreen.overlay.addEventListener("pointerup", (event) => {
   event.preventDefault();
   endMouseMove(event);
 
@@ -92,7 +93,7 @@ overlay.addEventListener("pointerup", (event) => {
   }
 });
 
-overlay.addEventListener("pointercancel", (event) => {
+gameScreen.overlay.addEventListener("pointercancel", (event) => {
   event.preventDefault();
   endMouseMove(event);
   updateTouchDirection(null);

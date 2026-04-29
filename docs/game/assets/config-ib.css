@@ -1,28 +1,11 @@
 
 :root {
-    --game-font-family: 'Share Tech Mono', monospace;
-    /*--game-text-color: #e6dccb;*/
+    --game-text-color: #e6dccb;
 
-    --score-color: white;
-    --score-minus-color: red;
+    --shadow-glow-color: rgba(255, 173, 106, 0.92);
 
-    --backdrop-blur: blur(4px);
-    --border-radius: 8px;
+    --background-image: url("ib-game-frame.png");
 
-    /*--shadow-glow-color: rgba(255, 173, 106, 0.92);*/
-    --shadow-glow: 0 0 10px 5px var(--shadow-glow-color);
-
-    --small-font-size: 10px;
-    --medium-font-size: 16px;
-    --message-font-size: 12px;
-    --large-font-size: 24px;
-
-    /*--background-image: url("ib-game-frame.png");*/
-    --background-width: 500px;
-    --background-height: 700px;
-
-    --cell-size: 24px;
-/*
     --maze-edge: #222;
     --maze-bg: #222;
     --maze-path: #bda06f;
@@ -30,10 +13,8 @@
     --maze-edge: #2b241c;
 
     --maze-edge-inset: 4px rgba(0, 0, 0, 0.4);
-*/
 }
 
-/*
 #maze {
     --sym-player: "🤠";
     --sym-cat: "🐈";
@@ -57,4 +38,3 @@
     --sym-banana: "🍌";
     --sym-cheese: "🧀";
 }
-*/

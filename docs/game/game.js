@@ -1,15 +1,15 @@
 import { Direction } from "./util.js";
 import { CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS } from "./config.js";
-import { Settings } from "./settings.js";
+import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
 import { Spider, Scorpion, Cat, Monkey, Mouse, Rat } from "./characters.js";
 import { Grid } from "./grid.js";
+import { gameWindow, gameScreen } from "./game-ui.js";
 
-export { overlay, keysPressed }
+export { keysPressed };
 
-const gameWindow = window;
 
 Grid.canMoveTo = (row, col, isPlayer = false) => {
   const object = grid.objectAt(row, col);
@@ -71,9 +71,14 @@ function updateGameState(reason) {
 function updatePlayerStatusLine() {
     let list = [];
 
+    if (player.previousLives > 0 && player.lives > player.previousLives) {
+      Sound.dingDing();
+    }
+    player.previousLives = player.lives;
+
     list.push(`${Grid.symbolFor(player.kind)}`.repeat(player.lives));
     list.push(`${Grid.symbolFor(OBJECTS.tnt.kind)}<b>${player.tnts}</b>`);
-    playerStatusLine.innerHTML = list.join("&nbsp;");
+    gameScreen.playerStatusLine.innerHTML = list.join("&nbsp;");
 
     list = [];
     Object.entries(OBJECTS).forEach(([kind, object]) => {
@@ -94,13 +99,13 @@ function updatePlayerStatusLine() {
       settings.highScore = player.score;
     }
 
-    bagStatusLine.innerHTML = list.join("&nbsp;");
+    gameScreen.bagStatusLine.innerHTML = list.join("&nbsp;");
 
-    scoreStatusLine.classList.toggle("minus", player.score < 0);
-    scoreStatusLine.textContent = `${Math.abs(player.score)}`
+    gameScreen.scoreStatusLine.classList.toggle("minus", player.score < 0);
+    gameScreen.scoreStatusLine.textContent = `${Math.abs(player.score)}`
 
-    highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
-    highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
+    gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
+    gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 }
 
 function playerTNT() {
@@ -414,9 +419,9 @@ function tallyScore() {
     list.push(`<div>${MESSAGES.mazeClearedBonus} level &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
   }
 
-  scorecard.innerHTML = "";
-  nextMazeLink.hidden = true;
-  scoreboard.style.display = "flex";
+  gameScreen.scorecard.innerHTML = "";
+  gameScreen.nextMazeLink.hidden = true;
+  gameScreen.scoreboard.style.display = "flex";
 
   let totalScore = 0;
   let scoreIndex = 0;
@@ -426,18 +431,18 @@ function tallyScore() {
       const score = scores[scoreIndex++];
       
       totalScore += score;
-      scorecard.innerHTML = list.slice(0, scoreIndex).join("");
+      gameScreen.scorecard.innerHTML = list.slice(0, scoreIndex).join("");
       Sound.ta_ding();
 
       setTimeout(updateScore, TIMEOUTS.updateScoreCardInterval);
     } else {
-        nextMazeLink.hidden = false;
+        gameScreen.nextMazeLink.hidden = false;
 
         if (totalScore === 0) {
-          scorecard.innerHTML = "<div>You came out empty this time.</div><div class='score'>😐</div>";
+          gameScreen.scorecard.innerHTML = "<div>You came out empty this time.</div><div class='score'>😐</div>";
           Sound.alert();
         } else {
-          scorecard.innerHTML = list.join("") + `<div style='justify-self: right'>Total:</div><div class='score'>${totalScore}</div>`;
+          gameScreen.scorecard.innerHTML = list.join("") + `<div style='justify-self: right'>Total:</div><div class='score'>${totalScore}</div>`;
           player.score += totalScore;
           Sound.ding();
         }
@@ -447,7 +452,7 @@ function tallyScore() {
 }
 
 function goDeeper() {
-  scoreboard.style.display = "none";
+  gameScreen.scoreboard.style.display = "none";
 
   player.row = grid.rows-1;
   player.col = grid.cols-1;
@@ -460,7 +465,7 @@ function goDeeper() {
 }
 
 function nextMaze() {
-  scoreboard.style.display = "none";
+  gameScreen.scoreboard.style.display = "none";
 
   const currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
   const currentMaze = player.mazes % settings.mazesPerLevel;
@@ -486,7 +491,7 @@ function nextMaze() {
   player.restart();
   grid.addCharacter(player);
 
-  setupScreen();
+  setupCharacters();
 
   mazeStatusLine.innerHTML = `<b>LEVEL ${currentLevel} - ${currentMaze+1}</b?`;
 
@@ -503,32 +508,6 @@ function nextMaze() {
   render();
   updateGameState(player);
   play();
-}
-
-function dismissInstructions(dismiss = true) {
-  if (instructionsPanel.dismissed === true) return;
-  instructionsPanel.dismissed = dismiss;
-  instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
-}
-
-function showGameMessage(text, duration = 0) {
-  if (text) {
-    gameMessagePanel.style.display = 'flex';
-    gameMessagePanel.textContent = text;
-
-    if (duration > 0) {
-      setTimeout(hideGameMessage, duration, text);
-    }
-  } else {
-    hideGameMessage();
-  }
-}
-
-function hideGameMessage(text) {
-    if (text && text !== gameMessagePanel.textContent) return;
-
-    gameMessagePanel.style.display = 'none';
-    gameMessagePanel.textContent = "";
 }
 
 function play() {
@@ -581,7 +560,7 @@ function getMoveDirection() {
   return player.direction;
 }
 
-function setupScreen() {
+function setupCharacters() {
     characters = [];
 
     characters.characterIndex = (character) => {
@@ -649,6 +628,39 @@ function dropItems(config) {
     }
 }
 
+function saveHighScore(highScore) {
+  localStorage.setItem("indiana-bones-high-score", String(highScore));
+}
+
+function getHighScore() {
+  return Number(localStorage.getItem("indiana-bones-high-score")) || 0;
+}
+
+function startGame() {
+  gameOver = false;
+
+  settings.setDefaults();
+  player.reset();
+
+  gameScreen.showGameUI();
+  nextMaze();
+}
+
+function setGameOver() {
+  restartGamePanel.style.display = 'flex';
+  gameScreen.dismissInstructions();
+
+  gameOver = true;
+  Sound.gameover();
+  saveHighScore(settings.highScore);
+}
+
+function dismissInstructions(dismiss = true) {
+  if (instructionsPanel.dismissed === true) return;
+  instructionsPanel.dismissed = dismiss;
+  instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
+}
+
 const keysPressed = {
     ArrowUp: false,
     ArrowDown: false,
@@ -665,7 +677,7 @@ keysPressed.clear = () => {
 function onKeyEvent(event, pressed) {
     if (pressed && event.code === "Space") {
       if (gameOver) {
-        restartGame();
+        gameScreen.restartGame();
         return;
       } else if (player.exitMaze && scoreboard.style.display !== 'none') {
         goDeeper();
@@ -688,83 +700,12 @@ function onKeyEvent(event, pressed) {
     }
 }
 
-function enterSpiderCave(source) {
-  // Switch screens
-  bioMessage.style.display = 'none';
-  zoomStartGame();
-}
+gameWindow.document.addEventListener("keydown", e => onKeyEvent(e, true));
+gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));
 
-function zoomStartGame() {
-  // Set style for game screen zoom in 
-  gameScreen.classList.add("zoomIn");
-  gameScreen.hidden = false;
-  Sound.intro();
+gameScreen.nextMazeLink.addEventListener("click", goDeeper);
+gameScreen.dismissInstructionsLink.addEventListener("click", () => dismissInstructions());
 
-  // While intro is playing, request the next frame
-  gameWindow.requestAnimationFrame(() => {
-    // Trigger zoom in effect
-    gameScreen.classList.add("expanded", "spin", "zoom");
-
-    // Wait for intro to play and zoom to occur before
-    // starting the game.
-    setTimeout(() => {
-      gameScreen.classList.remove("zoomIn", "expanded", "spin", "zoom");
-      gameWindow.requestAnimationFrame(startGame);
-    }, TIMEOUTS.startGameZoomDiration);
-  });
-}
-
-function startGame() {
-  showGameUI();
-
-  settings.setDefaults();
-
-  dashboard.style.display = 'flex';
-  gameOver = false;
-  player.reset();
-  nextMaze();
-}
-
-function setGameOver() {
-  restartGamePanel.style.display = 'flex';
-  dismissInstructions();
-
-  gameOver = true;
-  Sound.gameover();
-  saveHighScore(settings.highScore);
-}
-
-function restartGame() {
-  if (restartGamePanel.style.display === 'none') return;
-  
-  dashboard.style.display = 'none';
-  restartGamePanel.style.display = 'none';
-  Grid.mazeEl.innerHTML = "";
-
-  showGameUI(false);
-
-  gameWindow.requestAnimationFrame(zoomStartGame);
-}
-
-function showGameUI(show = true) {
-  const hide = !show;
-
-  gameScreen.hidden = hide;
-  playerStatusLine.hidden = hide;
-  scoreStatusLine.hidden = hide;
-  mazeStatusLine.hidden = hide;
-  bagStatusLine.hidden = hide;
-}
-
-function saveHighScore(highScore) {
-  localStorage.setItem("indiana-bones-high-score", String(highScore));
-}
-
-function getHighScore() {
-  return Number(localStorage.getItem("indiana-bones-high-score")) || 0;
-}
-
-const settings = new Settings();
 const player = new Player(CHARACTERS.player, settings);
 settings.highScore = getHighScore();
 
@@ -772,40 +713,4 @@ let grid = null;
 let characters = [];
 let gameOver = false;
 
-// Map class to configurations for screen intialization
-CHARACTERS.scorpion.class = Scorpion;
-CHARACTERS.spider.class = Spider;
-CHARACTERS.cat.class = Cat;
-CHARACTERS.rat.class = Rat;
-CHARACTERS.mouse.class = Mouse;
-CHARACTERS.monkey.class = Monkey;
-
-const gameScreen = gameWindow.document.getElementById("game");
-const overlay = gameWindow.document.getElementById("overlay");
-const dashboard = gameWindow.document.getElementById("dashboard");
-const bioMessage = gameWindow.document.getElementById("bio");
-
-const playerStatusLine = gameWindow.document.getElementById("playerStatusLine");
-const highScoreStatusLine = gameWindow.document.getElementById("highScoreStatusLine");
-const scoreStatusLine = gameWindow.document.getElementById("scoreStatusLine");
-const mazeStatusLine = gameWindow.document.getElementById("mazeStatusLine");
-const bagStatusLine = gameWindow.document.getElementById("bagStatusLine");
-
-const scoreboard = gameWindow.document.getElementById("scoreboard"); 
-const scorecard = gameWindow.document.getElementById("scorecard");
-const restartGamePanel = gameWindow.document.getElementById("restartGamePanel"); 
-const gameMessagePanel = gameWindow.document.getElementById("gameMessagePanel"); 
-const instructionsPanel = gameWindow.document.getElementById("instructionsPanel"); 
-
-const enterLink = gameWindow.document.getElementById("enterLink");
-const restartGameLink = gameWindow.document.getElementById("restartGameLink");
-const nextMazeLink = gameWindow.document.getElementById("nextMazeLink");
-const dismissInstructionsLink = gameWindow.document.getElementById("dismissInstructionsLink");
-
-gameWindow.document.addEventListener("keydown", e => onKeyEvent(e, true));
-gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));
-
-enterLink.addEventListener("click", enterSpiderCave);
-restartGameLink.addEventListener("click", restartGame);
-nextMazeLink.addEventListener("click", goDeeper);
-dismissInstructionsLink.addEventListener("click", () => dismissInstructions());
+gameScreen.startGame = startGame;

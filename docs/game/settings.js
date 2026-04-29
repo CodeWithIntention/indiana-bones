@@ -1,4 +1,4 @@
-export { Settings }
+export { settings }
 
 // Global game settings
 class Settings {
@@ -46,3 +46,5 @@ class Settings {
     this.speedUpRatePerLevel = .05;
   }
 }
+
+const settings = new Settings();

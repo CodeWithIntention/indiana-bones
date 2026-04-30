@@ -519,7 +519,7 @@ function play() {
     function gameLoop(time) {
         if (gameOver || player.exitMaze || mazes !== player.mazes) return;
 
-        const delta = Math.min((time - lastTime) / 1000, 0.075);
+        const delta = Math.min((time - lastTime) / 1000, 0.05);
         lastTime = time;
 
         movePlayer(getMoveDirection(), delta);

@@ -315,7 +315,7 @@ class Grid {
   }
   
   #hasCharacterArrived(character, characterCell) {
-    const MIN_COURSE_CORRECTION_DISTANCE = 2;
+    const MIN_COURSE_CORRECTION_DISTANCE = .5;
     const cell = this.cellAtRowCol(character.row, character.col);
     if (!cell) return false;
 

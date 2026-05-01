@@ -224,7 +224,7 @@ class Grid {
     if (!((character instanceof Character) || text)) return;
     
     const label = new Label(character.row, character.col);
-    this.addCharacter(label, character.top, character.left);
+    this.addCharacter(label, character.gridCell.offsetTop, character.gridCell.offsetLeft);
     label.gridCell.innerHTML = html;
     
     if (duration > 0) {
@@ -267,8 +267,6 @@ class Grid {
         }
       }
       if (Number.isFinite(offsetTop) && Number.isFinite(offsetLeft)) {
-        character.top = offsetTop;
-        character.left = offsetLeft;
         characterCell.style.top = `${offsetTop}px`;
         characterCell.style.left = `${offsetLeft}px`;
       }
@@ -318,8 +316,11 @@ class Grid {
   
   #hasCharacterArrived(character, characterCell) {
     const MIN_COURSE_CORRECTION_DISTANCE = 2;
-    return (Math.abs(characterCell.offsetLeft - character.left) < MIN_COURSE_CORRECTION_DISTANCE) 
-            && (Math.abs(characterCell.offsetTop - character.top) < MIN_COURSE_CORRECTION_DISTANCE);
+    const cell = this.cellAtRowCol(character.row, character.col);
+    if (!cell) return false;
+
+    return (Math.abs(characterCell.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
+      && (Math.abs(characterCell.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
   }
 
   moveCharacter(character, direction, delta, row, col) {
@@ -381,10 +382,7 @@ class Grid {
       characterCell.style.left = `${offsetLeft}px`;
 
       character.row = nextRow;
-      character.top = nextRow * this.cellSize;
-
       character.col = nextCol;
-      character.left = nextCol * this.cellSize;
     } else {
         character.row = nextRow - character.direction[0];
         character.col = nextCol - character.direction[1];

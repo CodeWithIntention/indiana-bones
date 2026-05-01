@@ -192,8 +192,8 @@ function playerChomp(object) {
   if (object instanceof Character) {
       if (!object.isChompable) return;
 
-      characters.remove(object);
       addScoreForCharacter(object, settings.chompPointsFactor);
+      characters.remove(object);
 
       const chompSound = object.chompSound;
       if (chompSound) {
@@ -205,8 +205,8 @@ function playerChomp(object) {
 
 function playerGrab(object) {
     if (object instanceof Character && object.isGrabable) {
-      characters.remove(object);
       player.putInBag(object.config);
+      characters.remove(object);
     } else if (Number.isFinite(object.points)) {
       player.putInBag(object);
     }
@@ -693,8 +693,8 @@ function onKeyEvent(event, pressed) {
       keysPressed[event.key] = pressed;
     }
 
-    if (!pressed && event.key === "Control" && event.location === 2) {
-      keysPressed.NextMaze = event.shiftKey && event.altKey && event.ctrlKey;
+    if (!pressed && event.key === "ArrowLeft") {
+      keysPressed.NextMaze = event.shiftKey && event.ctrlKey;
     } else {
       keysPressed.NextMaze = false;
     }

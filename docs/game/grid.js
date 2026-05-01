@@ -274,20 +274,6 @@ class Grid {
     }
   }
 
-  #orientCharacter(character, characterCell) {
-    const rotationTransform = character.rotationTransform;
-
-    if (rotationTransform && rotationTransform.length > 0 && rotationTransform[0].length == 2) {
-        const transformMap = new Map(rotationTransform);
-        const rotationAngle = Number(transformMap.get(character.direction));
-
-        if (Number.isInteger(rotationAngle)) {
-            const rotateFunc = rotationAngle < 0 ? "rotateY" : "rotate";
-            characterCell.style.transform = `${rotateFunc}(${Math.abs(rotationAngle)}deg)`;
-        }
-    }
-  }
-
   haveCollided(character1, character2) {
     return this.hasRectCollidedWithRect(character1.gridCell.getBoundingClientRect(), 
       character2.gridCell.getBoundingClientRect());
@@ -312,15 +298,6 @@ class Grid {
     return widthCollision < widthSpan && heightCollision < heightSpan &&
       ((widthSpan - widthCollision) / targetWidth >= this.#collisionPercentage) && 
       ((heightSpan - heightCollision) / targetHeight >= this.#collisionPercentage);
-  }
-  
-  #hasCharacterArrived(character, characterCell) {
-    const MIN_COURSE_CORRECTION_DISTANCE = .5;
-    const cell = this.cellAtRowCol(character.row, character.col);
-    if (!cell) return false;
-
-    return (Math.abs(characterCell.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
-      && (Math.abs(characterCell.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
   }
 
   moveCharacter(character, direction, delta, row, col) {
@@ -357,42 +334,6 @@ class Grid {
         return !this.#hasCharacterArrived(character, characterCell);
     }
     return false;
-  }
-
-  #updateCharacterPosition(character, characterCell, delta) {
-    character.updateVelocity(character.direction, delta);
-
-    const currentRow = character.row;
-    const currentCol = character.col;
-
-    const offsetTop = characterCell.offsetTop + character.vy;
-    const offsetLeft = characterCell.offsetLeft + character.vx;
-
-    const row = offsetTop / this.cellSize;
-    const col = offsetLeft / this.cellSize;
-
-    let nextRow = Direction.isUp(character.direction) ? Math.floor(row) : Math.ceil(row);
-    let nextCol = Direction.isLeft(character.direction) ? Math.floor(col) : Math.ceil(col);
-   
-    if (Grid.canMoveTo(nextRow, nextCol, character.priority === 1)) {
-      nextRow = Direction.isUp(character.direction) ? Math.ceil(row) : Math.floor(row);
-      nextCol = Direction.isLeft(character.direction) ? Math.ceil(col) : Math.floor(col);
-
-      characterCell.style.top = `${offsetTop}px`;
-      characterCell.style.left = `${offsetLeft}px`;
-
-      character.row = nextRow;
-      character.col = nextCol;
-    } else {
-        character.row = nextRow - character.direction[0];
-        character.col = nextCol - character.direction[1];
-        this.placeCharacter(character);
-    }
-
-    if (character.row !== currentRow || character.col !== currentCol) {
-        character.moves++;
-        Grid.onCharacterMoved(character);
-    }
   }
 
   showCharacterLabel(character, label, duration) {
@@ -436,6 +377,65 @@ class Grid {
   placeObjectAt(row, col, obj) {
     this.maze.placeObjectAt(row, col, obj);
     this.updateCellAtRowCol(row, col);
+  }
+
+  #updateCharacterPosition(character, characterCell, delta) {
+    character.updateVelocity(character.direction, delta);
+
+    const currentRow = character.row;
+    const currentCol = character.col;
+
+    const offsetTop = characterCell.offsetTop + character.vy;
+    const offsetLeft = characterCell.offsetLeft + character.vx;
+
+    const row = offsetTop / this.cellSize;
+    const col = offsetLeft / this.cellSize;
+
+    let nextRow = Direction.isUp(character.direction) ? Math.floor(row) : Math.ceil(row);
+    let nextCol = Direction.isLeft(character.direction) ? Math.floor(col) : Math.ceil(col);
+   
+    if (Grid.canMoveTo(nextRow, nextCol, character.priority === 1)) {
+      nextRow = Direction.isUp(character.direction) ? Math.ceil(row) : Math.floor(row);
+      nextCol = Direction.isLeft(character.direction) ? Math.ceil(col) : Math.floor(col);
+
+      characterCell.style.top = `${offsetTop}px`;
+      characterCell.style.left = `${offsetLeft}px`;
+
+      character.row = nextRow;
+      character.col = nextCol;
+    } else {
+        character.row = nextRow - character.direction[0];
+        character.col = nextCol - character.direction[1];
+        this.placeCharacter(character);
+    }
+
+    if (character.row !== currentRow || character.col !== currentCol) {
+        character.moves++;
+        Grid.onCharacterMoved(character);
+    }
+  }
+  
+  #orientCharacter(character, characterCell) {
+    const rotationTransform = character.rotationTransform;
+
+    if (rotationTransform && rotationTransform.length > 0 && rotationTransform[0].length == 2) {
+        const transformMap = new Map(rotationTransform);
+        const rotationAngle = Number(transformMap.get(character.direction));
+
+        if (Number.isInteger(rotationAngle)) {
+            const rotateFunc = rotationAngle < 0 ? "rotateY" : "rotate";
+            characterCell.style.transform = `${rotateFunc}(${Math.abs(rotationAngle)}deg)`;
+        }
+    }
+  }
+
+  #hasCharacterArrived(character, characterCell) {
+    const MIN_COURSE_CORRECTION_DISTANCE = 2;
+    const cell = this.cellAtRowCol(character.row, character.col);
+    if (!cell) return false;
+
+    return (Math.abs(characterCell.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
+      && (Math.abs(characterCell.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
   }
 
   #createCells(maze) {

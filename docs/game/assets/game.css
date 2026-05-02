@@ -3,17 +3,6 @@
 @import "characters.css";
 @import "items.css";
 
-body {
-    background-image: var(--background-image);
-    background-color: var(--maze-bg);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: var(--background-width) var(--background-height);
-    font-family: var(--game-font-family);
-    color: var(--game-text-color);
-}
-
 .shadowGlow {
     box-shadow: var(--shadow-glow);
     cursor: default;

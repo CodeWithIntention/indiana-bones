@@ -1,0 +1,64 @@
+
+:root {
+    --game-text-color: #e6dccb;
+
+    --shadow-glow-color: rgba(255, 173, 106, 0.92);
+
+    --background-image: url("ice-cave-frame.png");
+
+    --maze-edge: #222;
+    --maze-bg: #222;
+    --maze-path: #bda06f;
+    --maze-wall: #4a3f33;
+    --maze-edge: #2b241c;
+
+    --maze-edge-inset: 4px rgba(0, 0, 0, 0.4);
+}
+
+#maze {
+    --sym-player: "🤠";
+    --sym-cat: "🐈";
+    --sym-rat: "🐀";
+    --sym-mouse: "🐁";
+    --sym-monkey: "🐒";
+    --sym-scorpion: "🦂";
+    --sym-spider: "🕷️";
+
+    --sym-powerup: "💀";
+    --sym-dead: "⚰️";
+    --sym-buried: "🪦";
+
+    --sym-exit: "🕳";
+    --sym-web: "🕸";
+    --sym-poop: "💩";
+    --sym-gem: "💎";
+    --sym-tnt: "🧨";
+    --sym-bone: "🦴";
+    --sym-fountain: "⛲";
+    --sym-banana: "🍌";
+    --sym-cheese: "🧀";
+}
+body {
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15), transparent 40%),
+        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.08), transparent 50%),
+        linear-gradient(to bottom, #061a2b, #021018);
+    font-family: var(--game-font-family);
+    color: var(--game-text-color);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(white 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.18;
+    animation: snowDrift 5s linear infinite;
+}
+
+@keyframes snowDrift {
+    from { transform: translateY(0) translateX(0); }
+    to   { transform: translateY(40px) translateX(40px); }
+}

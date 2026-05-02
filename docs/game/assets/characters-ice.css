@@ -1,0 +1,39 @@
+
+.character.scorpion {
+    z-index: 5;
+}
+
+.character.cat,
+.character.mouse,
+.character.monkey,
+.character.rat {
+    z-index: 3;
+}
+
+.character.spider {
+    z-index: 2;
+}
+
+.character.spider::before {
+    content: var(--sym-spider);
+}
+
+.character.cat::before {
+    content: var(--sym-cat);
+}
+
+.character.mouse::before {
+    content: var(--sym-mouse);
+}
+
+.character.rat::before {
+    content: var(--sym-rat);
+}
+
+.character.monkey::before {
+    content: var(--sym-monkey);
+}
+
+.character.scorpion::before {
+    content: var(--sym-scorpion);
+}

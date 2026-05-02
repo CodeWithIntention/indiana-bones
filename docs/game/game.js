@@ -445,6 +445,7 @@ function tallyScore() {
           gameScreen.scorecard.innerHTML = list.join("") + `<div style='justify-self: right'>Total:</div><div class='score'>${totalScore}</div>`;
           player.score += totalScore;
           Sound.ding();
+          setTimeout(updatePlayerStatusLine, TIMEOUTS.updateScoreCardInterval);
         }
     }
   }

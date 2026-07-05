@@ -277,7 +277,7 @@ function render() {
 }
 
 function movePlayer(direction, delta) {
-  if (!player.isAlive) return;
+  if (!player.isAlive || player.exitMaze) return;
 
   // This is where player is at
   const currentRow = player.row;
@@ -532,7 +532,7 @@ function play() {
           return;
         }
 
-        if (!player.exitMaze || gameOver) {
+        if (!(player.exitMaze || gameOver)) {
             handleKeyEvents();
             gameWindow.requestAnimationFrame(gameLoop);
         }

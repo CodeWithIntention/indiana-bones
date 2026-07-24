@@ -152,16 +152,20 @@ function onCharacterBlownUp(character) {
     addScoreForCharacter(character, settings.blownUpPointsFactor);
 
     if (character.priority === 1) {
-      character.disabled = true;
-      const disabledTime = character.disabledTime;
+      if (character.disabled === true) {
+        addScoreForCharacter(character, 1);
+      } else {
+        character.disabled = true;
+        const disabledTime = character.disabledTime;
 
-      setTimeout(() => {
-        if (disabledTime === character.disabledTime) {
-          character.disabled = false;
-        }
-      }, settings.blowUpRecoveryDuration);
-      return;
-    } 
+        setTimeout(() => {
+          if (disabledTime === character.disabledTime) {
+            character.disabled = false;
+          }
+        }, settings.blowUpRecoveryDuration);
+        return;
+      }
+    }
   } else {
     addScoreForCharacter(character, -1);
   }
@@ -689,7 +693,7 @@ function onKeyEvent(event, pressed) {
     if (event.key === " " && event.code === "Space") {
       event.preventDefault();
       keysPressed[event.code] = pressed;
-    } if (typeof keysPressed[event.key] !== "undefined") {
+    } else if (typeof keysPressed[event.key] !== "undefined") {
       event.preventDefault();
       keysPressed[event.key] = pressed;
     }

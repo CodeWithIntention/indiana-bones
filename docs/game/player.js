@@ -55,8 +55,14 @@ class Player extends Character {
       this.#score = value;
 
       if (value >= this.#lastFreeLifeScore + this.#settings.pointsPerFreeLife) {
-        this.lives += Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife)
-        this.tnts += this.#settings.freeTNTsWithLife;
+        const freeLives = Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife);
+        this.lives += freeLives;
+        if (this.lives > this.#settings.maxLives) {
+          const excessLives = this.lives - this.#settings.maxLives;
+          this.lives = this.#settings.maxLives;
+          this.tnt += excessLives * this.#settings.freeTNTsWithLife;
+        }
+        this.tnts += freeLives * this.#settings.freeTNTsWithLife;
         this.#lastFreeLifeScore = value;
       }
     }

@@ -13,6 +13,8 @@
     --maze-edge: #2b241c;
 
     --maze-edge-inset: 4px rgba(0, 0, 0, 0.4);
+
+    --cell-visited-color: rgba(255, 255, 255, 0.5);
 }
 
 #maze {

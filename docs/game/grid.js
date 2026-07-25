@@ -104,11 +104,15 @@ class Grid {
   #maze;
   #cells;
   #collisionPercentage;
+  #pathCount;
+  #visitedPathCount;
 
   constructor(rows, cols, cellSize) {
     this.#maze = new Maze(rows, cols, cellSize);
     this.#cells = null;
     this.#collisionPercentage = .5;
+    this.#pathCount = 0;
+    this.#visitedPathCount = 0;
 
     this.#createCells(this.#maze);
   }
@@ -138,6 +142,14 @@ class Grid {
       }
     }
     return true;
+  }
+
+  get pathCount() {
+    return this.#pathCount;
+  }
+
+  get visitedPathCount() {
+    return this.#visitedPathCount;
   }
 
   cellAtRowCol(row, col) {
@@ -198,15 +210,30 @@ class Grid {
       for (let col = 0; col < this.cols; col++) {
         const cell = this.updateCellAtRowCol(row, col);
         visitor(cell, row, col);
+
+        const mazeObject = this.#maze.objectAt(row, col);
+        if (mazeObject.visitable !== false) {
+          this.#pathCount++;
+        }
       }
     }
   }
 
-  updateCellAtRowCol(row, col) {
+  updateCellAtRowCol(row, col, visited = false) {
     const cell = this.cellAtRowCol(row, col);
     if (cell) {
-        cell.className = "cell";
-        cell.classList.add(this.#maze.objectKindAt(row, col));
+      const attributes = [this.#maze.objectKindAt(row, col)];
+
+      if (visited) {
+        if (!cell.classList.contains("visited")) {
+          this.#visitedPathCount++;
+        }
+        attributes.push("visited");
+      } else if (cell.classList.contains("visited")) {
+        this.#visitedPathCount--;
+      }
+      cell.className = "cell";
+      cell.classList.add(...attributes);
     };
     return cell;
   }
@@ -374,9 +401,12 @@ class Grid {
     }
   }
 
-  placeObjectAt(row, col, obj) {
+  placeObjectAt(row, col, obj, visited = false) {
+    if (obj === OBJECTS.path && this.objectAt(row, col) === OBJECTS.wall) {
+      this.#pathCount++;
+    }
     this.maze.placeObjectAt(row, col, obj);
-    this.updateCellAtRowCol(row, col);
+    this.updateCellAtRowCol(row, col, visited);
   }
 
   #updateCharacterPosition(character, characterCell, delta) {

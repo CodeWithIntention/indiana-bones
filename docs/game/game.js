@@ -50,11 +50,13 @@ function updateGameState(reason) {
         attributes.powerup = reason.powerUp;
 
         if (grid.objectAt(reason) === OBJECTS.exit) {
+          if (!player.exitMaze) {
             player.exitMaze = true;
             attributes.spin = true;
 
             Sound.yeah();
             setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
+          }
         } else if (grid.isCharacterAtEntrance(reason)) {
             attributes.entrance = true;
         }
@@ -66,6 +68,10 @@ function updateGameState(reason) {
     grid.setCharacterAttributes(reason, attributes);
     updatePlayerStatusLine();
   }
+}
+
+function mazeBonus() {
+  return (grid.pathCount - grid.visitedPathCount) * settings.pointsPerPath * player.level;
 }
 
 function updatePlayerStatusLine() {
@@ -106,6 +112,8 @@ function updatePlayerStatusLine() {
 
     gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
+
+    mazeStatusLine.innerHTML = `<b>LEVEL: ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze} BONUS: ${mazeBonus()}</b>`;
 }
 
 function playerTNT() {
@@ -141,7 +149,7 @@ function playerTNT() {
     const mazeObjAtRowCol = grid.objectAt(row, col);
 
     if (!(mazeObjAtRowCol === OBJECTS.edge || mazeObjAtRowCol === OBJECTS.exit)) {
-      grid.placeObjectAt(row, col, OBJECTS.path);
+      grid.placeObjectAt(row, col, OBJECTS.path, false);
     }
   });
   updatePlayerStatusLine();
@@ -249,15 +257,18 @@ function playerKilled() {
 }
 
 function onPlayerMoved() {
-    const object = grid.objectAt(player.row, player.col);
+    const object = grid.objectAt(player);
     
-    if (object && object !== OBJECTS.path && object !== OBJECTS.exit) {
+    if (object && object !== OBJECTS.exit) {
+      if (object !== OBJECTS.path) {
+
         if (player.powerUp) {
             playerChomp(object);
         } else {
             playerGrab(object);
         }
-        grid.placeObjectAt(player.row, player.col, OBJECTS.path);
+      }
+      grid.placeObjectAt(player.row, player.col, OBJECTS.path, true);
     }
     updateGameState(player);
 }
@@ -417,6 +428,9 @@ function tallyScore() {
     }
   });
 
+  scores.push(mazeBonus());
+  list.push(`<div>Maze Bonus:</div><div class='score'>${mazeBonus()}</div>`);
+
   if (grid.isMazeCleared && characters.length === 0) {
     const points = settings.mazeClearedBonusPoints * player.level;
     scores.push(points);
@@ -498,7 +512,8 @@ function nextMaze() {
 
   setupCharacters();
 
-  mazeStatusLine.innerHTML = `<b>LEVEL ${currentLevel} - ${currentMaze+1}</b?`;
+  mazeStatusLine.currentLevel = currentLevel;
+  mazeStatusLine.currentMaze = currentMaze + 1;
 
   [player, ...characters].forEach(character => {
       // Negative speed is not sped up. 

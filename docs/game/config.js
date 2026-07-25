@@ -27,10 +27,10 @@ const OBJECTS = {
     web:        {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'webbed', grabSound: 'oops'},
     poop:       {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'pooped', grabSound: 'oops'},
 
-    path:       {fixed: true},
-    wall:       {fixed: true},
-    edge:       {fixed: true},
-    exit:       {fixed: true},
+    path:       {fixed: true, visitable: true},
+    wall:       {fixed: true, visitable: false},
+    edge:       {fixed: true, visitable: false},
+    exit:       {fixed: true, visitable: false},
 };
 
 Object.entries(OBJECTS).forEach(([key, value]) => value.kind = key);

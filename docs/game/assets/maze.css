@@ -40,3 +40,23 @@
     background-color: var(--maze-path);
 }
 
+.cell.visited {
+    position: relative;
+}
+
+.cell.visited::after {
+    content: "";
+    position: absolute;
+
+    width: 4px;
+    height: 4px;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+    background: var(--cell-visited-color);
+}
+

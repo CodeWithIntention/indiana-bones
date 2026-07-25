@@ -8,6 +8,7 @@ class Settings {
   rows;
   cols;
 
+  pointsPerPath;
   pointsPerFreeLife;
   freeTNTsWithLife;
   mazeClearedBonusPoints;
@@ -33,6 +34,7 @@ class Settings {
     this.rows = 9;
     this.cols = 9;
 
+    this.pointsPerPath = 10;
     this.pointsPerFreeLife = 10000;
     this.freeTNTsWithLife = 5;
     this.mazeClearedBonusPoints = 5000;

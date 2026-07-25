@@ -437,7 +437,7 @@ function tallyScore() {
   if (grid.isMazeCleared && characters.length === 0) {
     const points = settings.mazeClearedBonusPoints * player.level;
     scores.push(points);
-  list.push(`<div>${MESSAGES.mazeClearedBonus}: ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
+    list.push(`<div>${MESSAGES.mazeClearedBonus} ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
   }
 
   gameScreen.scorecard.innerHTML = "";

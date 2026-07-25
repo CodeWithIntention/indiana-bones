@@ -71,7 +71,7 @@ function updateGameState(reason) {
 }
 
 function mazeBonus() {
-  return (grid.pathCount - grid.visitedPathCount) * settings.pointsPerPath * player.level;
+  return (grid.pathCount - grid.visitedPathCount);
 }
 
 function updatePlayerStatusLine() {
@@ -113,7 +113,7 @@ function updatePlayerStatusLine() {
     gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
-    mazeStatusLine.innerHTML = `<b>LEVEL: ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze} BONUS: ${mazeBonus()}</b>`;
+    mazeStatusLine.innerHTML = `<b>LEVEL: ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze}</b> <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
 }
 
 function playerTNT() {
@@ -428,13 +428,16 @@ function tallyScore() {
     }
   });
 
-  scores.push(mazeBonus());
-  list.push(`<div>Maze Bonus:</div><div class='score'>${mazeBonus()}</div>`);
+  const mazeBonusPoints = mazeBonus() * settings.pointsPerPath;
+  if (mazeBonusPoints !== 0) {
+    scores.push(mazeBonusPoints);
+    list.push(`<div>${Grid.symbolFor("maze-bonus")} &times; ${mazeBonus()} &times; ${settings.pointsPerPath}</div><div class='score'>${mazeBonusPoints}</div>`);
+  }
 
   if (grid.isMazeCleared && characters.length === 0) {
     const points = settings.mazeClearedBonusPoints * player.level;
     scores.push(points);
-    list.push(`<div>${MESSAGES.mazeClearedBonus} level &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
+  list.push(`<div>${MESSAGES.mazeClearedBonus}: ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
   }
 
   gameScreen.scorecard.innerHTML = "";

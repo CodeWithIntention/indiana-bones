@@ -31,10 +31,10 @@ class Settings {
     this.maxCols = 19;
 
     this.cellSize = 24;
-    this.rows = 9;
-    this.cols = 9;
+    this.rows = 11;
+    this.cols = 11;
 
-    this.pointsPerPath = 10;
+    this.pointsPerPath = 100;
     this.pointsPerFreeLife = 10000;
     this.freeTNTsWithLife = 5;
     this.mazeClearedBonusPoints = 5000;

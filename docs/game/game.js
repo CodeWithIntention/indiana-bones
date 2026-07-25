@@ -77,10 +77,10 @@ function mazeBonus() {
 function updatePlayerStatusLine() {
     let list = [];
 
-    if (player.previousLives > 0 && player.lives > player.previousLives) {
+    if (player.bonusAwarded) {
       Sound.dingDing();
+      player.bonusAwarded = false;
     }
-    player.previousLives = player.lives;
 
     list.push(`${Grid.symbolFor(player.kind)}`.repeat(player.lives));
     list.push(`${Grid.symbolFor(OBJECTS.tnt.kind)}<b>${player.tnts}</b>`);

@@ -10,6 +10,7 @@ class Player extends Character {
   points;
   exitMazeTime;
   tnts;
+  bonusAwarded;
 
   #settings;
   #alive;
@@ -60,10 +61,11 @@ class Player extends Character {
         if (this.lives > this.#settings.maxLives) {
           const excessLives = this.lives - this.#settings.maxLives;
           this.lives = this.#settings.maxLives;
-          this.tnt += excessLives * this.#settings.freeTNTsWithLife;
+          this.tnts += excessLives * this.#settings.freeTNTsWithLife;
         }
         this.tnts += freeLives * this.#settings.freeTNTsWithLife;
         this.#lastFreeLifeScore = value;
+        this.bonusAwarded = true;
       }
     }
   }
@@ -140,7 +142,8 @@ class Player extends Character {
     this.points = 0;
     this.tnts = this.config.tnts;
     this.lives = this.config.lives;
-    
+    this.bonusAwarded = false;
+
     this.#lastFreeLifeScore = 0;
 
     this.restart();

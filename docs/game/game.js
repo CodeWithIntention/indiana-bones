@@ -24,6 +24,7 @@ Grid.onCharacterMoved =  (character) => {
     onPlayerMoved();
   } else if (character.canDrop && grid.objectAt(character.row, character.col) === OBJECTS.path) {
     grid.placeObjectAt(character.row, character.col, character.dropObject);
+    updateGameState(character);
   }
 }
 
@@ -66,8 +67,8 @@ function updateGameState(reason) {
         attributes.buried = true;
     }
     grid.setCharacterAttributes(reason, attributes);
-    updatePlayerStatusLine();
   }
+  updatePlayerStatusLine();
 }
 
 function mazeBonus() {

@@ -269,7 +269,7 @@ function onPlayerMoved() {
             playerGrab(object);
         }
       }
-      grid.placeObjectAt(player.row, player.col, OBJECTS.path, true);
+      grid.placeObjectAt(player.row, player.col, OBJECTS.path, !player.powerUp);
     }
     updateGameState(player);
 }

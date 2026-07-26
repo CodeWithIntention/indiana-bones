@@ -120,6 +120,7 @@ function playerTNT() {
   if (player.powerUp || !(player.isAlive && player.removeTNT())) return false;
 
   const blastArea = [
+    [0, 0],
     [-1, -1],
     [-1, 0],
     [-1, 1],

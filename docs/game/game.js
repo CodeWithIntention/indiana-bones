@@ -150,7 +150,7 @@ function playerTNT() {
     const col = player.col + rc[1];
     const mazeObjAtRowCol = grid.objectAt(row, col);
 
-    if (!(mazeObjAtRowCol === OBJECTS.edge || mazeObjAtRowCol === OBJECTS.exit)) {
+    if (![OBJECTS.edge, OBJECTS.exit, OBJECTS.gem].includes(mazeObjAtRowCol)) {
       grid.placeObjectAt(row, col, OBJECTS.path, false);
     }
   });
@@ -268,6 +268,14 @@ function onPlayerMoved() {
             playerChomp(object);
         } else {
             playerGrab(object);
+        }
+        if (object === OBJECTS.gem) {
+          player.gemsNeededToExit--;
+
+          if (player.gemsNeededToExit === 0) {
+            grid.ensureExit();
+            Sound.portal();
+          }
         }
       }
       grid.placeObjectAt(player.row, player.col, OBJECTS.path, !player.powerUp);
@@ -658,6 +666,10 @@ function dropItems(config) {
     if (config.fixed || !config.qty) return;
 
     let count = config.qty(player.level);
+
+    if (config === OBJECTS.gem) {
+      player.gemsNeededToExit = count;
+    }
 
     while (count-- > 0) {
       const position = findRandomPathCell(config.inWalls);

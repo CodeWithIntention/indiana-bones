@@ -11,10 +11,6 @@ class Maze {
   constructor(rows, cols, cellSize) {
     this.cellSize = cellSize;
     this.#createGrid(rows, cols);
-          
-    // Ensure the exit is cleared
-    this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
-    this.placeObjectAt(this.rows - 2, this.cols - 1, OBJECTS.exit);
   }
 
   get rows() {
@@ -409,6 +405,11 @@ class Grid {
     }
     this.maze.placeObjectAt(row, col, obj);
     this.updateCellAtRowCol(row, col, visited);
+  }
+  
+  ensureExit() {
+    this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
+    this.placeObjectAt(this.rows - 2, this.cols - 1, OBJECTS.exit);
   }
 
   #updateCharacterPosition(character, characterCell, delta) {

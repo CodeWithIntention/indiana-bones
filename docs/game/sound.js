@@ -23,6 +23,7 @@ class Sound {
   static #deeper = new Audio("sounds/deeper.wav");
   static #gameover = new Audio("sounds/game_over.wav");
   static #intro = new Audio("sounds/intro.wav");
+  static #portal = new Audio("sounds/portal.wav");
 
   static play(sound) {
     sound.currentTime = 0;
@@ -115,6 +116,10 @@ class Sound {
 
   static intro() {
     this.play(this.#intro);
+  }
+
+  static portal() {
+    this.play(this.#portal);
   }
 }
 

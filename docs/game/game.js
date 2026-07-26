@@ -454,6 +454,14 @@ function tallyScore() {
   let scoreIndex = 0;
 
   const updateScore = () => {
+    if (gameScreen.scoreboard.style.display === "none") {
+      while (scoreIndex < scores.length) {
+        totalScore += scores[scoreIndex++];
+      }
+      player.score += totalScore;
+      return;
+    }
+
     if (scoreIndex < scores.length) {
       const score = scores[scoreIndex++];
       

@@ -103,14 +103,14 @@ class Grid {
 
   #maze;
   #cells;
-  #collisionPercentage;
+  #collisionThreshold;
   #pathCount;
   #visitedPathCount;
 
   constructor(rows, cols, cellSize) {
     this.#maze = new Maze(rows, cols, cellSize);
     this.#cells = null;
-    this.#collisionPercentage = .5;
+    this.#collisionThreshold = .5;
     this.#pathCount = 0;
     this.#visitedPathCount = 0;
 
@@ -323,8 +323,8 @@ class Grid {
     const heightCollision = rect1.top < rect2.top ? rect2.bottom - rect1.top : rect1.bottom - rect2.top;
   
     return widthCollision < widthSpan && heightCollision < heightSpan &&
-      ((widthSpan - widthCollision) / targetWidth >= this.#collisionPercentage) && 
-      ((heightSpan - heightCollision) / targetHeight >= this.#collisionPercentage);
+      ((widthSpan - widthCollision) / targetWidth >= this.#collisionThreshold) && 
+      ((heightSpan - heightCollision) / targetHeight >= this.#collisionThreshold);
   }
 
   moveCharacter(character, direction, delta, row, col) {
@@ -338,11 +338,11 @@ class Grid {
         // Test if character is not enroute
         if (direction !== character.direction) {
           if (Direction.isOnSameLine(character.direction, direction)) {
-            // Allow transitional direction 
+            // Allow reversing direction 
             character.direction = direction;
             this.#orientCharacter(character, characterCell);
           } else if (this.#hasCharacterArrived(character, characterCell)) {
-            // Commit to new course
+            // Commit to new course once character has arrived
             character.direction = direction;
             this.placeCharacter(character);
           }
@@ -410,41 +410,48 @@ class Grid {
   }
 
   #updateCharacterPosition(character, characterCell, delta) {
+    function getLocation(offsetTop, offsetLeft) {
+      const EPSILON = this.cellSize * this.#collisionThreshold;
+
+      return {
+          left: Math.floor((offsetLeft + EPSILON) / this.cellSize),
+          right: Math.floor((offsetLeft + this.cellSize - EPSILON) / this.cellSize),
+          up: Math.floor((offsetTop + EPSILON) / this.cellSize),
+          down: Math.floor((offsetTop + this.cellSize - EPSILON) / this.cellSize)
+      };
+    }
+
     character.updateVelocity(character.direction, delta);
 
     const currentRow = character.row;
     const currentCol = character.col;
+    const nextRow = currentRow + character.direction[0];
+    const nextCol = currentCol + character.direction[1];
 
-    const offsetTop = characterCell.offsetTop + character.vy;
-    const offsetLeft = characterCell.offsetLeft + character.vx;
-
-    const row = offsetTop / this.cellSize;
-    const col = offsetLeft / this.cellSize;
-
-    let nextRow = Direction.isUp(character.direction) ? Math.floor(row) : Math.ceil(row);
-    let nextCol = Direction.isLeft(character.direction) ? Math.floor(col) : Math.ceil(col);
-   
-    if (Grid.canMoveTo(nextRow, nextCol, character.priority === 1)) {
-      nextRow = Direction.isUp(character.direction) ? Math.ceil(row) : Math.floor(row);
-      nextCol = Direction.isLeft(character.direction) ? Math.ceil(col) : Math.floor(col);
+    if (!this.#hasCharacterArrived(character, characterCell) 
+      || Grid.canMoveTo(nextRow, nextCol, character.priority === 1)) {
+      const offsetTop = characterCell.offsetTop + character.vy;
+      const offsetLeft = characterCell.offsetLeft + character.vx;
 
       characterCell.style.top = `${offsetTop}px`;
       characterCell.style.left = `${offsetLeft}px`;
 
-      character.row = nextRow;
-      character.col = nextCol;
+      const location = getLocation.call(this, offsetTop, offsetLeft);
+      character.row = Direction.isUp(character.direction) ? location.up : location.down;;
+      character.col = Direction.isLeft(character.direction) ? location.left : location.right;;
     } else {
-        character.row = nextRow - character.direction[0];
-        character.col = nextCol - character.direction[1];
         this.placeCharacter(character);
     }
 
     if (character.row !== currentRow || character.col !== currentCol) {
         character.moves++;
+        if (OBJECTS.exit === this.objectAt(character.row, character.col)) {
+          this.placeCharacter(character);
+        }
         Grid.onCharacterMoved(character);
     }
   }
-  
+
   #orientCharacter(character, characterCell) {
     const rotationTransform = character.rotationTransform;
 

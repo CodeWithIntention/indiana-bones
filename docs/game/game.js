@@ -298,10 +298,11 @@ function movePlayer(direction, delta) {
   const currentRow = player.row;
   const currentCol = player.col;
 
-    // This is where player is going
+  // This is where player is going
   const nextRow = currentRow + direction[0];
   const nextCol = currentCol + direction[1];
 
+  // Special case for initial player movement
   if (Direction.isNone(player.direction) && currentRow === 1 && currentCol === 0 
     && Grid.canMoveTo(nextRow, nextCol, true)) {
     player.row = nextRow;

@@ -251,7 +251,7 @@ class Grid {
     if (!((character instanceof Character) || text)) return;
     
     const label = new Label(character.row, character.col);
-    this.addCharacter(label, character.gridCell.offsetTop, character.gridCell.offsetLeft);
+    this.addCharacter(label, character.offsetTop, character.offsetLeft);
     label.gridCell.innerHTML = html;
     
     if (duration > 0) {
@@ -297,6 +297,8 @@ class Grid {
         characterCell.style.top = `${offsetTop}px`;
         characterCell.style.left = `${offsetLeft}px`;
       }
+      character.offsetLeft = offsetLeft;
+      character.offsetTop = offsetTop;
       this.#orientCharacter(character, characterCell);
     }
   }
@@ -430,13 +432,13 @@ class Grid {
 
     if (!this.#hasCharacterArrived(character, characterCell) 
       || Grid.canMoveTo(nextRow, nextCol, character.priority === 1)) {
-      const offsetTop = characterCell.offsetTop + character.vy;
-      const offsetLeft = characterCell.offsetLeft + character.vx;
+      character.offsetTop += character.vy;
+      character.offsetLeft += character.vx;
 
-      characterCell.style.top = `${offsetTop}px`;
-      characterCell.style.left = `${offsetLeft}px`;
+      characterCell.style.top = `${character.offsetTop}px`;
+      characterCell.style.left = `${character.offsetLeft}px`;
 
-      const location = getLocation.call(this, offsetTop, offsetLeft);
+      const location = getLocation.call(this, character.offsetTop, character.offsetLeft);
       character.row = Direction.isUp(character.direction) ? location.up : location.down;;
       character.col = Direction.isLeft(character.direction) ? location.left : location.right;;
     } else {
@@ -471,8 +473,8 @@ class Grid {
     const cell = this.cellAtRowCol(character.row, character.col);
     if (!cell) return false;
 
-    return (Math.abs(characterCell.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
-      && (Math.abs(characterCell.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
+    return (Math.abs(character.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
+      && (Math.abs(character.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
   }
 
   #createCells(maze) {

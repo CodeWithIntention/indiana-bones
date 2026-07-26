@@ -355,8 +355,11 @@ function moveCharacter(character, delta) {
         // Don't introduce a random turn if a scorpion sees the player
         if (!(character.priority === 1 && canSeePlayer)) {
             // Add a random turn before the perferred direction.
-            const randomTurnIndex = Math.floor(Math.random()*2);
-            dirs.push(Direction.turnsFor(direction)[randomTurnIndex]);
+            const randomTurnIndex = Math.floor(Math.random()*character.priority*2);
+            const turns = Direction.turnsFor(direction);
+            if (randomTurnIndex < turns.length) {
+              dirs.push(turns[randomTurnIndex]);
+            }
         }
 
         // Hunt down the player by favoring the direction to get to the player.

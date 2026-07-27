@@ -67,6 +67,13 @@ function updateGameState(reason) {
         attributes.buried = true;
     }
     grid.setCharacterAttributes(reason, attributes);
+  } else if (reason instanceof Character) {
+    const attributes = {shake: false};
+
+    if (reason.disabled === true) {
+      attributes.shake = true;
+    }
+    grid.setCharacterAttributes(reason, attributes);
   }
   updatePlayerStatusLine();
 }
@@ -159,22 +166,23 @@ function playerTNT() {
 }
 
 function onCharacterBlownUp(character) {
-  if (character.canKill(player)) {
-    if (character.disabled === true) {
-      addScoreForCharacter(character, 1);
-    } else {
-      addScoreForCharacter(character, settings.blownUpPointsFactor);
-    }
+  if (character.disabled === true) return;
 
-    if (character.priority === 1 && character.disabled !== true) {
+  if (character.canKill(player)) {
+    if (character.lives === 0) {
+      addScoreForCharacter(character, settings.blownUpPointsFactor);
+    } else {
+      character.lives--;
       character.disabled = true;
       const disabledTime = character.disabledTime;
 
       setTimeout(() => {
         if (disabledTime === character.disabledTime) {
           character.disabled = false;
+          updateGameState(character);
         }
       }, settings.blowUpRecoveryDuration);
+      updateGameState(character);
       return;
     }
   } else {
@@ -205,9 +213,9 @@ function playerRespawn() {
 
 function playerChomp(object) {
   if (object instanceof Character) {
-      if (!object.isChompable) return;
+      if (!(object.isChompable || object.disabled)) return;
 
-      addScoreForCharacter(object, settings.chompPointsFactor);
+      addScoreForCharacter(object, object.canKill(player) ? 1 : settings.chompPointsFactor);
       characters.remove(object);
 
       const chompSound = object.chompSound;
@@ -361,7 +369,7 @@ function moveCharacter(character, delta) {
         // Don't introduce a random turn if a scorpion sees the player
         if (!(character.priority === 1 && canSeePlayer)) {
             // Add a random turn before the perferred direction.
-            const randomTurnIndex = Math.floor(Math.random()*character.priority*2);
+            const randomTurnIndex = Math.floor(Math.random()*character.priority*3);
             const turns = Direction.turnsFor(direction);
             if (randomTurnIndex < turns.length) {
               dirs.push(turns[randomTurnIndex]);

@@ -114,7 +114,8 @@ function updatePlayerStatusLine() {
     gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
-    mazeStatusLine.innerHTML = `<b>LEVEL: ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze}</b> <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
+    mazeStatusLine.innerHTML = `<b>LEVEL: ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze}</b> 
+      <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
 }
 
 function playerTNT() {
@@ -159,22 +160,22 @@ function playerTNT() {
 
 function onCharacterBlownUp(character) {
   if (character.canKill(player)) {
-    addScoreForCharacter(character, settings.blownUpPointsFactor);
+    if (character.disabled === true) {
+      addScoreForCharacter(character, 1);
+    } else {
+      addScoreForCharacter(character, settings.blownUpPointsFactor);
+    }
 
-    if (character.priority === 1) {
-      if (character.disabled === true) {
-        addScoreForCharacter(character, 1);
-      } else {
-        character.disabled = true;
-        const disabledTime = character.disabledTime;
+    if (character.priority === 1 && character.disabled !== true) {
+      character.disabled = true;
+      const disabledTime = character.disabledTime;
 
-        setTimeout(() => {
-          if (disabledTime === character.disabledTime) {
-            character.disabled = false;
-          }
-        }, settings.blowUpRecoveryDuration);
-        return;
-      }
+      setTimeout(() => {
+        if (disabledTime === character.disabledTime) {
+          character.disabled = false;
+        }
+      }, settings.blowUpRecoveryDuration);
+      return;
     }
   } else {
     addScoreForCharacter(character, -1);
@@ -269,13 +270,9 @@ function onPlayerMoved() {
         } else {
             playerGrab(object);
         }
-        if (object === OBJECTS.gem) {
-          player.gemsNeededToExit--;
-
-          if (player.gemsNeededToExit === 0) {
-            grid.ensureExit();
-            Sound.portal();
-          }
+        if (object === OBJECTS.gem && --grid.gemsNeededToExit === 0) {
+          grid.ensureExit();
+          Sound.portal();
         }
       }
       grid.placeObjectAt(player.row, player.col, OBJECTS.path, !player.powerUp);
@@ -668,7 +665,7 @@ function dropItems(config) {
     let count = config.qty(player.level);
 
     if (config === OBJECTS.gem) {
-      player.gemsNeededToExit = count;
+      grid.gemsNeededToExit = count;
     }
 
     while (count-- > 0) {

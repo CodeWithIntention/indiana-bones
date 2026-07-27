@@ -64,7 +64,7 @@ class Player extends Character {
           this.tnts += excessLives * this.#settings.freeTNTsWithLife;
         }
         this.tnts += freeLives * this.#settings.freeTNTsWithLife;
-        this.#lastFreeLifeScore = value;
+        this.#lastFreeLifeScore += freeLives * this.#settings.pointsPerFreeLife;
         this.bonusAwarded = true;
       }
     }

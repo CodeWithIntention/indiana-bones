@@ -17,7 +17,7 @@ const TIMEOUTS = {
 
 // Object configurations starting at Level 1
 const OBJECTS = {
-    gem:        {points: 500, qty: (level => level), inWalls: true, grabSound: 'grab'},
+    gem:        {points: NaN, qty: (level => level), inWalls: true, grabSound: 'grab'},
     tnt:        {points:   0, qty: (level => level), grabSound: 'pickup'},
     bone:       {points:  50, qty: (level => level*2), grabSound: 'grab'},
     fountain:   {points: NaN, qty: (level => level-1), grabSound: 'powerup'},

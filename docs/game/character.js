@@ -109,7 +109,7 @@ class Character {
 
     set disabled(value) {
       if (value) {
-        this.#disabledTime = Date.now;
+        this.#disabledTime = Date.now();
       }
       this.#disabled = value;
     }

@@ -40,7 +40,7 @@ const CHARACTERS = {
     player:     {points: 0, priority: 1, speed: 55, lives: 3, tnts: 1, qty: (() => 0), 
                     speedReductionRate: .10,
                     powerUpDuration: 3000, rotationTransform: null},
-    scorpion:   {points: 4000, priority: 1, speed: 50, lives: 0, qty: (level => Math.floor((level-3)/2)), 
+    scorpion:   {points: 4000, priority: 1, speed: 50, lives: 1, qty: (level => Math.floor((level-1)/2)), 
                     rotationTransform: [[Direction.UP, 180], [Direction.DOWN, 0], [Direction.LEFT, 90], [Direction.RIGHT, 270]]}, 
     spider:     {points: 2000, priority: 2, speed: 45, lives: 0, qty: (level => level), 
                     isChompable: true, 

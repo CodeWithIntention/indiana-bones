@@ -276,7 +276,6 @@ function onPlayerMoved() {
     
     if (object && object !== OBJECTS.exit) {
       if (object !== OBJECTS.path) {
-
         if (player.powerUp) {
             playerChomp(object);
         } else {
@@ -298,6 +297,7 @@ function onPlayerCollide(character) {
   if (player.powerUp) {
     playerChomp(character);
   } else if (character.canKill(player)) {
+    if (character.disabled === true) return;
     playerKilled();
   } else {
     playerGrab(character);
@@ -338,9 +338,7 @@ function moveCharacters(delta) {
 }
 
 function moveCharacter(character, delta) {
-  if (character.disabled === true) return;
-
-  if (grid.isCharacterEnroute(character, delta)) {
+  if (character.disabled === true|| grid.isCharacterEnroute(character, delta)) {
     if (grid.haveCollided(player, character)) {
       onPlayerCollide(character);
     }

@@ -90,7 +90,11 @@ function updatePlayerStatusLine() {
       player.bonusAwarded = false;
     }
 
-    list.push(`${Grid.symbolFor(player.kind)}`.repeat(player.lives));
+    const lives = player.isAlive ? player.lives-1 : player.lives;
+    if (lives > 0) {
+      list.push(`${Grid.symbolFor(player.kind)}`.repeat(lives));
+    }
+
     list.push(`${Grid.symbolFor(OBJECTS.tnt.kind)}<b>${player.tnts}</b>`);
     gameScreen.playerStatusLine.innerHTML = list.join("&nbsp;");
 

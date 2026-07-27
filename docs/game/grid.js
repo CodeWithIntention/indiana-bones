@@ -406,9 +406,11 @@ class Grid {
     this.maze.placeObjectAt(row, col, obj);
     this.updateCellAtRowCol(row, col, visited);
   }
-  
+
   ensureExit() {
-    this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
+    if (OBJECTS.wall === this.objectAt(this.rows - 2, this.cols - 2)) {
+      this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
+    }
     this.placeObjectAt(this.rows - 2, this.cols - 1, OBJECTS.exit);
   }
 

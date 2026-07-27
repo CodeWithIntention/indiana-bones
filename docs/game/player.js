@@ -52,21 +52,28 @@ class Player extends Character {
   }
 
   set score(value) {
-    if (Number.isFinite(value) && this.#score !== value) {
-      this.#score = value;
+    if (!(Number.isFinite(value) && this.#score !== value)) return;
 
-      if (value >= this.#lastFreeLifeScore + this.#settings.pointsPerFreeLife) {
-        const freeLives = Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife);
-        this.lives += freeLives;
-        if (this.lives > this.#settings.maxLives) {
-          const excessLives = this.lives - this.#settings.maxLives;
-          this.lives = this.#settings.maxLives;
-          this.tnts += excessLives * this.#settings.freeTNTsWithLife;
-        }
-        this.tnts += freeLives * this.#settings.freeTNTsWithLife;
-        this.#lastFreeLifeScore += freeLives * this.#settings.pointsPerFreeLife;
-        this.bonusAwarded = true;
+    let lifeCount = this.lives;
+    let tntCount = this.tnts;
+
+    this.#score = value;
+    
+    if (value >= this.#lastFreeLifeScore + this.#settings.pointsPerFreeLife) {
+      const freeLives = Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife);
+      lifeCount += freeLives;
+      if (lifeCount > this.#settings.maxLives) {
+        const excessLives = lifeCount - this.#settings.maxLives;
+        lifeCount = this.#settings.maxLives;
+        tntCount += excessLives * this.#settings.freeTNTsWithLife;
       }
+      tntCount = Math.min(tntCount + freeLives * this.#settings.freeTNTsWithLife, this.#settings.maxTnts);
+      this.#lastFreeLifeScore += freeLives * this.#settings.pointsPerFreeLife;
+    }
+    if (lifeCount !== this.lives || tntCount !== this.tnts) {
+      this.lives = lifeCount;
+      this.tnts = tntCount;
+      this.bonusAwarded = true;
     }
   }
 

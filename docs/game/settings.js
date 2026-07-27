@@ -12,6 +12,7 @@ class Settings {
   pointsPerFreeLife;
   freeTNTsWithLife;
   maxLives;
+  maxTnts;
   mazeClearedBonusPoints;
 
   chompPointsFactor;
@@ -39,6 +40,7 @@ class Settings {
     this.pointsPerFreeLife = 10000;
     this.freeTNTsWithLife = 5;
     this.maxLives = 5;
+    this.maxTnts = 99;
     this.mazeClearedBonusPoints = 5000;
 
     this.chompPointsFactor = .5;

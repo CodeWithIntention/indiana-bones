@@ -2,8 +2,9 @@
 @import "maze.css";
 
 .cell.pooped,
-.cell.webbed {
-    animation: shakeOffWeb 0.5s ease-in-out infinite;
+.cell.webbed,
+.cell.shake {
+    animation: shake 0.5s ease-in-out infinite;
 }
 
 .cell.web {

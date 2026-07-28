@@ -520,32 +520,38 @@ function nextMaze() {
 
   const currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
   const currentMaze = player.mazes % settings.mazesPerLevel;
-  
   player.mazes++;
   
-  if (currentLevel > player.level) {
+  let rows = settings.rows;
+  let cols = settings.cols;
+
+  if (currentMaze === 0) {
     player.level = currentLevel;
     Sound.level();
-  } else if (currentMaze > 0) {
-    if (currentMaze & 1) {
-      settings.rows = Math.min(settings.rows + 2, settings.maxRows);
-    } else {
-      settings.cols = Math.min(settings.rows, settings.maxCols);
-    }
 
+    if (player.level > 1) {
+      rows = Math.min(rows + 2, settings.maxRows);
+      cols = Math.min(cols + 2, settings.maxCols);
+      settings.rows = rows;
+      settings.cols = cols;
+    }
+  } else {
+    if ((currentMaze & 1) === 1) {
+      rows = Math.min(rows+2, settings.maxRows);
+    } else {
+      cols = Math.min(cols+2, settings.maxCols);
+    }
     Sound.maze();
-  } else if (currentMaze === 0) {
-    Sound.level();
   }
 
-  grid = new Grid(settings.rows, settings.cols, settings.cellSize);
+  grid = new Grid(rows, cols, settings.cellSize);
   player.restart();
   grid.addCharacter(player);
 
   setupCharacters();
 
   mazeStatusLine.currentLevel = currentLevel;
-  mazeStatusLine.currentMaze = currentMaze + 1;
+  mazeStatusLine.currentMaze = currentMaze+1;
 
   [player, ...characters].forEach(character => {
       // Negative speed is not sped up. 

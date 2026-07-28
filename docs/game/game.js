@@ -125,7 +125,7 @@ function updatePlayerStatusLine() {
     gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
-    mazeStatusLine.innerHTML = `<b>LEVEL: ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze}</b> 
+    mazeStatusLine.innerHTML = `<b>LEVEL ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze}</b> 
       <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
 }
 

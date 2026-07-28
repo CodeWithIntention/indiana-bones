@@ -6,7 +6,7 @@
     top: 0;
     left: 0;
     z-index: 2;
-    display: inline-block;
+    display: flex;
     justify-content: center;
     background: transparent;
     transform: 1s linear;

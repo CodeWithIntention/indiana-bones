@@ -54,7 +54,7 @@ class Maze {
       }
     }
 
-    function carve(row, col) {
+    function carve(row, col, loopedBack) {
       maze[row][col] = OBJECTS.path;
 
       const directions = [
@@ -69,21 +69,21 @@ class Maze {
       for (const [dr, dc] of directions) {
         const newRow = row + dr;
         const newCol = col + dc;
+        const allowLoopback = !loopedBack 
+          && newRow > 2 && newCol > 2
+          && newRow < rows - 2 && newCol < cols - 2
+          && Math.random() < 0.25;
 
-        if (
-          newRow > 0 &&
-          newRow < rows - 1 &&
-          newCol > 0 &&
-          newCol < cols - 1 &&
-          maze[newRow][newCol] === OBJECTS.wall
-        ) {
-          maze[row + dr / 2][col + dc / 2] = OBJECTS.path;
-          carve(newRow, newCol);
-        }
+        if (newRow > 0 && newRow < rows - 1 
+          && newCol > 0 && newCol < cols - 1 
+          && (maze[newRow][newCol] === OBJECTS.wall || allowLoopback)) {
+            maze[row + dr / 2][col + dc / 2] = OBJECTS.path;
+            carve(newRow, newCol, allowLoopback);
+          }
       }
     }
 
-    carve(1, 1);
+    carve(1, 1, false);
 
     this.#maze = maze;
   }

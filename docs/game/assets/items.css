@@ -15,6 +15,7 @@
 .cell.webbed::after,
 .cell.web::after {
     content: var(--sym-web);
+    color: var(--cell-text-color);
 }
 
 .cell.pooped::after,

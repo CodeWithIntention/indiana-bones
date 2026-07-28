@@ -215,18 +215,25 @@ class Grid {
     }
   }
 
-  updateCellAtRowCol(row, col, visited = false) {
+  updateCellAtRowCol(row, col, effects = {}) {
     const cell = this.cellAtRowCol(row, col);
     if (cell) {
       const attributes = [this.#maze.objectKindAt(row, col)];
 
-      if (visited) {
+      if (effects.visited === true) {
         if (!cell.classList.contains("visited")) {
           this.#visitedPathCount++;
         }
         attributes.push("visited");
       } else if (cell.classList.contains("visited")) {
         this.#visitedPathCount--;
+      }
+
+      if (effects.flash === true) {
+        // Hack to cause animations to reapply
+        cell.classList.remove("flash");
+        cell.offsetWidth;
+        attributes.push("flash")
       }
       cell.className = "cell";
       cell.classList.add(...attributes);
@@ -399,12 +406,12 @@ class Grid {
     }
   }
 
-  placeObjectAt(row, col, obj, visited = false) {
+  placeObjectAt(row, col, obj, effects = {}) {
     if (obj === OBJECTS.path && this.objectAt(row, col) === OBJECTS.wall) {
       this.#pathCount++;
     }
     this.maze.placeObjectAt(row, col, obj);
-    this.updateCellAtRowCol(row, col, visited);
+    this.updateCellAtRowCol(row, col, effects);
   }
 
   ensureExit() {

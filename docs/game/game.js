@@ -163,7 +163,7 @@ function playerTNT() {
     const mazeObjAtRowCol = grid.objectAt(row, col);
 
     if (![OBJECTS.edge, OBJECTS.exit, OBJECTS.gem].includes(mazeObjAtRowCol)) {
-      grid.placeObjectAt(row, col, OBJECTS.path, false);
+      grid.placeObjectAt(row, col, OBJECTS.path, {flash: true});
     }
   });
   updatePlayerStatusLine();
@@ -286,7 +286,7 @@ function onPlayerMoved() {
           Sound.portal();
         }
       }
-      grid.placeObjectAt(player.row, player.col, OBJECTS.path, !player.powerUp);
+      grid.placeObjectAt(player.row, player.col, OBJECTS.path, {visited: !player.powerUp});
     }
     updateGameState(player);
 }

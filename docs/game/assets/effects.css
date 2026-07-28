@@ -19,6 +19,10 @@
     animation: glow 1s infinite alternate;
 }
 
+.flash {
+  animation: flash 300ms ease-out;
+}
+
 @keyframes glow {
     from {
         opacity: 0.75;
@@ -60,3 +64,21 @@
         transform: translate(0px, 0px) rotate(0deg);
     }
 }
+
+@keyframes flash {
+  0% {
+    background-color: #fff;
+    filter: brightness(3);
+  }
+
+  30% {
+    background-color: #ffd54a;
+    filter: brightness(2);
+  }
+
+  100% {
+    background-color: inherit;
+    filter: brightness(1);
+  }
+}
+

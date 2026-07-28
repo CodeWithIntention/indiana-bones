@@ -8,19 +8,27 @@
 }
 
 .cell.web {
-    font-size: 20px;
+    font-size: 18px;
+    padding-bottom: 4px;
 }
 
 .cell.webbed::after,
 .cell.web::after {
     content: var(--sym-web);
-    margin-bottom: 6px;
 }
 
 .cell.pooped::after,
 .cell.poop::after {
     content: var(--sym-poop);
     font-size: 10px;
+}
+
+.cell.webbed::after,
+.cell.pooped::after {
+  position: absolute;
+  top: 50%;  
+  left: 50%; 
+  transform: translate(-50%, -50%);
 }
 
 .cell.gem {

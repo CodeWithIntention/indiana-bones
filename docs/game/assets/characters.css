@@ -34,20 +34,36 @@
 
 .character.player::before {
     content: var(--sym-player);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .character.powerup::before {
     content: var(--sym-powerup);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .character.dead::before {
     content: var(--sym-dead);
     font-size: 32px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .character.buried::before {
     content: var(--sym-buried);
     font-size: 32px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .character.player,

@@ -24,14 +24,6 @@
     font-size: 10px;
 }
 
-.cell.webbed::after,
-.cell.pooped::after {
-  position: absolute;
-  top: 50%;  
-  left: 50%; 
-  transform: translate(-50%, -50%);
-}
-
 .cell.gem {
     background-color: var(--maze-wall);
 }

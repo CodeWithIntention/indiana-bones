@@ -6,7 +6,7 @@
 .character.cat,
 .character.mouse,
 .character.monkey,
-.character.rat {
+.character.rock {
     z-index: 3;
 }
 
@@ -26,8 +26,8 @@
     content: var(--sym-mouse);
 }
 
-.character.rat::before {
-    content: var(--sym-rat);
+.character.rock::before {
+    content: var(--sym-rock);
 }
 
 .character.monkey::before {

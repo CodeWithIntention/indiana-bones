@@ -11,6 +11,8 @@ class Character {
     speedReduction;
     speedReductionReason;
 
+    allowedDirections;
+
     row;
     col;
     left;
@@ -32,6 +34,8 @@ class Character {
         this.speedReduction = 0;
         this.speedReductionReason = null;
 
+        this.allowedDirections = config.allowedDirections || Direction.ALL;
+    
         this.row = row;
         this.col = col;
         this.left = 0;

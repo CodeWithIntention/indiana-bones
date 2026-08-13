@@ -4,24 +4,23 @@ import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
-import { Spider, Scorpion, Cat, Monkey, Mouse, Rat } from "./characters.js";
+import { Spider, Scorpion, Cat, Monkey, Mouse, Rock } from "./characters.js";
 import { Grid } from "./grid.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
 
 export { keysPressed };
 
 
-Grid.canMoveTo = (row, col, isPlayer = false) => {
+Grid.canMoveTo = (row, col, priority = 0) => {
   const object = grid.objectAt(row, col);
-  if (object === null || object === OBJECTS.wall || object === OBJECTS.edge) return false;
-  if ((object === OBJECTS.gem || object === OBJECTS.exit) && !isPlayer) return false;
-
-  return true;
+  return object !== null && object.priority <= priority;
 }
 
-Grid.onCharacterMoved =  (character) => {
+Grid.onCharacterMoved = (character) => {
   if (character === player) {
-    onPlayerMoved();
+    onPlayerMoved(character);
+  } else if (character instanceof Rock) {
+    onRockMoved(character);
   } else if (character.canDrop && grid.objectAt(character.row, character.col) === OBJECTS.path) {
     grid.placeObjectAt(character.row, character.col, character.dropObject);
     updateGameState(character);
@@ -34,7 +33,7 @@ function findRandomPathCell(inWalls = false) {
     const col = Math.floor(Math.random() * grid.cols);
     const obj = grid.objectAt(row, col);
 
-    if (!((inWalls ? OBJECTS.wall : OBJECTS.path) === obj)) continue;
+    if (obj !== (inWalls ? OBJECTS.wall : OBJECTS.path)) continue;
     if (row === player.row && col === player.col) continue;
     if (characters.atRowCol(row, col)) continue;
 
@@ -42,10 +41,52 @@ function findRandomPathCell(inWalls = false) {
   }
 }
 
-function updateGameState(reason) {
-  if (reason instanceof Player) {
-    const attributes = {entrance: false, spin: false, powerup: false, dead: false, buried: false, webbed: false, pooped: false};
+function findRandomRockPositions(count) {
+  function canPlaceRockAt(row, col) {
+    const object = grid.objectAt(row, col);
+    return object && object.priority <= CHARACTERS.rock.priority;
+  }
 
+  const positions = [];
+  let tries = Math.random() * 10;
+
+  // When there are enough walls in the maze, try to place rocks in the walls first.
+  while (--tries > 0 && (grid.pathCount / grid.cellCount) < settings.caveInThreshold) {
+    const position = findRandomPathCell(true);
+    // There must be a path cell below the wall to place a rock in the wall.
+    if (canPlaceRockAt(position.row+1, position.col)) {
+      positions.push(position);
+      break;
+    }
+  }
+
+  // If no wall was found, then try to place rocks at top
+  tries = grid.cols;
+  while (--tries > 0 && positions.length < count) {
+    const col = Math.floor(Math.random() * (grid.cols-2)) + 1;
+    let row = 0;
+    
+    // Place rocks at the top if a path cell exists.
+    if (canPlaceRockAt(row+1, col)) {
+      positions.push({ row, col });
+      continue;
+    }
+
+    // Otherwise place rocks at lowest possible row in the column if a path cell exists.
+    while (++row < grid.rows-1) {
+      if (canPlaceRockAt(row, col)) {
+        positions.push({ row: row-1, col });
+        break;
+      }
+    }
+  }
+  return positions;
+}
+
+function updateGameState(reason) {
+  const attributes = {entrance: false, spin: false, powerup: false, dead: false, buried: false, webbed: false, pooped: false, shake: false};
+
+  if (reason instanceof Player) {
     if (reason.isAlive) {
         attributes[reason.speedReductionReason] = reason.isReducedSpeed;
         attributes.powerup = reason.powerUp;
@@ -66,15 +107,16 @@ function updateGameState(reason) {
     } else {
         attributes.buried = true;
     }
-    grid.setCharacterAttributes(reason, attributes);
-  } else if (reason instanceof Character) {
-    const attributes = {shake: false};
-
+    if (gameState.isCaveInThreshold()) {
+      startCaveIn();
+    }
+  } 
+  if (reason instanceof Character) {
     if (reason.disabled === true) {
       attributes.shake = true;
     }
-    grid.setCharacterAttributes(reason, attributes);
   }
+  grid.setCharacterAttributes(reason, attributes);
   updatePlayerStatusLine();
 }
 
@@ -129,8 +171,12 @@ function updatePlayerStatusLine() {
       <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
 }
 
-function playerTNT() {
-  if (player.powerUp || !(player.isAlive && player.removeTNT())) return false;
+function playerTNT(character) {
+  if (character === player) {
+    if (player.powerUp || !(player.isAlive && player.removeTNT())) return false;
+  } else if (character instanceof Rock) {
+    characters.remove(character);
+  }
 
   const blastArea = [
     [0, 0],
@@ -146,27 +192,35 @@ function playerTNT() {
 
   Sound.tnt();
 
-  const playerRect = grid.cellRectAtRowCol(player.row, player.col);
-  const rectTopLeft = grid.cellRectAtRowCol(player.row-1, player.col-1) || playerRect;
-  const rectBottomRight = grid.cellRectAtRowCol(player.row+1, player.col+1) || playerRect;
+  const playerRect = grid.cellRectAtRowCol(character.row, character.col);
+  const rectTopLeft = grid.cellRectAtRowCol(character.row-1, character.col-1) || playerRect;
+  const rectBottomRight = grid.cellRectAtRowCol(character.row+1, character.col+1) || playerRect;
   const blastRect = {top: rectTopLeft.top, left: rectTopLeft.left, bottom: rectBottomRight.bottom, right: rectBottomRight.right};
 
   characters.forEach((character) => {
-      if (grid.hasCharacterCollidedWithRect(character, blastRect)) {
-        onCharacterBlownUp(character);
-      }
-    });
+    if (grid.hasCharacterCollidedWithRect(character, blastRect)) {
+      onCharacterBlownUp(character);
+    }
+  });
 
   blastArea.forEach((rc) => {
-    const row = player.row + rc[0];
-    const col = player.col + rc[1];
+    const row = character.row + rc[0];
+    const col = character.col + rc[1];
     const mazeObjAtRowCol = grid.objectAt(row, col);
 
     if (![OBJECTS.edge, OBJECTS.exit, OBJECTS.gem].includes(mazeObjAtRowCol)) {
       grid.placeObjectAt(row, col, OBJECTS.path, {flash: true});
+      if (mazeObjAtRowCol === OBJECTS.tnt) {
+        playerTNT({row, col});
+      }
     }
   });
   updatePlayerStatusLine();
+
+  if (player !== character && grid.hasCharacterCollidedWithRect(player, blastRect)) {
+    playerKilled(!player.isAlive);
+    updateGameState(player);
+  }
 }
 
 function onCharacterBlownUp(character) {
@@ -196,7 +250,7 @@ function onCharacterBlownUp(character) {
 }
 
 function addScoreForCharacter(character, factor) {
-  if (Number.isFinite(character.points)) {
+  if (Number.isFinite(character.points) && player.isAlive) {
     // Only half the value is given for chomping
     const points = character.points * factor;
     player.score += points;
@@ -215,9 +269,9 @@ function playerRespawn() {
   return true;
 }
 
-function playerChomp(object) {
+function playerChomp(character, object) {
   if (object instanceof Character) {
-      if (!(object.isChompable || object.disabled)) return;
+      if (!(character instanceof Rock || object.isChompable || object.disabled)) return;
 
       addScoreForCharacter(object, object.canKill(player) ? 1 : settings.chompPointsFactor);
       characters.remove(object);
@@ -227,7 +281,7 @@ function playerChomp(object) {
           Sound[chompSound]();
       }
   }
-  Sound.chomp();
+  Sound[character.chompSound || "chomp"]();
 }
 
 function playerGrab(object) {
@@ -261,8 +315,8 @@ function playerGrab(object) {
     }
 }
 
-function playerKilled() {
-    player.die();
+function playerKilled(buried = false) {
+    player.die(buried);
 
     if (player.lives === 0) {
       setGameOver();
@@ -271,13 +325,26 @@ function playerKilled() {
     }
 }
 
-function onPlayerMoved() {
-    const object = grid.objectAt(player);
+function onRockMoved(character) {
+  const object = grid.objectAt(character);
+  if (!object) return;
+
+  if (object === OBJECTS.tnt) {
+    playerTNT(character)
+  } else if (object !== OBJECTS.path) {
+    playerChomp(character, object);
+  }
+  grid.placeObjectAt(character.row, character.col, OBJECTS.path, {visited: true});
+  updatePlayerStatusLine();
+}
+
+function onPlayerMoved(character) {
+    const object = grid.objectAt(character);
     
     if (object && object !== OBJECTS.exit) {
       if (object !== OBJECTS.path) {
-        if (player.powerUp) {
-            playerChomp(object);
+        if (character.powerUp) {
+            playerChomp(character, object);
         } else {
             playerGrab(object);
         }
@@ -286,16 +353,16 @@ function onPlayerMoved() {
           Sound.portal();
         }
       }
-      grid.placeObjectAt(player.row, player.col, OBJECTS.path, {visited: !player.powerUp});
+      grid.placeObjectAt(character.row, character.col, OBJECTS.path, {visited: !character.powerUp});
     }
-    updateGameState(player);
+    updateGameState(character);
 }
 
 function onPlayerCollide(character) {
   if (!(character instanceof Character && player.isAlive)) return;
 
   if (player.powerUp) {
-    playerChomp(character);
+    playerChomp(player, character);
   } else if (character.canKill(player)) {
     if (character.disabled === true) return;
     playerKilled();
@@ -305,13 +372,24 @@ function onPlayerCollide(character) {
   updateGameState(player);
 }
 
-function render() {
+function onCharacterCollide(character, other) {
+  if (!(character instanceof Character && other instanceof Character)) return;
+
+  if (character.canKill(other)) {
+    playerChomp(character, other);
+  } else if (other.canKill(character)) {
+    playerChomp(other, character);
+  }
+}
+
+function buildMaze() {
   grid.render((cell, row, col) => {
   });
+  gameState.caveInStarted = false;
 }
 
 function movePlayer(direction, delta) {
-  if (!player.isAlive || player.exitMaze) return;
+  if (player.isBuried || player.exitMaze) return;
 
   // This is where player is at
   const currentRow = player.row;
@@ -327,9 +405,17 @@ function movePlayer(direction, delta) {
     player.row = nextRow;
     player.col = nextCol;
     grid.placeCharacter(player);
-    onPlayerMoved();
+    onPlayerMoved(player);
   } else {
-    grid.moveCharacter(player, direction, delta, nextRow, nextCol);
+    // If player is trapped, then end the game.
+    const playerTrapped = grid.objectAt(currentRow, currentCol) === OBJECTS.wall;
+    
+    if (playerTrapped) {
+      playerKilled(true);
+      updateGameState(player);
+    } else if (player.isAlive) {
+      grid.moveCharacter(player, direction, delta, nextRow, nextCol);
+    }
   }
 }
 
@@ -338,22 +424,19 @@ function moveCharacters(delta) {
 }
 
 function moveCharacter(character, delta) {
-  if (character.disabled === true|| grid.isCharacterEnroute(character, delta)) {
+  const characterDisabled = character.disabled === true;
+  const characterEnroute = grid.isCharacterEnroute(character, delta);
+
+  if (characterDisabled || characterEnroute) {
     if (grid.haveCollided(player, character)) {
       onPlayerCollide(character);
     }
     return;
   }
 
-  const directions = [
-    Direction.LEFT,
-    Direction.RIGHT,
-    Direction.UP,
-    Direction.DOWN
-  ];
-
   function getDirections(direction) {
     // The default is to pick a random direction
+    const directions = [...Direction.ALL];
     Direction.shuffle(directions);
     const dirs = [Direction.NONE, ...directions];
 
@@ -363,24 +446,25 @@ function moveCharacter(character, delta) {
         const canSeePlayer = grid.canCharacterSeeTheOther(character, player);
 
         // Cats run from player and spiders run from power player, so don't
-        // favor the current direction the player is visible.
-        if (!canSeePlayer || !(character.priority === 3 || character.priority === 2 && player.powerUp)) {
+        // favor the current direction when player is visible.
+        if (!canSeePlayer || !(character.priority === 0 || character.priority === 1 && player.powerUp)) {
             dirs.push(direction);
         }
 
         // Don't introduce a random turn if a scorpion sees the player
-        if (!(character.priority === 1 && canSeePlayer)) {
+        if (!(character.priority >= player.priority && canSeePlayer)) {
             // Add a random turn before the perferred direction.
-            const randomTurnIndex = Math.floor(Math.random()*character.priority*3);
             const turns = Direction.turnsFor(direction);
-            if (randomTurnIndex < turns.length) {
-              dirs.push(turns[randomTurnIndex]);
+            const randomTurnIndex = Math.floor(Math.random()*10);
+            if (randomTurnIndex < 5) {
+                dirs.push(turns[randomTurnIndex % turns.length]);
             }
         }
 
         // Hunt down the player by favoring the direction to get to the player.
         // The vision distance is random up to on the player's level.
-        if (character.canKill(player) && player.isAlive && Math.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
+        if (character.canKill(player) && player.isAlive && 
+          Math.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
           const huntDistance = Math.random() * character.manhattanDistanceTo(player) + Math.random() * player.level;
           if (huntDistance < player.level) {
             const huntUD = player.row < character.row ? Direction.UP : Direction.DOWN;
@@ -399,24 +483,39 @@ function moveCharacter(character, delta) {
   const dirs = getDirections(character.direction);
   const currentRow = character.row;
   const currentCol = character.col;
+  let direction = Direction.NONE;
 
   while (dirs.length > 0) {
-    const direction = dirs.pop();
+    direction = dirs.pop();
 
-    if (Direction.isGood(direction)) {
+    if (Direction.isGood(direction) && character.allowedDirections.includes(direction)) {
       const nextRow = character.row + direction[0];
       const nextCol = character.col + direction[1];
 
-      // Scorpions have same freedom of movement as player
-      const highPriority = character.priority === 1;
-      if (Grid.canMoveTo(nextRow, nextCol, highPriority)) {
+      if (Grid.canMoveTo(nextRow, nextCol, character.priority)) {
           grid.moveCharacter(character, direction, delta, nextRow, nextCol);
           break;
       }
     }
   }
+
+  if (!characters.contains(character)) return;
+
   if (grid.haveCollided(player, character)) {
     onPlayerCollide(character);
+  } 
+
+  characters.allAtRowCol(character.row, character.col).forEach(other => {
+    if (character.canKill(other) && grid.haveCollided(character, other)) {
+      onCharacterCollide(character, other);
+    }
+  });
+
+  if (character.kind === CHARACTERS.rock.kind && Direction.isNone(direction)) {
+    // Rocks become wall when they no longer move.
+    characters.remove(character);
+    grid.placeObjectAt(character.row, character.col, OBJECTS.wall, {rock: true});
+    updatePlayerStatusLine();
   }
 }
 
@@ -563,7 +662,7 @@ function nextMaze() {
   dismissInstructions(player.mazes > 1);
 
   gameWindow.focus();
-  render();
+  buildMaze();
   updateGameState(player);
   play();
 }
@@ -575,7 +674,7 @@ function play() {
     keysPressed.clear();
 
     function gameLoop(time) {
-        if (gameOver || player.exitMaze || mazes !== player.mazes) return;
+        if (gameState.gameOver || player.exitMaze || mazes !== player.mazes) return;
 
         const delta = Math.min((time - lastTime) / 1000, 0.05);
         lastTime = time;
@@ -589,7 +688,7 @@ function play() {
           return;
         }
 
-        if (!(player.exitMaze || gameOver)) {
+        if (!(player.exitMaze || gameState.gameOver)) {
             handleKeyEvents();
             gameWindow.requestAnimationFrame(gameLoop);
         }
@@ -600,7 +699,7 @@ function play() {
 function handleKeyEvents() {
     if (keysPressed.Space) {
         if (player.isAlive) {
-            playerTNT();
+            playerTNT(player);
         } else {
             playerRespawn();
         }
@@ -623,6 +722,10 @@ function setupCharacters() {
 
     characters.characterIndex = (character) => {
         return characters.findIndex((element) => character === element);
+    }
+
+    characters.contains = (character) => {
+        return characters.characterIndex(character) >= 0;
     }
 
     characters.remove = (character) => {
@@ -675,6 +778,33 @@ function createCharacters(config) {
     }
 }
 
+function startCaveIn() {
+  if (gameState.caveInStarted) return;
+
+  gameState.caveInStarted = true;
+  Grid.mazeEl.classList.toggle("rumble", true);
+
+  const caveInInterval = setInterval(() => {
+    if (!gameState.caveInStarted || player.exitMaze || gameState.gameOver) {
+      gameState.caveInStarted = false;
+      Grid.mazeEl.classList.toggle("rumble", false);
+      clearInterval(caveInInterval);
+      return;
+    }
+    dropRandomRocks();
+  }, TIMEOUTS.caveInInterval);
+}
+
+function dropRandomRocks() {
+  const positions = findRandomRockPositions(player.level);
+  if (positions.length === 0) return;
+
+  positions.forEach(position => {
+    const rock = new Rock(position);
+    characters.add(rock);
+  });
+}
+
 function dropItems(config) {
     if (config.fixed || !config.qty) return;
 
@@ -699,7 +829,7 @@ function getHighScore() {
 }
 
 function startGame() {
-  gameOver = false;
+  gameState.gameOver = false;
 
   settings.setDefaults();
   player.reset();
@@ -712,7 +842,7 @@ function setGameOver() {
   gameScreen.restartGamePanel.style.display = 'flex';
   dismissInstructions();
 
-  gameOver = true;
+  gameState.gameOver = true;
   Sound.gameover();
   saveHighScore(settings.highScore);
 }
@@ -738,7 +868,7 @@ keysPressed.clear = () => {
 
 function onKeyEvent(event, pressed) {
     if (pressed && event.code === "Space") {
-      if (gameOver) {
+      if (gameState.gameOver) {
         gameScreen.restartGame();
         return;
       } else if (player.exitMaze && scoreboard.style.display !== 'none') {
@@ -773,6 +903,13 @@ settings.highScore = getHighScore();
 
 let grid = null;
 let characters = [];
-let gameOver = false;
+const gameState = {
+  gameOver: false, 
+  caveInStarted: false,
+  isCaveInThreshold () { 
+    const pathCount = this.caveInStarted ? grid.pathCount + Math.random() * 10 : grid.pathCount;
+    return pathCount / grid.cellCount > settings.caveInThreshold;
+   },
+};
 
 gameScreen.startGame = startGame;

@@ -24,6 +24,7 @@ class Sound {
   static #gameover = new Audio("sounds/game_over.wav");
   static #intro = new Audio("sounds/intro.wav");
   static #portal = new Audio("sounds/portal.wav");
+  static #splat = new Audio("sounds/splat.wav");
 
   static play(sound) {
     sound.currentTime = 0;
@@ -120,6 +121,10 @@ class Sound {
 
   static portal() {
     this.play(this.#portal);
+  }
+
+  static splat() {
+    this.play(this.#splat);
   }
 }
 

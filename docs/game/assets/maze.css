@@ -1,5 +1,9 @@
 @import "config.css";
 
+#maze.rumble {
+    animation: rumble .18s ease-in-out infinite;
+}
+
 .cell {
     position: relative;
     width: var(--cell-size);
@@ -26,7 +30,8 @@
     box-shadow: inset 0 0 var(--maze-edge-inset);
 }
 
-.cell.wall {
+.cell.wall,
+.cell.wall.rock {
     background-color: var(--maze-wall);
 }
 
@@ -44,17 +49,25 @@
     position: relative;
 }
 
-.cell.visited::after {
-    content: "";
-    width: 4px;
-    height: 4px;
-    
+.cell::after {
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+}
 
+.cell.visited::after {
+    content: "";
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
     background: var(--cell-visited-color);
 }
 
+.cell.rock {
+    background-color: transparent;
+}
+
+.cell.rock::after {
+    content: var(--sym-rock);
+}

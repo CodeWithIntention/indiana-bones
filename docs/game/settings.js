@@ -14,6 +14,7 @@ class Settings {
   maxLives;
   maxTnts;
   mazeClearedBonusPoints;
+  caveInThreshold;
 
   chompPointsFactor;
   blownUpPointsFactor;
@@ -42,6 +43,7 @@ class Settings {
     this.maxLives = 5;
     this.maxTnts = 99;
     this.mazeClearedBonusPoints = 5000;
+    this.caveInThreshold = .80;
 
     this.chompPointsFactor = .5;
     this.blownUpPointsFactor = .25;

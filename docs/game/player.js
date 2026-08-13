@@ -30,6 +30,10 @@ class Player extends Character {
     return this.#alive;
   }
 
+  get isBuried() {
+    return !this.#alive && !this.canRespawn;
+  }
+
   get canRespawn() {
     return this.lives > 0;
   }
@@ -175,8 +179,12 @@ class Player extends Character {
     this.#alive = true;
   }
 
-  die() {
-    this.lives--;
+  die(buried = false) {
+    if (buried) {
+      this.lives = 0;
+    } else {
+      this.lives--;
+    }
     this.#alive = false;
     this.powerUp = false;
     this.#bag = [];

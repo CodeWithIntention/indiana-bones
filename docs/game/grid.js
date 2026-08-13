@@ -39,6 +39,22 @@ class Maze {
     return obj.kind;
   }
 
+  tallyObjectKinds() {
+    const objects = {};
+
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.cols; col++) {
+        const objectAtRowCol = this.#maze[row][col];
+
+        if (objectAtRowCol) {
+          let count = objects[objectAtRowCol.kind] || 0;
+          objects[objectAtRowCol.kind] = count + 1;
+        }
+      }
+    }
+    return objects;
+  }
+
   #createGrid(rows, cols) {
     const maze = Array.from({ length: rows }, () =>
       Array(cols).fill(OBJECTS.wall),
@@ -140,6 +156,10 @@ class Grid {
     return true;
   }
 
+  get cellCount() {
+    return (this.rows-2) * (this.cols-2);
+  }
+  
   get pathCount() {
     return this.#pathCount;
   }
@@ -194,7 +214,7 @@ class Grid {
       row += character.direction[0];
       col += character.direction[1];
 
-      if (!Grid.canMoveTo(row, col, other.priority === 1)) return false;
+      if (!Grid.canMoveTo(row, col, other.priority)) return false;
       distance = other.manhattanDistanceTo(row, col);
     } while (distance > 0 && distance < there);
 
@@ -235,6 +255,11 @@ class Grid {
         cell.offsetWidth;
         attributes.push("flash")
       }
+
+      if (effects.rock === true) {
+        attributes.push("rock");
+      }
+
       cell.className = "cell";
       cell.classList.add(...attributes);
     };
@@ -307,6 +332,9 @@ class Grid {
   }
 
   haveCollided(character1, character2) {
+    if (character1 === character2) return false;
+    if (character1.gridCell === null || character2.gridCell === null) return false;
+
     return this.hasRectCollidedWithRect(character1.gridCell.getBoundingClientRect(), 
       character2.gridCell.getBoundingClientRect());
   }
@@ -346,7 +374,7 @@ class Grid {
             // Allow reversing direction 
             character.direction = direction;
             this.#orientCharacter(character, characterCell);
-          } else if (this.#hasCharacterArrived(character, characterCell)) {
+          } else if (this.hasCharacterArrived(character)) {
             // Commit to new course once character has arrived
             character.direction = direction;
             this.placeCharacter(character);
@@ -363,7 +391,7 @@ class Grid {
     
     if (characterCell) {
         this.#updateCharacterPosition(character, characterCell, delta);
-        return !this.#hasCharacterArrived(character, characterCell);
+        return !this.hasCharacterArrived(character);
     }
     return false;
   }
@@ -409,6 +437,8 @@ class Grid {
   placeObjectAt(row, col, obj, effects = {}) {
     if (obj === OBJECTS.path && this.objectAt(row, col) === OBJECTS.wall) {
       this.#pathCount++;
+    } else if (obj === OBJECTS.wall && this.objectAt(row, col) === OBJECTS.path) {
+      this.#pathCount--;
     }
     this.maze.placeObjectAt(row, col, obj);
     this.updateCellAtRowCol(row, col, effects);
@@ -419,6 +449,15 @@ class Grid {
       this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
     }
     this.placeObjectAt(this.rows - 2, this.cols - 1, OBJECTS.exit);
+  }
+
+  hasCharacterArrived(character) {
+    const MIN_COURSE_CORRECTION_DISTANCE = 2;
+    const cell = this.cellAtRowCol(character.row, character.col);
+    if (!cell) return false;
+
+    return (Math.abs(character.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
+      && (Math.abs(character.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
   }
 
   #updateCharacterPosition(character, characterCell, delta) {
@@ -440,8 +479,8 @@ class Grid {
     const nextRow = currentRow + character.direction[0];
     const nextCol = currentCol + character.direction[1];
 
-    if (!this.#hasCharacterArrived(character, characterCell) 
-      || Grid.canMoveTo(nextRow, nextCol, character.priority === 1)) {
+    if (!this.hasCharacterArrived(character) 
+      || Grid.canMoveTo(nextRow, nextCol, character.priority)) {
       character.offsetTop += character.vy;
       character.offsetLeft += character.vx;
 
@@ -449,8 +488,16 @@ class Grid {
       characterCell.style.left = `${character.offsetLeft}px`;
 
       const location = getLocation.call(this, character.offsetTop, character.offsetLeft);
-      character.row = Direction.isUp(character.direction) ? location.up : location.down;;
-      character.col = Direction.isLeft(character.direction) ? location.left : location.right;;
+
+      if (Direction.isUp(character.direction)) {
+        character.row = location.up;
+      } else if (Direction.isDown(character.direction)) {
+        character.row = location.down;
+      } else if (Direction.isLeft(character.direction)) {
+        character.col = location.left;
+      } else if (Direction.isRight(character.direction)) {
+        character.col = location.right;
+      }
     } else {
         this.placeCharacter(character);
     }
@@ -476,15 +523,6 @@ class Grid {
             characterCell.style.transform = `${rotateFunc}(${Math.abs(rotationAngle)}deg)`;
         }
     }
-  }
-
-  #hasCharacterArrived(character, characterCell) {
-    const MIN_COURSE_CORRECTION_DISTANCE = 2;
-    const cell = this.cellAtRowCol(character.row, character.col);
-    if (!cell) return false;
-
-    return (Math.abs(character.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
-      && (Math.abs(character.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
   }
 
   #createCells(maze) {

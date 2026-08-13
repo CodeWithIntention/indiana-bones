@@ -6,6 +6,7 @@ class Direction {
     static LEFT = [0, -1];
     static RIGHT = [0, 1];
     static NONE = [0, 0];
+    static ALL = [this.UP, this.DOWN, this.LEFT, this.RIGHT];
 
     static isNone(direction) {
         return direction === this.NONE;

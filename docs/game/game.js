@@ -317,7 +317,8 @@ function playerGrab(object) {
 
 function playerKilled(buried = false) {
     player.die(buried);
-
+    grid.placeCharacter(player);
+    
     if (player.lives === 0) {
       setGameOver();
     } else {

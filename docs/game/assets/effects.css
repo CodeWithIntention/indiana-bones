@@ -96,3 +96,7 @@
   }
 }
 
+@keyframes float {
+    from { transform: translateY(1px); }
+    to   { transform: translateY(-2px); }
+}

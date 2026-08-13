@@ -39,7 +39,7 @@ Object.entries(OBJECTS).forEach(([key, value]) => value.kind = key);
 
 // Character configurations starting at Level 1
 const CHARACTERS = {
-    player:     {points: 0, priority: 2, speed: 55, lives: 3, tnts: 99, qty: (() => 0), 
+    player:     {points: 0, priority: 2, speed: 55, lives: 3, tnts: 1, qty: (() => 0), 
                     speedReductionRate: .10, chompSound: 'chomp',
                     powerUpDuration: 3000, rotationTransform: null},
     scorpion:   {points: 4000, priority: 2, speed: 50, lives: 1, qty: (level => Math.floor((level-1)/2)), 

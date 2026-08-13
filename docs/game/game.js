@@ -424,10 +424,7 @@ function moveCharacters(delta) {
 }
 
 function moveCharacter(character, delta) {
-  const characterDisabled = character.disabled === true;
-  const characterEnroute = grid.isCharacterEnroute(character, delta);
-
-  if (characterDisabled || characterEnroute) {
+  if (character.disabled === true || grid.isCharacterEnroute(character, delta)) {
     if (grid.haveCollided(player, character)) {
       onPlayerCollide(character);
     }

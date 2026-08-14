@@ -226,7 +226,13 @@ function playerTNT(character) {
   });
   updatePlayerStatusLine();
 
-  if (player !== character && grid.hasCharacterCollidedWithRect(player, blastRect)) {
+  // The Player can be hurt if TNT was set off by 
+  // chain reaction or by a 3rd party, and the 
+  // Player is not powered-up.
+  if (player !== character && !player.powerUp 
+    && grid.hasCharacterCollidedWithRect(player, blastRect)) {
+    // Beware! If the player is waiting to respawn and
+    // is blown up, then its game over!
     playerKilled(!player.isAlive);
     updateGameState(player);
   }

@@ -275,7 +275,7 @@ class Grid {
   }
 
   addHtmlCharacterFor(character, html, duration) {
-    if (!((character instanceof Character) || text)) return;
+    if (!((character instanceof Character) && html)) return;
     
     const label = new Label(character.row, character.col);
     this.addCharacter(label, character.offsetTop, character.offsetLeft);

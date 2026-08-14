@@ -212,7 +212,7 @@ function playerTNT(character) {
     const col = character.col + rc[1];
     const mazeObjAtRowCol = grid.objectAt(row, col);
 
-    if (mazeObjAtRowCol.fixed !== true) {
+    if (mazeObjAtRowCol && mazeObjAtRowCol.fixed !== true) {
       if (mazeObjAtRowCol === OBJECTS.tnt) {
         grid.updateCellAtRowCol(row, col, {strobe: true});
         setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});

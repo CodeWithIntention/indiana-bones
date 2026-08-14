@@ -33,11 +33,10 @@
 }
 
 .cell.gem {
-    background-color: transparent;
+    background-color: var(--maze-path);
 }
 
 .cell.gem::before {
-    font-size: 12px;
     content: var(--sym-gem);
 }
 

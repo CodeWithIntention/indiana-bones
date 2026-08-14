@@ -26,7 +26,7 @@ const OBJECTS = {
     
     cheese:     {points: 200, qty: (() => 0), grabSound: 'grab', priority: 0},
     banana:     {points: 300, qty: (() => 0), grabSound: 'grab', priority: 0},
-    gem:        {points: NaN, qty: (() => 0), grabSound: 'grab', priority: 0},
+    gem:        {points: 10000, qty: (() => 0), grabSound: 'dingDing', priority: 0, isBaggable: false},
 
     web:        {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
     poop:       {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
@@ -65,7 +65,8 @@ const CHARACTERS = {
                     dropObject: OBJECTS.banana, movesToDrop: 25, dropProbability: .50,
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
     rock:       {points: 1000, priority: 1, speed: 55, lives: 0, qty: 0, 
-                    isChompable: true, chompSound: "splat", allowedDirections: [Direction.DOWN]},
+                    isChompable: true, chompSound: "splat", allowedDirections: [Direction.DOWN],
+                    dropObject: OBJECTS.gem, movesToDrop: 1, dropProbability: .005},
     label:      {points: 0, priority: 0, speed: 0, lives: 0, qty: (() => 0), 
                     isChompable: false, isGrabable: false, grabSound: null, chompSound: null, rotationTransform: null},
 };

@@ -19,11 +19,14 @@ Grid.canMoveTo = (row, col, priority = 0) => {
 Grid.onCharacterMoved = (character) => {
   if (character === player) {
     onPlayerMoved(character);
-  } else if (character instanceof Rock) {
-    onRockMoved(character);
-  } else if (character.canDrop && grid.objectAt(character.row, character.col) === OBJECTS.path) {
-    grid.placeObjectAt(character.row, character.col, character.dropObject);
-    updateGameState(character);
+  } else {
+    if (character instanceof Rock) {
+      onRockMoved(character);
+    } 
+    if (character.canDrop && grid.objectAt(character.row, character.col) === OBJECTS.path) {
+      grid.placeObjectAt(character.row, character.col, character.dropObject);
+      updateGameState(character);
+    }
   }
 }
 
@@ -260,7 +263,8 @@ function addScoreForCharacter(character, factor) {
     // Only half the value is given for chomping
     const points = character.points * factor;
     player.score += points;
-    grid.addScoreCharacterFor(character, points, TIMEOUTS.characterPointsLabel);
+    const target = character instanceof Character ? character : player;
+    grid.addScoreCharacterFor(target, points, TIMEOUTS.characterPointsLabel);
   }
 }
 
@@ -295,7 +299,11 @@ function playerGrab(object) {
       player.putInBag(object.config);
       characters.remove(object);
     } else if (Number.isFinite(object.points)) {
-      player.putInBag(object);
+      if (object.isBaggable === false) {
+        addScoreForCharacter(object, 1);
+      } else {
+        player.putInBag(object);
+      }
     }
 
     const speedReduction = object.speedReduction;

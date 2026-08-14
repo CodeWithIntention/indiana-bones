@@ -20,9 +20,9 @@ const TIMEOUTS = {
 
 // Object configurations starting at Level 1
 const OBJECTS = {
-    tnt:        {points:   0, qty: (level => level), grabSound: 'pickup', priority: 0},
-    bone:       {points: 500, qty: (level => level*2), grabSound: 'grab', priority: 0},
-    fountain:   {points: NaN, qty: (level => level-1), grabSound: 'powerup', priority: 0},
+    tnt:        {points: 100, qty: (level => level), grabSound: 'pickup', priority: 0},
+    bone:       {points: 1000, qty: (level => level*2), grabSound: 'grab', priority: 0},
+    fountain:   {points: 5000, qty: (level => level-1), grabSound: 'powerup', priority: 0},
     
     cheese:     {points: 200, qty: (() => 0), grabSound: 'grab', priority: 0},
     banana:     {points: 300, qty: (() => 0), grabSound: 'grab', priority: 0},

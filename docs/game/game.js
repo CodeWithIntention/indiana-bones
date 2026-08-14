@@ -290,6 +290,8 @@ function playerChomp(character, object) {
       if (chompSound) {
           Sound[chompSound]();
       }
+  } else if (character instanceof Player) {
+    addScoreForCharacter(object, settings.chompPointsFactor);
   }
   Sound[character.chompSound || "chomp"]();
 }

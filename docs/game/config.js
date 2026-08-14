@@ -15,6 +15,7 @@ const TIMEOUTS = {
   nextMazeDelay: 1000,
   mazeRumbleDuration: 2000,
   caveInInterval: 1500,
+  tntDetonationDelay: 1500,
 }
 
 // Object configurations starting at Level 1

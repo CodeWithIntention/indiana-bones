@@ -176,6 +176,10 @@ function playerTNT(character) {
     if (player.powerUp || !(player.isAlive && player.removeTNT())) return false;
   } else if (character instanceof Rock) {
     characters.remove(character);
+  } else if (character && character.isTNT && grid.objectAt(character.row, character.col) === OBJECTS.tnt) {
+    grid.placeObjectAt(character.row, character.col, OBJECTS.path)
+  } else {
+    return;
   }
 
   const blastArea = [
@@ -209,9 +213,11 @@ function playerTNT(character) {
     const mazeObjAtRowCol = grid.objectAt(row, col);
 
     if (![OBJECTS.edge, OBJECTS.exit, OBJECTS.gem].includes(mazeObjAtRowCol)) {
-      grid.placeObjectAt(row, col, OBJECTS.path, {flash: true});
       if (mazeObjAtRowCol === OBJECTS.tnt) {
-        playerTNT({row, col});
+        grid.updateCellAtRowCol(row, col, {strobe: true});
+        setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
+      } else {
+        grid.placeObjectAt(row, col, OBJECTS.path, {flash: true});
       }
     }
   });

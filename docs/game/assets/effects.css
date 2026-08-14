@@ -23,6 +23,10 @@
   animation: flash 300ms ease-out;
 }
 
+.strobe {
+  animation: flash 500ms ease-in-out infinite;
+}
+
 @keyframes glow {
     from {
         opacity: 0.75;

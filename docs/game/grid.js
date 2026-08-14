@@ -240,29 +240,32 @@ class Grid {
     if (cell) {
       const attributes = [this.#maze.objectKindAt(row, col)];
 
-      if (effects.visited === true) {
-        if (!cell.classList.contains("visited")) {
-          this.#visitedPathCount++;
+      Object.keys(effects).forEach(key => {
+        if (effects[key] === true) {
+          attributes.push(key);
         }
-        attributes.push("visited");
-      } else if (cell.classList.contains("visited")) {
-        this.#visitedPathCount--;
-      }
-
-      if (effects.flash === true) {
-        // Hack to cause animations to reapply
-        cell.classList.remove("flash");
-        cell.offsetWidth;
-        attributes.push("flash")
-      }
-
-      if (effects.rock === true) {
-        attributes.push("rock");
-      }
-
+        switch (key) {
+          case "visited":
+            if (effects.visited === true) {
+              if (!cell.classList.contains("visited")) {
+                this.#visitedPathCount++;
+              }
+            } else if (cell.classList.contains("visited")) {
+              this.#visitedPathCount--;
+            }
+            break;
+          case "flash":
+            if (effects.flash === true) {
+              // Hack to cause animations to reapply
+              cell.classList.remove("flash");
+              cell.offsetWidth;
+            }
+            break;
+        }
+      });
       cell.className = "cell";
       cell.classList.add(...attributes);
-    };
+    }
     return cell;
   }
 

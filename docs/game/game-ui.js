@@ -30,7 +30,7 @@ function zoomStartGame() {
     setTimeout(() => {
       gameScreen.classList.remove("zoomIn", "expanded", "spin", "zoom");
       gameWindow.requestAnimationFrame(() => gameScreen.startGame());
-    }, TIMEOUTS.startGameZoomDiration);
+    }, TIMEOUTS.startGameZoomDuration);
   });
 }
 

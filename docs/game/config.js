@@ -7,7 +7,7 @@ const MESSAGES = {
 }
 
 const TIMEOUTS = {
-  startGameZoomDiration: 2500,
+  startGameZoomDuration: 2500,
   characterPointsLabel: 2000,
   tallyScoreDelay: 2000,
   updateScoreCardInterval: 750,

@@ -240,27 +240,23 @@ class Grid {
     if (cell) {
       const attributes = [this.#maze.objectKindAt(row, col)];
 
+      if (effects.visited === true) {
+        if (!cell.classList.contains("visited")) {
+          this.#visitedPathCount++;
+        }
+      } else if (cell.classList.contains("visited")) {
+        this.#visitedPathCount--;
+      }
+
+      if (effects.flash === true) {
+        // Hack to cause animations to reapply
+        cell.classList.remove("flash");
+        cell.offsetWidth;
+      }
+
       Object.keys(effects).forEach(key => {
         if (effects[key] === true) {
           attributes.push(key);
-        }
-        switch (key) {
-          case "visited":
-            if (effects.visited === true) {
-              if (!cell.classList.contains("visited")) {
-                this.#visitedPathCount++;
-              }
-            } else if (cell.classList.contains("visited")) {
-              this.#visitedPathCount--;
-            }
-            break;
-          case "flash":
-            if (effects.flash === true) {
-              // Hack to cause animations to reapply
-              cell.classList.remove("flash");
-              cell.offsetWidth;
-            }
-            break;
         }
       });
       cell.className = "cell";

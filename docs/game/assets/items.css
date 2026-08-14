@@ -24,8 +24,16 @@
     font-size: 10px;
 }
 
+.cell.key {
+    background-color: transparent;
+}
+
+.cell.key::before {
+    content: var(--sym-key);
+}
+
 .cell.gem {
-    background-color: var(--maze-wall);
+    background-color: transparent;
 }
 
 .cell.gem::before {

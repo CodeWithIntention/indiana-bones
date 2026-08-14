@@ -20,20 +20,23 @@ const TIMEOUTS = {
 
 // Object configurations starting at Level 1
 const OBJECTS = {
-    gem:        {points: NaN, qty: (level => level), inWalls: true, grabSound: 'grab', priority: 2},
     tnt:        {points:   0, qty: (level => level), grabSound: 'pickup', priority: 0},
     bone:       {points: 500, qty: (level => level*2), grabSound: 'grab', priority: 0},
     fountain:   {points: NaN, qty: (level => level-1), grabSound: 'powerup', priority: 0},
-    cheese:     {points: 200, qty: (() =>  0), grabSound: 'grab', priority: 0},
-    banana:     {points: 300, qty: (() =>  0), grabSound: 'grab', priority: 0},
+    
+    cheese:     {points: 200, qty: (() => 0), grabSound: 'grab', priority: 0},
+    banana:     {points: 300, qty: (() => 0), grabSound: 'grab', priority: 0},
+    gem:        {points: NaN, qty: (() => 0), grabSound: 'grab', priority: 0},
 
     web:        {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
     poop:       {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
 
-    path:       {fixed: true, visitable: true, priority: 0},
-    wall:       {fixed: true, visitable: false, priority: 3},
-    edge:       {fixed: true, visitable: false, priority: 4},
-    exit:       {fixed: true, visitable: false, priority: 2},
+    key:        {points: NaN, qty: (level => level), inWalls: true, grabSound: 'grab', priority: 2, fixed: true},
+
+    path:       {priority: 0, visitable: true,  fixed: false},
+    wall:       {priority: 3, visitable: false, fixed: false},
+    edge:       {priority: 4, visitable: false, fixed: true},
+    exit:       {priority: 2, visitable: false, fixed: true},
 };
 
 Object.entries(OBJECTS).forEach(([key, value]) => value.kind = key);

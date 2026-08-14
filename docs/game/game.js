@@ -212,7 +212,7 @@ function playerTNT(character) {
     const col = character.col + rc[1];
     const mazeObjAtRowCol = grid.objectAt(row, col);
 
-    if (![OBJECTS.edge, OBJECTS.exit, OBJECTS.gem].includes(mazeObjAtRowCol)) {
+    if (mazeObjAtRowCol.fixed !== true) {
       if (mazeObjAtRowCol === OBJECTS.tnt) {
         grid.updateCellAtRowCol(row, col, {strobe: true});
         setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
@@ -355,7 +355,7 @@ function onPlayerMoved(character) {
         } else {
             playerGrab(object);
         }
-        if (object === OBJECTS.gem && --grid.gemsNeededToExit === 0) {
+        if (object === OBJECTS.key && --gameState.keysNeeded === 0) {
           grid.ensureExit();
           Sound.portal();
         }
@@ -392,7 +392,6 @@ function onCharacterCollide(character, other) {
 function buildMaze() {
   grid.render((cell, row, col) => {
   });
-  gameState.caveInStarted = false;
 }
 
 function movePlayer(direction, delta) {
@@ -620,6 +619,7 @@ function goDeeper() {
 
 function nextMaze() {
   gameScreen.scoreboard.style.display = "none";
+  gameState.reset();
 
   const currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
   const currentMaze = player.mazes % settings.mazesPerLevel;
@@ -810,12 +810,12 @@ function dropRandomRocks() {
 }
 
 function dropItems(config) {
-    if (config.fixed || !config.qty) return;
+    if (!config.qty) return;
 
     let count = config.qty(player.level);
 
-    if (config === OBJECTS.gem) {
-      grid.gemsNeededToExit = count;
+    if (config === OBJECTS.key) {
+      gameState.keysNeeded = count;
     }
 
     while (count-- > 0) {
@@ -907,9 +907,14 @@ settings.highScore = getHighScore();
 
 let grid = null;
 let characters = [];
+
 const gameState = {
-  gameOver: false, 
-  caveInStarted: false,
+  reset() {
+    this.gameOver = false; 
+    this.caveInStarted = false;
+    this.keysNeeded = 0;
+  },
+
   isCaveInThreshold () { 
     const pathCount = this.caveInStarted ? grid.pathCount + Math.random() * 10 : grid.pathCount;
     return pathCount / grid.cellCount > settings.caveInThreshold;

@@ -28,8 +28,8 @@ const OBJECTS = {
     banana:     {points: 300, qty: (() => 0), grabSound: 'grab', priority: 0},
     gem:        {points: 10000, qty: (() => 0), grabSound: 'dingDing', priority: 0, isBaggable: false},
 
-    web:        {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
-    poop:       {points: NaN, qty: (() =>  0), speedReduction: 1, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
+    web:        {points: NaN, qty: (() =>  0), speedReduction: .50, speedReductionDuration: 1000, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
+    poop:       {points: NaN, qty: (() =>  0), speedReduction: .75, speedReductionDuration: 2000, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
 
     key:        {points: NaN, qty: (level => level), inWalls: true, grabSound: 'grab', priority: 2, fixed: true},
 
@@ -44,7 +44,7 @@ Object.entries(OBJECTS).forEach(([key, value]) => value.kind = key);
 // Character configurations starting at Level 1
 const CHARACTERS = {
     player:     {points: 0, priority: 2, speed: 55, lives: 3, tnts: 1, qty: (() => 0), 
-                    speedReductionRate: .10, chompSound: 'chomp',
+                    chompSound: 'chomp',
                     powerUpDuration: 3000, rotationTransform: null},
     scorpion:   {points: 4000, priority: 2, speed: 50, lives: 1, qty: (level => Math.floor((level-1)/2)), 
                     dropObject: OBJECTS.poop, movesToDrop: 50, dropProbability: .75,

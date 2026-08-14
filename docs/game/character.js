@@ -7,6 +7,7 @@ class Character {
     #speed;
     #disabled;
     #disabledTime;
+    #speedReductionExpirationTime;
 
     speedReduction;
     speedReductionReason;
@@ -30,6 +31,7 @@ class Character {
         this.#speed = config.speed || 0;
         this.#disabled = false;
         this.#disabledTime = Date.now();
+        this.#speedReductionExpirationTime = Date.now();
 
         this.speedReduction = 0;
         this.speedReductionReason = null;
@@ -122,9 +124,13 @@ class Character {
       return this.#disabledTime;
     }
 
-    reduceSpeedBy(by, reason) {
+    reduceSpeedBy(by, howLong, reason) {
         this.speedReduction = by;
         this.speedReductionReason = reason;
+
+        if (by > 0) {
+            this.#speedReductionExpirationTime = Date.now() + howLong;
+        }
     }
 
     isAtRowCol(row, col) {
@@ -139,12 +145,11 @@ class Character {
     updateVelocity(direction, delta = 0) {
       this.vx = this.vy = 0;
 
-      // Negative speed is a setting the prevents level increases
+      // Negative speed is a setting that prevents level increases
       let speed = Math.abs(this.speed);
 
-      if (this.speedReduction > this.#config.speedReductionRate) {
+      if (this.speedReduction > 0 && Date.now() < this.#speedReductionExpirationTime) {
           speed -= speed * this.speedReduction;
-          this.speedReduction -= this.speedReduction * this.#config.speedReductionRate;
       } else {
           this.speedReduction = 0;
       }

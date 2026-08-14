@@ -91,7 +91,9 @@ function updateGameState(reason) {
 
   if (reason instanceof Player) {
     if (reason.isAlive) {
-        attributes[reason.speedReductionReason] = reason.isReducedSpeed;
+        if (reason.isReducedSpeed) {
+          attributes[reason.speedReductionReason] = true;
+        }
         attributes.powerup = reason.powerUp;
 
         if (grid.objectAt(reason) === OBJECTS.exit) {
@@ -316,7 +318,7 @@ function playerGrab(object) {
 
     const speedReduction = object.speedReduction;
     if (speedReduction) {
-        player.reduceSpeedBy(speedReduction, object.speedReductionReason);
+        player.reduceSpeedBy(speedReduction, object.speedReductionDuration, object.speedReductionReason);
     }
 
     const grabSound = object.grabSound;

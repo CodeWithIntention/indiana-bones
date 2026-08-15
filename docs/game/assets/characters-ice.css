@@ -1,12 +1,19 @@
-
 .character.scorpion {
+    z-index: 4;
+}
+
+.character.rock {
     z-index: 5;
+}
+
+.character.ghost {
+    z-index: 6;
+    animation: float 3s ease-in-out infinite;
 }
 
 .character.cat,
 .character.mouse,
-.character.monkey,
-.character.rock {
+.character.monkey {
     z-index: 3;
 }
 
@@ -22,6 +29,15 @@
     content: var(--sym-rock);
 }
 
+.character.scorpion::before {
+    content: var(--sym-scorpion);
+}
+
+.character.ghost::before {
+    content: var(--sym-ghost);
+    font-size: 18px;
+}
+
 .character.cat::before {
     content: var(--sym-cat);
 }
@@ -30,14 +46,6 @@
     content: var(--sym-mouse);
 }
 
-.character.rock::before {
-    content: var(--sym-rock);
-}
-    
 .character.monkey::before {
     content: var(--sym-monkey);
-}
-
-.character.scorpion::before {
-    content: var(--sym-scorpion);
 }

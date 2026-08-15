@@ -8,6 +8,7 @@ class Character {
     #disabled;
     #disabledTime;
     #speedReductionExpirationTime;
+    #passThroughProbability;
 
     speedReduction;
     speedReductionReason;
@@ -32,6 +33,7 @@ class Character {
         this.#disabled = false;
         this.#disabledTime = Date.now();
         this.#speedReductionExpirationTime = Date.now();
+        this.#passThroughProbability = config.passThroughProbability || 0;
 
         this.speedReduction = 0;
         this.speedReductionReason = null;
@@ -124,13 +126,18 @@ class Character {
       return this.#disabledTime;
     }
 
-    reduceSpeedBy(by, howLong, reason) {
-        this.speedReduction = by;
-        this.speedReductionReason = reason;
+    canPassThroughObject(object) {
+        const objPriority = object && object.priority;
+        return objPriority === this.priority+1 && this.#passThroughProbability > 0
+            && Math.random() <= this.#passThroughProbability;
+    }
+    
+    reduceSpeedBy(object) {
+        if (!(object && Number.isFinite(object.speedReduction) && Number.isFinite(object.speedReductionDuration))) return;
 
-        if (by > 0) {
-            this.#speedReductionExpirationTime = Date.now() + howLong;
-        }
+        this.speedReduction = object.speedReduction;
+        this.speedReductionReason = object.speedReductionReason;
+        this.#speedReductionExpirationTime = Date.now() + object.speedReductionDuration;
     }
 
     isAtRowCol(row, col) {

@@ -2,7 +2,7 @@ import { CHARACTERS } from "./config.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
 
-export { Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label }
+export { Ghost, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label }
 
 class Spider extends Character {
     constructor(position) {
@@ -42,13 +42,23 @@ class Scorpion extends Character {
     }
 }
 
+class Ghost extends Character {
+    constructor(position) {
+        super(CHARACTERS.ghost, position.row, position.col);
+    }
+
+    canKill(character) {
+        return character instanceof Player;
+    }
+}
+
 class Rock extends Character {
     constructor(position) {
         super(CHARACTERS.rock, position.row, position.col);
     }
 
     canKill(character) {
-        return !(character instanceof Rock);
+        return !(character instanceof Rock || character instanceof Ghost);
     }
 
     get powerUp() {
@@ -69,3 +79,4 @@ CHARACTERS.cat.class = Cat;
 CHARACTERS.mouse.class = Mouse;
 CHARACTERS.monkey.class = Monkey;
 CHARACTERS.rock.class = Rock;
+CHARACTERS.ghost.class = Ghost;

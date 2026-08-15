@@ -4,29 +4,26 @@ import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
-import { Spider, Scorpion, Cat, Monkey, Mouse, Rock } from "./characters.js";
+import { Ghost, Spider, Scorpion, Cat, Monkey, Mouse, Rock } from "./characters.js";
 import { Grid } from "./grid.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
 
 export { keysPressed };
 
-
-Grid.canMoveTo = (row, col, priority = 0) => {
-  const object = grid.objectAt(row, col);
-  return object !== null && object.priority <= priority;
-}
-
-Grid.onCharacterMoved = (character) => {
+Grid.onCharacterMoved = (character, object) => {
   if (character === player) {
     onPlayerMoved(character);
   } else {
+    if (object === OBJECTS.wall) {
+      character.reduceSpeedBy(object);
+    }
     if (character instanceof Rock) {
-      onRockMoved(character);
-    } 
+      onRockMoved(character, object);
+    }
     if (character.canDrop && grid.objectAt(character.row, character.col) === OBJECTS.path) {
       grid.placeObjectAt(character.row, character.col, character.dropObject);
-      updateGameState(character);
     }
+    updateGameState(character);
   }
 }
 
@@ -89,11 +86,15 @@ function findRandomRockPositions(count) {
 function updateGameState(reason) {
   const attributes = {entrance: false, spin: false, powerup: false, dead: false, buried: false, webbed: false, pooped: false, shake: false};
 
+  if (reason.speedReductionReason) {
+    attributes[reason.speedReductionReason] = reason.isReducedSpeed;
+  }
+  if (reason.disabled === true) {
+    attributes.shake = true;
+  }
+
   if (reason instanceof Player) {
     if (reason.isAlive) {
-        if (reason.isReducedSpeed) {
-          attributes[reason.speedReductionReason] = true;
-        }
         attributes.powerup = reason.powerUp;
 
         if (grid.objectAt(reason) === OBJECTS.exit) {
@@ -116,11 +117,6 @@ function updateGameState(reason) {
       startCaveIn();
     }
   } 
-  if (reason instanceof Character) {
-    if (reason.disabled === true) {
-      attributes.shake = true;
-    }
-  }
   grid.setCharacterAttributes(reason, attributes);
   updatePlayerStatusLine();
 }
@@ -316,9 +312,8 @@ function playerGrab(object) {
       }
     }
 
-    const speedReduction = object.speedReduction;
-    if (speedReduction) {
-        player.reduceSpeedBy(speedReduction, object.speedReductionDuration, object.speedReductionReason);
+    if (object.speedReduction) {
+        player.reduceSpeedBy(object);
     }
 
     const grabSound = object.grabSound;
@@ -350,8 +345,7 @@ function playerKilled(buried = false) {
     }
 }
 
-function onRockMoved(character) {
-  const object = grid.objectAt(character);
+function onRockMoved(character, object) {
   if (!object) return;
 
   if (object === OBJECTS.tnt) {
@@ -425,7 +419,7 @@ function movePlayer(direction, delta) {
 
   // Special case for initial player movement
   if (Direction.isNone(player.direction) && currentRow === 1 && currentCol === 0 
-    && Grid.canMoveTo(nextRow, nextCol, true)) {
+    && grid.canCharacterMoveTo(player, nextRow, nextCol)) {
     player.row = nextRow;
     player.col = nextCol;
     grid.placeCharacter(player);
@@ -513,7 +507,7 @@ function moveCharacter(character, delta) {
       const nextRow = character.row + direction[0];
       const nextCol = character.col + direction[1];
 
-      if (Grid.canMoveTo(nextRow, nextCol, character.priority)) {
+      if (grid.canCharacterMoveTo(character, nextRow, nextCol)) {
           grid.moveCharacter(character, direction, delta, nextRow, nextCol);
           break;
       }
@@ -575,7 +569,7 @@ function tallyScore() {
     list.push(`<div>${Grid.symbolFor("maze-bonus")} &times; ${mazeBonus()} &times; ${settings.pointsPerPath}</div><div class='score'>${mazeBonusPoints}</div>`);
   }
 
-  if (grid.isMazeCleared && characters.length === 0) {
+  if (grid.isMazeCleared && characters.killables.length === 0) {
     const points = settings.mazeClearedBonusPoints * player.level;
     scores.push(points);
     list.push(`<div>${MESSAGES.mazeClearedBonus} ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
@@ -781,7 +775,11 @@ function setupCharacters() {
     characters.killers = (victim) => {
         return characters.filter(item => item.canKill(victim));
     }
-  
+
+    characters.killables = () => {
+        return characters.filter(item => item.lives >= 0);
+    }
+
     Object.values(CHARACTERS).forEach(createCharacters);
     Object.values(OBJECTS).forEach(dropItems);
 }

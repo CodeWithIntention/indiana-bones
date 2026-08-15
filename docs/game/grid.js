@@ -168,6 +168,20 @@ class Grid {
     return this.#visitedPathCount;
   }
 
+  canCharacterMoveTo(character, row, col) {
+    if (!(character instanceof Character)) return false;
+
+    const object = this.objectAt(row, col);
+    if (object === null) return false;
+
+    let allow = object.priority <= character.priority;
+
+    if (!allow && character.canPassThroughObject(object)) {
+      allow = true;
+    }
+    return allow;
+  }
+
   cellAtRowCol(row, col) {
     if (!(row >= 0 && row < this.rows && col >= 0 && col < this.cols)) return null;
 
@@ -214,7 +228,7 @@ class Grid {
       row += character.direction[0];
       col += character.direction[1];
 
-      if (!Grid.canMoveTo(row, col, other.priority)) return false;
+      if (!this.canCharacterMoveTo(other, row, col)) return false;
       distance = other.manhattanDistanceTo(row, col);
     } while (distance > 0 && distance < there);
 
@@ -479,7 +493,7 @@ class Grid {
     const nextCol = currentCol + character.direction[1];
 
     if (!this.hasCharacterArrived(character) 
-      || Grid.canMoveTo(nextRow, nextCol, character.priority)) {
+      || this.canCharacterMoveTo(character, nextRow, nextCol)) {
       character.offsetTop += character.vy;
       character.offsetLeft += character.vx;
 
@@ -503,10 +517,11 @@ class Grid {
 
     if (character.row !== currentRow || character.col !== currentCol) {
         character.moves++;
-        if (OBJECTS.exit === this.objectAt(character.row, character.col)) {
+        const object = this.objectAt(character.row, character.col);
+        if (OBJECTS.exit === object) {
           this.placeCharacter(character);
         }
-        Grid.onCharacterMoved(character);
+        Grid.onCharacterMoved(character, object);
     }
   }
 

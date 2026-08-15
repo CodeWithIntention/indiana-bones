@@ -27,6 +27,10 @@
   animation: flash 500ms ease-in-out infinite;
 }
 
+.phasing {
+    opacity: 0.55;
+}
+
 @keyframes glow {
     from {
         opacity: 0.75;

@@ -28,13 +28,16 @@ const OBJECTS = {
     banana:     {points: 300, qty: (() => 0), grabSound: 'grab', priority: 0},
     gem:        {points: 10000, qty: (() => 0), grabSound: 'dingDing', priority: 0, isBaggable: false},
 
-    web:        {points: NaN, qty: (() =>  0), speedReduction: .50, speedReductionDuration: 1000, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
-    poop:       {points: NaN, qty: (() =>  0), speedReduction: .75, speedReductionDuration: 2000, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
+    web:        {points: NaN, qty: (() =>  0), 
+                  speedReduction: .50, speedReductionDuration: 1000, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
+    poop:       {points: NaN, qty: (() =>  0), 
+                  speedReduction: .75, speedReductionDuration: 2000, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
 
     key:        {points: NaN, qty: (level => level), inWalls: true, grabSound: 'grab', priority: 2, fixed: true},
 
     path:       {priority: 0, visitable: true,  fixed: false},
-    wall:       {priority: 3, visitable: false, fixed: false},
+    wall:       {priority: 3, visitable: false, fixed: false,
+                  speedReduction: .75, speedReductionDuration: 500, speedReductionReason: 'phasing'},
     edge:       {priority: 4, visitable: false, fixed: true},
     exit:       {priority: 2, visitable: false, fixed: true},
 };
@@ -46,6 +49,9 @@ const CHARACTERS = {
     player:     {points: 0, priority: 2, speed: 55, lives: 3, tnts: 1, qty: (() => 0), 
                     chompSound: 'chomp',
                     powerUpDuration: 3000, rotationTransform: null},
+    ghost:      {points: 8000, priority: 2, speed: 60, lives: -1, qty: (level => 0), 
+                    passThroughProbability: .50,
+                    rotationTransform: null}, 
     scorpion:   {points: 4000, priority: 2, speed: 50, lives: 1, qty: (level => Math.floor((level-1)/2)), 
                     dropObject: OBJECTS.poop, movesToDrop: 50, dropProbability: .75,
                     rotationTransform: [[Direction.UP, 180], [Direction.DOWN, 0], [Direction.LEFT, 90], [Direction.RIGHT, 270]]}, 

@@ -17,7 +17,7 @@ const TIMEOUTS = {
   caveInInterval: 1500,
   tntDetonationDelay: 1500,
   guardianDelay: 3000,
-  guardianDelayLevelReduction: 250,
+  guardianDelayLevelReduction: 200,
 }
 
 // Object configurations

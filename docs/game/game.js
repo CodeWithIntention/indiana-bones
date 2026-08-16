@@ -555,7 +555,7 @@ function tallyScore() {
     }
     const points = gameState.levelRelic.points * player.level;
     scores.push(points);
-    list.push(`<div>${Grid.symbolFor(gameState.levelRelic.kind)} &times; ${gameState.levelRelic.points}</div><div class='score'>${points}</div>`);
+    list.push(`<div>${Grid.symbolFor(gameState.levelRelic.kind)} &times; ${player.level} &times; ${gameState.levelRelic.points}</div><div class='score'>${points}</div>`);
   }
 
   gameScreen.scorecard.innerHTML = "";

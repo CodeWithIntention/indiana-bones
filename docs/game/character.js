@@ -8,7 +8,7 @@ class Character {
     #disabled;
     #disabledTime;
     #speedReductionExpirationTime;
-    #passThroughProbability;
+    #phaseProbability;
 
     speedReduction;
     speedReductionReason;
@@ -33,7 +33,7 @@ class Character {
         this.#disabled = false;
         this.#disabledTime = Date.now();
         this.#speedReductionExpirationTime = Date.now();
-        this.#passThroughProbability = config.passThroughProbability || 0;
+        this.#phaseProbability = config.phaseProbability || 0;
 
         this.speedReduction = 0;
         this.speedReductionReason = null;
@@ -54,7 +54,7 @@ class Character {
     }
 
     get kind() {
-        return this.#config.kind;
+        return this.config.kind;
     }
 
     get config() {
@@ -67,6 +67,14 @@ class Character {
 
     get priority() {
         return this.#config.priority;
+    }
+
+    get isRelic() {
+        return this.#config.isRelic === true;
+    }
+
+    get isBaggable() {
+        return this.#config.isBaggable !== false;
     }
 
     get isGrabable() {
@@ -128,8 +136,8 @@ class Character {
 
     canPassThroughObject(object) {
         const objPriority = object && object.priority;
-        return objPriority === this.priority+1 && this.#passThroughProbability > 0
-            && Math.random() <= this.#passThroughProbability;
+        return (objPriority - this.priority) < 1 && this.#phaseProbability > 0
+            && Math.random() <= this.#phaseProbability;
     }
     
     reduceSpeedBy(object) {
@@ -154,6 +162,8 @@ class Character {
 
       // Negative speed is a setting that prevents level increases
       let speed = Math.abs(this.speed);
+
+      if (speed === 0) return;
 
       if (this.speedReduction > 0 && Date.now() < this.#speedReductionExpirationTime) {
           speed -= speed * this.speedReduction;

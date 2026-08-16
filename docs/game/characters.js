@@ -2,15 +2,48 @@ import { CHARACTERS } from "./config.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
 
-export { Ghost, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label }
+export { Ghost, Relic, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label, Skull }
 
-class Spider extends Character {
-    constructor(position) {
-        super(CHARACTERS.spider, position.row, position.col);
+class Killer extends Character {
+    constructor(config, position) {
+        super(config, position.row, position.col);
     }
 
     canKill(character) {
         return character instanceof Player;
+    }
+}
+
+class Spider extends Killer {
+    constructor(position) {
+        super(CHARACTERS.spider, position);
+    }
+
+}
+
+class Scorpion extends Killer {
+    constructor(position) {
+        super(CHARACTERS.scorpion, position);
+    }
+}
+
+class Ghost extends Killer {
+    constructor(position) {
+        super(CHARACTERS.ghost, position);
+    }
+}
+
+class Rock extends Character {
+    constructor(position) {
+        super(CHARACTERS.rock, position.row, position.col);
+    }
+
+    canKill(character) {
+        return this.priority >= character.priority;
+    }
+
+    get powerUp() {
+        return true;
     }
 }
 
@@ -32,38 +65,29 @@ class Monkey extends Character {
     }
 }
 
-class Scorpion extends Character {
-    constructor(position) {
-        super(CHARACTERS.scorpion, position.row, position.col);
-    }
-
-    canKill(character) {
-        return character instanceof Player;
-    }
+class Skull extends Character {
+  constructor(position) {
+    super(CHARACTERS.skull, position.row, position.col)
+  }
 }
 
-class Ghost extends Character {
-    constructor(position) {
-        super(CHARACTERS.ghost, position.row, position.col);
-    }
+class Relic extends Character {
+  constructor(position) {
+    // Copy the configuration so that kind can be modified for each instance
+    const config = {};
+    Object.entries(CHARACTERS.relic).forEach(([key, value]) => {
+        config[key] = value;
+    });
+    super(config, position.row, position.col)
+  }
 
-    canKill(character) {
-        return character instanceof Player;
-    }
-}
+  set kind(value) {
+    this.config.kind = value;
 
-class Rock extends Character {
-    constructor(position) {
-        super(CHARACTERS.rock, position.row, position.col);
+    if (this.gridCell) {
+        this.gridCell.textContent = value;
     }
-
-    canKill(character) {
-        return !(character instanceof Rock || character instanceof Ghost);
-    }
-
-    get powerUp() {
-        return true;
-    }
+  }
 }
 
 class Label extends Character {
@@ -80,3 +104,5 @@ CHARACTERS.mouse.class = Mouse;
 CHARACTERS.monkey.class = Monkey;
 CHARACTERS.rock.class = Rock;
 CHARACTERS.ghost.class = Ghost;
+CHARACTERS.relic.class = Relic;
+CHARACTERS.skull.class = Skull;

@@ -66,10 +66,6 @@
     transform: translate(-50%, -50%);
 }
 
-.character.dead {
-    animation: float 0.8s ease-in-out infinite alternate;
-}
-
 .character.player,
 .character.powerup,
 .character.dead,
@@ -81,3 +77,12 @@
 .character.powerup::before {
     animation: glow 1s infinite alternate;
 }
+
+.character.blownup {
+    animation: blown-up 450ms ease-out forwards;
+}
+
+.character.dead {
+    animation: float 0.8s ease-in-out infinite alternate;
+}
+

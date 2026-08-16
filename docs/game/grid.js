@@ -107,6 +107,17 @@ class Maze {
 
 class Grid {
   static mazeEl = document.getElementById("maze");
+  static ALL_DIRECTIONS = [
+    [0, 0],
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
 
   static symbolFor(name) {
     if (name) return getComputedStyle(this.mazeEl).getPropertyValue(`--sym-${name}`).replaceAll('"', '');
@@ -174,7 +185,7 @@ class Grid {
     const object = this.objectAt(row, col);
     if (object === null) return false;
 
-    let allow = object.priority <= character.priority;
+    let allow = object.visitable !== false && (object.priority - character.priority) < 1;
 
     if (!allow && character.canPassThroughObject(object)) {
       allow = true;
@@ -236,6 +247,9 @@ class Grid {
   }
 
   render(visitor) {
+    this.#pathCount = 0;
+    this.#visitedPathCount = 0;
+
     for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
         const cell = this.updateCellAtRowCol(row, col);
@@ -268,27 +282,34 @@ class Grid {
         cell.offsetWidth;
       }
 
-      Object.keys(effects).forEach(key => {
-        if (effects[key] === true) {
+      if (effects.explode === true) {
+        cell.addEventListener("animationend", (event) => {
+          event.target.classList.remove("explode");
+        }, { once: true });
+      }
+
+      for (const [key, value] of Object.entries(effects)) {
+        if (value === true) {
           attributes.push(key);
         }
-      });
+      }
+
       cell.className = "cell";
       cell.classList.add(...attributes);
     }
     return cell;
   }
 
-  addScoreCharacterFor(character, score, duration) {
+  addScoreCharacterFor(character, score, duration = 0) {
     const style = score < 0 ? "score minus" : "score";
     this.addHtmlCharacterFor(character, `<span class='${style}'>${String(Math.abs(score))}</span>`, duration);
   }
 
-  addLabelCharacterFor(character, text, duration) {
+  addLabelCharacterFor(character, text, duration = 0) {
     this.addHtmlCharacterFor(character, `<span>${text}</span>`, duration);
   }
 
-  addHtmlCharacterFor(character, html, duration) {
+  addHtmlCharacterFor(character, html, duration = 0) {
     if (!((character instanceof Character) && html)) return;
     
     const label = new Label(character.row, character.col);
@@ -298,6 +319,38 @@ class Grid {
     if (duration > 0) {
       setTimeout(this.removeCharacter, duration, label);
     }
+  }
+
+  
+  addAnimationCharacterFor(character, effects) {
+    if (!((character instanceof Character) && effects)) return;
+    
+    const label = new Label(character.row, character.col);
+    this.addCharacter(label, character.offsetTop, character.offsetLeft);
+    label.gridCell.style.zIndex = (character.gridCell.style.zIndex || 0) + 1;
+    this.applyAnimationFor(label, effects, true);
+  }
+
+  applyAnimationFor(character, effects, removeCharacterAfter = false) {
+    if (!((character instanceof Character) && effects)) return;
+
+    for (const [key, value] of Object.entries(effects)) {
+      if (value === true) {
+        character.gridCell.classList.add(key);
+      }
+    }
+
+    character.gridCell.addEventListener("animationend", () => {
+      if (removeCharacterAfter) {
+        this.removeCharacter(character);
+      } else {
+        for (const [key, value] of Object.entries(effects)) {
+          if (value === true) {
+            character.gridCell.classList.remove(key);
+          }
+        }
+      }
+    }, { once: true });
   }
 
   addCharacter(character, top, left) {
@@ -448,20 +501,72 @@ class Grid {
   }
 
   placeObjectAt(row, col, obj, effects = {}) {
-    if (obj === OBJECTS.path && this.objectAt(row, col) === OBJECTS.wall) {
+    const currentObjectAt = this.objectAt(row, col);
+
+    if (currentObjectAt.visitable === false && obj.visitable !== false) {
       this.#pathCount++;
-    } else if (obj === OBJECTS.wall && this.objectAt(row, col) === OBJECTS.path) {
+    } else if (currentObjectAt.visitable !== false && obj.visitable === false) {
       this.#pathCount--;
     }
     this.maze.placeObjectAt(row, col, obj);
     this.updateCellAtRowCol(row, col, effects);
   }
 
-  ensureExit() {
-    if (OBJECTS.wall === this.objectAt(this.rows - 2, this.cols - 2)) {
+  ensureExit(randomize = false) {
+    if (randomize) {
+      while (true) {
+        const row = Math.floor(Math.random() * this.rows);
+        const col = Math.floor(Math.random() * this.cols);
+        const objectAtRowCol = this.objectAt(row, col);
+
+        if (objectAtRowCol.fixed === false) {
+          this.placeObjectAt(row, col, OBJECTS.exit);
+
+          Grid.ALL_DIRECTIONS.forEach(dir => {
+            const objectAtRowCol = this.objectAt(row+dir[0], col+dir[1]);
+            if (objectAtRowCol && objectAtRowCol.fixed !== true) {
+              this.placeObjectAt(row+dir[0], col+dir[1], OBJECTS.wall, {pulse: true, rock: true});
+            }
+          });
+          return;
+        }
+      }
+    } else if (OBJECTS.wall === this.objectAt(this.rows - 2, this.cols - 2)) {
       this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
     }
     this.placeObjectAt(this.rows - 2, this.cols - 1, OBJECTS.exit);
+  }
+
+  placeObjectFormation(formation, object, effects, maskAll = false) {
+    if (!formation || !(formation.length > 0 && formation[0].length > 0)) return;
+
+    const position = {row: Math.floor((this.rows-formation.length)/2), col: Math.floor((this.cols-formation[0].length)/2)};
+    const positions = [];
+
+    for (let row = 0; row < formation.length; row++) {
+        for (let col = 0; col < formation[row].length; col++) {
+            const pos = {row: position.row+row, col: position.col+col};
+
+            if (formation[row][col] === "1" || maskAll) {
+              this.placeObjectAt(pos.row, pos.col, object, effects);
+              positions.push(pos);
+            } else {
+              this.placeObjectAt(pos.row, pos.col, OBJECTS.path);
+            }
+        }
+    }
+    return positions;
+  }
+
+  blockOutCenter(rows, cols, object, effects = {}) {
+    const position = {row: Math.floor((this.rows-rows)/2), col: Math.floor((this.cols-cols)/2)};
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        this.placeObjectAt(position.row+r, position.col+c, object, effects)
+      }
+    }
+    return position;
   }
 
   hasCharacterArrived(character) {

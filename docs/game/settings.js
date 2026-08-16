@@ -24,6 +24,8 @@ class Settings {
   powerUpSpeedBoost;
   speedUpRatePerLevel;
 
+  relicChamberSize;
+
   constructor() {
     this.setDefaults();
   }

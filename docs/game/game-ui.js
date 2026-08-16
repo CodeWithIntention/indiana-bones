@@ -11,6 +11,7 @@ function showGameUI(show = true) {
   scoreStatusLine.hidden = hide;
   mazeStatusLine.hidden = hide;
   bagStatusLine.hidden = hide;
+  relicsStatusLine.hidden = hide;
   dashboard.style.display = show ? 'flex' : 'none';
 }
 
@@ -83,6 +84,7 @@ const highScoreStatusLine = gameWindow.document.getElementById("highScoreStatusL
 const scoreStatusLine = gameWindow.document.getElementById("scoreStatusLine");
 const mazeStatusLine = gameWindow.document.getElementById("mazeStatusLine");
 const bagStatusLine = gameWindow.document.getElementById("bagStatusLine");
+const relicsStatusLine = gameWindow.document.getElementById("relicsStatusLine");
 
 const scoreboard = gameWindow.document.getElementById("scoreboard"); 
 const scorecard = gameWindow.document.getElementById("scorecard");
@@ -108,6 +110,7 @@ gameScreen.highScoreStatusLine = highScoreStatusLine;
 gameScreen.scoreStatusLine = scoreStatusLine;
 gameScreen.mazeStatusLine = mazeStatusLine;
 gameScreen.bagStatusLine = bagStatusLine;
+gameScreen.relicsStatusLine = relicsStatusLine;
 gameScreen.nextMazeLink = nextMazeLink;
 gameScreen.restartGameLink = restartGameLink;
 gameScreen.dismissInstructionsLink = dismissInstructionsLink;

@@ -67,7 +67,19 @@ body {
     z-index: 2;
 }
 
+#game #relicsStatusLine {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: var(--cell-size);  
+}
+
 #bagStatusLine b,
+#relicsStatusLine b,
 #playerStatusLine b {
     font-size: var(--small-font-size);
 }

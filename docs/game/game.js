@@ -1,10 +1,10 @@
 import { Direction } from "./util.js";
-import { CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS } from "./config.js";
+import { CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS } from "./config.js";
 import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
-import { Ghost, Spider, Scorpion, Cat, Monkey, Mouse, Rock } from "./characters.js";
+import { Ghost, Relic, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Skull } from "./characters.js";
 import { Grid } from "./grid.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
 
@@ -14,7 +14,7 @@ Grid.onCharacterMoved = (character, object) => {
   if (character === player) {
     onPlayerMoved(character);
   } else {
-    if (object === OBJECTS.wall) {
+    if (object.priority > character.priority) {
       character.reduceSpeedBy(object);
     }
     if (character instanceof Rock) {
@@ -25,62 +25,6 @@ Grid.onCharacterMoved = (character, object) => {
     }
     updateGameState(character);
   }
-}
-
-function findRandomPathCell(inWalls = false) {
-  while (true) {
-    const row = Math.floor(Math.random() * grid.rows);
-    const col = Math.floor(Math.random() * grid.cols);
-    const obj = grid.objectAt(row, col);
-
-    if (obj !== (inWalls ? OBJECTS.wall : OBJECTS.path)) continue;
-    if (row === player.row && col === player.col) continue;
-    if (characters.atRowCol(row, col)) continue;
-
-    return { row, col };
-  }
-}
-
-function findRandomRockPositions(count) {
-  function canPlaceRockAt(row, col) {
-    const object = grid.objectAt(row, col);
-    return object && object.priority <= CHARACTERS.rock.priority;
-  }
-
-  const positions = [];
-  let tries = Math.random() * 10;
-
-  // When there are enough walls in the maze, try to place rocks in the walls first.
-  while (--tries > 0 && (grid.pathCount / grid.cellCount) < settings.caveInThreshold) {
-    const position = findRandomPathCell(true);
-    // There must be a path cell below the wall to place a rock in the wall.
-    if (canPlaceRockAt(position.row+1, position.col)) {
-      positions.push(position);
-      break;
-    }
-  }
-
-  // If no wall was found, then try to place rocks at top
-  tries = grid.cols;
-  while (--tries > 0 && positions.length < count) {
-    const col = Math.floor(Math.random() * (grid.cols-2)) + 1;
-    let row = 0;
-    
-    // Place rocks at the top if a path cell exists.
-    if (canPlaceRockAt(row+1, col)) {
-      positions.push({ row, col });
-      continue;
-    }
-
-    // Otherwise place rocks at lowest possible row in the column if a path cell exists.
-    while (++row < grid.rows-1) {
-      if (canPlaceRockAt(row, col)) {
-        positions.push({ row: row-1, col });
-        break;
-      }
-    }
-  }
-  return positions;
 }
 
 function updateGameState(reason) {
@@ -101,12 +45,20 @@ function updateGameState(reason) {
           if (!player.exitMaze) {
             player.exitMaze = true;
             attributes.spin = true;
-
             Sound.yeah();
             setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
           }
         } else if (grid.isCharacterAtEntrance(reason)) {
             attributes.entrance = true;
+        } else if (gameState.keysNeeded === 0) {
+          --gameState.keysNeeded;
+          Sound.portal();
+
+          if (gameState.isLastMaze()) {
+              setTimeout(startRelicChamber, TIMEOUTS.caveInInterval);
+          } else {
+            grid.ensureExit();
+          }
         }
     } else if (reason.canRespawn) {
         attributes.dead = true;
@@ -118,14 +70,14 @@ function updateGameState(reason) {
     }
   } 
   grid.setCharacterAttributes(reason, attributes);
-  updatePlayerStatusLine();
+  updateGameUI();
 }
 
 function mazeBonus() {
   return (grid.pathCount - grid.visitedPathCount);
 }
 
-function updatePlayerStatusLine() {
+function updateGameUI() {
     let list = [];
 
     if (player.bonusAwarded) {
@@ -133,12 +85,13 @@ function updatePlayerStatusLine() {
       player.bonusAwarded = false;
     }
 
-    const lives = player.isAlive ? player.lives-1 : player.lives;
+    const lives = Math.min(player.isAlive ? player.lives-1 : player.lives, settings.maxLives);
     if (lives > 0) {
       list.push(`${Grid.symbolFor(player.kind)}`.repeat(lives));
     }
-
-    list.push(`${Grid.symbolFor(OBJECTS.tnt.kind)}<b>${player.tnts}</b>`);
+    if (player.tnts > 0) {
+      list.push(`${Grid.symbolFor(OBJECTS.tnt.kind)}<b>${player.tnts}</b>`);
+    }
     gameScreen.playerStatusLine.innerHTML = list.join("&nbsp;");
 
     list = [];
@@ -148,18 +101,15 @@ function updatePlayerStatusLine() {
         list.push(`${Grid.symbolFor(kind)}<b>${count}</b>`);
       }
     });
-
     Object.entries(CHARACTERS).forEach(([kind, object]) => {
       const count = player.countInBag(object);
       if (count > 0) {
         list.push(`${Grid.symbolFor(kind)}<b>${count}</b>`);
       }
     });
-
     if (player.score > settings.highScore) {
       settings.highScore = player.score;
     }
-
     gameScreen.bagStatusLine.innerHTML = list.join("&nbsp;");
 
     gameScreen.scoreStatusLine.classList.toggle("minus", player.score < 0);
@@ -168,8 +118,14 @@ function updatePlayerStatusLine() {
     gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
-    mazeStatusLine.innerHTML = `<b>LEVEL ${mazeStatusLine.currentLevel}.${mazeStatusLine.currentMaze}</b> 
+    mazeStatusLine.innerHTML = `<b>LEVEL ${gameState.currentLevel}.${gameState.currentMaze}</b> 
       <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
+
+    list = [];
+    for (const relic of player.relics) {
+      list.push(`<div>${Grid.symbolFor(relic.kind)}</div>`);
+    }
+    gameScreen.relicsStatusLine.innerHTML = list.join("");
 }
 
 function playerTNT(character) {
@@ -183,18 +139,6 @@ function playerTNT(character) {
     return;
   }
 
-  const blastArea = [
-    [0, 0],
-    [-1, -1],
-    [-1, 0],
-    [-1, 1],
-    [0, -1],
-    [0, 1],
-    [1, -1],
-    [1, 0],
-    [1, 1],
-  ];
-
   Sound.tnt();
 
   const playerRect = grid.cellRectAtRowCol(character.row, character.col);
@@ -202,13 +146,14 @@ function playerTNT(character) {
   const rectBottomRight = grid.cellRectAtRowCol(character.row+1, character.col+1) || playerRect;
   const blastRect = {top: rectTopLeft.top, left: rectTopLeft.left, bottom: rectBottomRight.bottom, right: rectBottomRight.right};
 
-  characters.forEach((character) => {
-    if (grid.hasCharacterCollidedWithRect(character, blastRect)) {
-      onCharacterBlownUp(character);
+  characters.forEach((target) => {
+    if ((target.priority - OBJECTS.tnt.priority) <= 2 
+      && grid.hasCharacterCollidedWithRect(target, blastRect)) {
+      onCharacterBlownUp(target);
     }
   });
 
-  blastArea.forEach((rc) => {
+  Grid.ALL_DIRECTIONS.forEach((rc) => {
     const row = character.row + rc[0];
     const col = character.col + rc[1];
     const mazeObjAtRowCol = grid.objectAt(row, col);
@@ -218,11 +163,12 @@ function playerTNT(character) {
         grid.updateCellAtRowCol(row, col, {strobe: true});
         setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
       } else {
-        grid.placeObjectAt(row, col, OBJECTS.path, {flash: true});
+        const explode = mazeObjAtRowCol !== OBJECTS.path;
+        const flash = !explode;
+        grid.placeObjectAt(row, col, OBJECTS.path, {flash: flash, explode: explode});
       }
     }
   });
-  updatePlayerStatusLine();
 
   // The Player can be hurt if TNT was set off by 
   // chain reaction or by a 3rd party, and the 
@@ -233,27 +179,39 @@ function playerTNT(character) {
     // is blown up, then its game over!
     playerKilled(!player.isAlive);
     updateGameState(player);
+  } else {
+    updateGameUI();
   }
+}
+
+function disableCharacter(character, disabledDuration) {
+  if (!(character instanceof Character) || disabledDuration <= 0) return;
+  if (character.disabled) return;
+
+  character.disabled = true;
+  const disabledTime = character.disabledTime;
+
+  setTimeout(() => {
+    if (disabledTime === character.disabledTime) {
+      character.disabled = false;
+      updateGameState(character);
+    }
+  }, disabledDuration);
+  updateGameState(character);
 }
 
 function onCharacterBlownUp(character) {
   if (character.disabled === true) return;
+
+  grid.addAnimationCharacterFor(character, {explode: true});
 
   if (character.canKill(player)) {
     if (character.lives === 0) {
       addScoreForCharacter(character, settings.blownUpPointsFactor);
     } else {
       character.lives--;
-      character.disabled = true;
-      const disabledTime = character.disabledTime;
-
-      setTimeout(() => {
-        if (disabledTime === character.disabledTime) {
-          character.disabled = false;
-          updateGameState(character);
-        }
-      }, settings.blowUpRecoveryDuration);
-      updateGameState(character);
+      disableCharacter(character, settings.blowUpRecoveryDuration);
+      grid.applyAnimationFor(character, {blownup: true});
       return;
     }
   } else {
@@ -302,13 +260,20 @@ function playerChomp(character, object) {
 
 function playerGrab(object) {
     if (object instanceof Character && object.isGrabable) {
-      player.putInBag(object.config);
+      if (object.isRelic) {
+        gameState.levelRelic = object.config;
+        Sound.portal();
+        grid.ensureExit(true);  
+        setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
+      } else {
+        player.grab(object.config);
+      }
       characters.remove(object);
     } else if (Number.isFinite(object.points)) {
       if (object.isBaggable === false) {
         addScoreForCharacter(object, 1);
       } else {
-        player.putInBag(object);
+        player.grab(object);
       }
     }
 
@@ -346,7 +311,7 @@ function playerKilled(buried = false) {
 }
 
 function onRockMoved(character, object) {
-  if (!object) return;
+  if (!object || object.fixed === true) return;
 
   if (object === OBJECTS.tnt) {
     playerTNT(character)
@@ -354,7 +319,7 @@ function onRockMoved(character, object) {
     playerChomp(character, object);
   }
   grid.placeObjectAt(character.row, character.col, OBJECTS.path, {visited: true});
-  updatePlayerStatusLine();
+  updateGameUI();
 }
 
 function onPlayerMoved(character) {
@@ -367,9 +332,8 @@ function onPlayerMoved(character) {
         } else {
             playerGrab(object);
         }
-        if (object === OBJECTS.key && --gameState.keysNeeded === 0) {
-          grid.ensureExit();
-          Sound.portal();
+        if (object === OBJECTS.key) {
+          --gameState.keysNeeded;
         }
       }
       grid.placeObjectAt(character.row, character.col, OBJECTS.path, {visited: !character.powerUp});
@@ -460,13 +424,13 @@ function moveCharacter(character, delta) {
     if (Direction.isGood(direction)) {
         const canSeePlayer = grid.canCharacterSeeTheOther(character, player);
 
-        // Cats run from player and spiders run from power player, so don't
-        // favor the current direction when player is visible.
-        if (!canSeePlayer || !(character.priority === 0 || character.priority === 1 && player.powerUp)) {
+        // When the character can see the player, don't favor the same
+        // direction if its a prey or the player is powered up.
+        if (player.powerUp ? false : !(canSeePlayer && character.priority < 1)) {
             dirs.push(direction);
         }
 
-        // Don't introduce a random turn if a scorpion sees the player
+        // Don't introduce a random turn if a hunter sees the player
         if (!(character.priority >= player.priority && canSeePlayer)) {
             // Add a random turn before the perferred direction.
             const turns = Direction.turnsFor(direction);
@@ -476,7 +440,7 @@ function moveCharacter(character, delta) {
             }
         }
 
-        // Hunt down the player by favoring the direction to get to the player.
+        // Hunt down the player by favoring the player's location.
         // The vision distance is random up to on the player's level.
         if (character.canKill(player) && player.isAlive && 
           Math.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
@@ -527,10 +491,20 @@ function moveCharacter(character, delta) {
   });
 
   if (character.kind === CHARACTERS.rock.kind && Direction.isNone(direction)) {
-    // Rocks become wall when they no longer move.
     characters.remove(character);
-    grid.placeObjectAt(character.row, character.col, OBJECTS.wall, {rock: true});
-    updatePlayerStatusLine();
+
+    // When a rock stops moving, it can become a wall if position is
+    // not occupied by a fixed object. Otherwise try the row above.
+    let object = grid.objectAt(character.row, character.col);
+    let row = character.row;
+
+    if (!object || object.fixed === true) {
+      object = grid.objectAt(--row, character.col);
+    }
+    if (object && object.fixed !== true) {
+      grid.placeObjectAt(row, character.col, OBJECTS.wall, {rock: true});
+      updateGameUI();
+    }
   }
 }
 
@@ -575,6 +549,15 @@ function tallyScore() {
     list.push(`<div>${MESSAGES.mazeClearedBonus} ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
   }
 
+  if (gameState.levelRelic) {
+    if (gameState.levelRelic) {
+      player.grab(gameState.levelRelic);
+    }
+    const points = gameState.levelRelic.points * player.level;
+    scores.push(points);
+    list.push(`<div>${Grid.symbolFor(gameState.levelRelic.kind)} &times; ${gameState.levelRelic.points}</div><div class='score'>${points}</div>`);
+  }
+
   gameScreen.scorecard.innerHTML = "";
   gameScreen.nextMazeLink.hidden = true;
   gameScreen.scoreboard.style.display = "flex";
@@ -609,7 +592,7 @@ function tallyScore() {
           gameScreen.scorecard.innerHTML = list.join("") + `<div style='justify-self: right'>Total:</div><div class='score'>${totalScore}</div>`;
           player.score += totalScore;
           Sound.ding();
-          setTimeout(updatePlayerStatusLine, TIMEOUTS.updateScoreCardInterval);
+          setTimeout(updateGameUI, TIMEOUTS.updateScoreCardInterval);
         }
     }
   }
@@ -633,15 +616,15 @@ function nextMaze() {
   gameScreen.scoreboard.style.display = "none";
   gameState.reset();
 
-  const currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
-  const currentMaze = player.mazes % settings.mazesPerLevel;
+  gameState.currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
+  gameState.currentMaze = (player.mazes % settings.mazesPerLevel)+1;
   player.mazes++;
   
   let rows = settings.rows;
   let cols = settings.cols;
 
-  if (currentMaze === 0) {
-    player.level = currentLevel;
+  if (gameState.currentMaze === 1) {
+    player.level = gameState.currentLevel;
     Sound.level();
 
     if (player.level > 1) {
@@ -651,22 +634,28 @@ function nextMaze() {
       settings.cols = cols;
     }
   } else {
-    if ((currentMaze & 1) === 1) {
-      rows = Math.min(rows+2, settings.maxRows);
-    } else {
+    if (gameState.currentMaze & 1) {
       cols = Math.min(cols+2, settings.maxCols);
+    } else {
+      rows = Math.min(rows+2, settings.maxRows);
     }
     Sound.maze();
   }
 
   grid = new Grid(rows, cols, settings.cellSize);
+
+  if (gameState.isLastMaze()) {
+    gameState.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
+    grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.edge, {}, true);
+  }
+
   player.restart();
   grid.addCharacter(player);
-
   setupCharacters();
 
-  mazeStatusLine.currentLevel = currentLevel;
-  mazeStatusLine.currentMaze = currentMaze+1;
+  if (gameState.isLastMaze()) {
+    grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.rock, {});
+  }
 
   [player, ...characters].forEach(character => {
       // Negative speed is not sped up. 
@@ -790,12 +779,34 @@ function createCharacters(config) {
     let count = config.qty(player.level);
 
     while (count-- > 0) {
-        const characterType = config.class;
-
-        const position = findRandomPathCell();
-        const character = new characterType(position);
-        characters.add(character);
+      const position = findRandomPathCell();
+      createCharacter(config, position);
     }
+}
+
+function createCharacter(config, position) {
+    if (!config.class) return;
+
+    const characterType = config.class;
+    const character = new characterType(position);
+    characters.add(character);
+
+    return character;
+}
+
+function startRelicChamber() {
+  const positions = grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.wall, {pulse: true, rock: true});
+
+  // Where the relic is buried is randomized
+  const positionIndex = Math.floor(Math.random() * positions.length);
+  const position = positions[positionIndex];
+
+  // The Guardian is hiding at the same location as the relic, so the
+  // astute will see where the Guardian originated from and dig there.
+  const guardian = createCharacter(CHARACTERS.ghost, {row: position.row, col: position.col});
+  const relic = createCharacter(CHARACTERS.skull, position);
+
+  disableCharacter(guardian, TIMEOUTS.guardianDelay-player.level*TIMEOUTS.guardianDelayLevelReduction);
 }
 
 function startCaveIn() {
@@ -815,16 +826,6 @@ function startCaveIn() {
   }, TIMEOUTS.caveInInterval);
 }
 
-function dropRandomRocks() {
-  const positions = findRandomRockPositions(player.level);
-  if (positions.length === 0) return;
-
-  positions.forEach(position => {
-    const rock = new Rock(position);
-    characters.add(rock);
-  });
-}
-
 function dropItems(config) {
     if (!config.qty) return;
 
@@ -838,6 +839,72 @@ function dropItems(config) {
       const position = findRandomPathCell(config.inWalls);
       grid.placeObjectAt(position.row, position.col, config);
     }
+}
+
+function dropRandomRocks() {
+  const positions = findRandomRockPositions(player.level);
+  if (positions.length === 0) return;
+
+  positions.forEach(position => {
+    const rock = new Rock(position);
+    characters.add(rock);
+  });
+}
+
+function findRandomRockPositions(count) {
+  function canPlaceRockAt(row, col) {
+    const object = grid.objectAt(row, col);
+    return object && object.fixed !== true && object.priority <= CHARACTERS.rock.priority;
+  }
+
+  const positions = [];
+  let tries = Math.random() * 10;
+
+  // When there are enough walls in the maze, try to place rocks in the walls first.
+  while (--tries > 0 && (grid.pathCount / grid.cellCount) < settings.caveInThreshold) {
+    const position = findRandomPathCell(true);
+    // There must be a path cell below the wall to place a rock in the wall.
+    if (canPlaceRockAt(position.row+1, position.col)) {
+      positions.push(position);
+      break;
+    }
+  }
+
+  // If no wall was found, then try to place rocks at top
+  tries = grid.cols;
+  while (--tries > 0 && positions.length < count) {
+    const col = Math.floor(Math.random() * grid.cols);
+    let row = 0;
+    
+    // Place rocks at the top if a path cell exists.
+    if (canPlaceRockAt(row+1, col)) {
+      positions.push({ row, col });
+      continue;
+    }
+
+    // Otherwise place rocks at lowest possible row in the column if a path cell exists.
+    while (++row < grid.rows-1) {
+      if (canPlaceRockAt(row, col)) {
+        positions.push({ row: row-1, col });
+        break;
+      }
+    }
+  }
+  return positions;
+}
+
+function findRandomPathCell(inWalls = false) {
+  while (true) {
+    const row = Math.floor(Math.random() * grid.rows);
+    const col = Math.floor(Math.random() * grid.cols);
+    const obj = grid.objectAt(row, col);
+
+    if (inWalls ? !(obj === OBJECTS.wall || obj === OBJECTS.rock) : (obj !== OBJECTS.path)) continue;
+    if (row === player.row && col === player.col) continue;
+    if (characters.atRowCol(row, col)) continue;
+
+    return { row, col };
+  }
 }
 
 function saveHighScore(highScore) {
@@ -929,12 +996,20 @@ const gameState = {
     this.gameOver = false; 
     this.caveInStarted = false;
     this.keysNeeded = 0;
+    this.currentLevel = 0;
+    this.currentMaze = 0;
+    this.levelRelic = null;
+    this.relicChamberFormation = null;
   },
 
-  isCaveInThreshold () { 
+  isLastMaze() {
+    return this.currentMaze === settings.mazesPerLevel;
+  },
+
+  isCaveInThreshold() { 
     const pathCount = this.caveInStarted ? grid.pathCount + Math.random() * 10 : grid.pathCount;
     return pathCount / grid.cellCount > settings.caveInThreshold;
-   },
+  },
 };
 
 gameScreen.startGame = startGame;

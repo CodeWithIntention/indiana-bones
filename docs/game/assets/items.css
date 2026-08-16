@@ -28,7 +28,7 @@
     background-color: transparent;
 }
 
-.cell.key::before {
+.cell.key::after {
     content: var(--sym-key);
 }
 
@@ -36,7 +36,7 @@
     background-color: var(--maze-path);
 }
 
-.cell.gem::before {
+.cell.gem::after {
     content: var(--sym-gem);
 }
 
@@ -52,12 +52,16 @@
     content: var(--sym-fountain);
 }
 
-.cell.cheese::before {
+.cell.cheese::after {
     content: var(--sym-cheese);
 }
 
-.cell.banana::before {
+.cell.banana::after {
     content: var(--sym-banana);
+}
+
+.cell.skull::after {
+    content: var(--sym-skull);
 }
 
 .cell.exit {

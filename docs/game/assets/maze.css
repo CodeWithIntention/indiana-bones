@@ -40,7 +40,6 @@
     opacity: .25;
 }
 
-.cell.rock,
 .cell.exit,
 .cell.path {
     background-color: var(--maze-path);

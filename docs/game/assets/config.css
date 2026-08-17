@@ -1,6 +1,8 @@
 
 :root {
     --game-font-family: 'Share Tech Mono', monospace;
+    --game-border-color: transparent;
+
     /*--game-text-color: #e6dccb;*/
 
     --score-color: white;
@@ -12,9 +14,10 @@
     /*--shadow-glow-color: rgba(255, 173, 106, 0.92);*/
     --shadow-glow: 0 0 10px 5px var(--shadow-glow-color);
 
+    --message-font-size: 12px;
+
     --small-font-size: 10px;
     --medium-font-size: 16px;
-    --message-font-size: 12px;
     --large-font-size: 24px;
 
     /*--background-image: url("ib-game-frame.png");*/

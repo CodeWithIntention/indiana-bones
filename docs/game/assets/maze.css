@@ -40,6 +40,7 @@
     opacity: .25;
 }
 
+.cell.rock,
 .cell.exit,
 .cell.path {
     background-color: var(--maze-path);
@@ -66,7 +67,6 @@
 
 .cell.rock {
     z-index: 5;
-    background-color: transparent;
 }
 
 .cell.rock::after {

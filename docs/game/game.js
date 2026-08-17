@@ -140,6 +140,7 @@ function playerTNT(character) {
   }
 
   Sound.tnt();
+  grid.addAnimationCharacterFor(character, {explosion: true});
 
   const playerRect = grid.cellRectAtRowCol(character.row, character.col);
   const rectTopLeft = grid.cellRectAtRowCol(character.row-1, character.col-1) || playerRect;
@@ -163,9 +164,9 @@ function playerTNT(character) {
         grid.updateCellAtRowCol(row, col, {strobe: true});
         setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
       } else {
-        const explode = mazeObjAtRowCol !== OBJECTS.path;
-        const flash = !explode;
-        grid.placeObjectAt(row, col, OBJECTS.path, {flash: flash, explode: explode});
+        const blast = mazeObjAtRowCol !== OBJECTS.path;
+        const flash = !blast;
+        grid.placeObjectAt(row, col, OBJECTS.path, {flash: flash, blast: blast});
       }
     }
   });
@@ -177,7 +178,7 @@ function playerTNT(character) {
     && grid.hasCharacterCollidedWithRect(player, blastRect)) {
     // Beware! If the player is waiting to respawn and
     // is blown up, then its game over!
-    grid.addAnimationCharacterFor(player, {explode: true});
+    grid.addAnimationCharacterFor(player, {blast: true});
     playerKilled(!player.isAlive);
     updateGameState(player);
   } else {
@@ -204,7 +205,7 @@ function disableCharacter(character, disabledDuration) {
 function onCharacterBlownUp(character) {
   if (character.disabled === true) return;
 
-  grid.addAnimationCharacterFor(character, {explode: true});
+  grid.addAnimationCharacterFor(character, {blast: true});
 
   if (character.canKill(player)) {
     if (character.lives === 0) {

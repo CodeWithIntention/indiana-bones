@@ -30,13 +30,23 @@
     opacity: 0.55;
 }
 
-.explode {
+.blast {
     background-color: transparent;
 }
 
-.explode::before {
+.blast::before {
     content: var(--sym-blast);
     font-size: 18px;
+    animation: blast 400ms ease-out forwards;
+}
+
+.explosion {
+    background-color: transparent;
+}
+
+.explosion::before {
+    content: var(--sym-blast);
+    font-size: 38px;
     animation: blast 300ms ease-out forwards;
 }
 

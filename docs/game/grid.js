@@ -323,11 +323,11 @@ class Grid {
 
   
   addAnimationCharacterFor(character, effects) {
-    if (!((character instanceof Character) && effects)) return;
+    if (!(character && character.row > 0 && character.col > 0 && effects)) return;
     
     const label = new Label(character.row, character.col);
-    this.addCharacter(label, character.offsetTop, character.offsetLeft);
-    label.gridCell.style.zIndex = (character.gridCell.style.zIndex || 0) + 1;
+    const cellRect = this.cellAtRowCol(character.row, character.col);
+    this.addCharacter(label, character.offsetTop || cellRect.top, character.offsetLeft || cellRect.left);
     this.applyAnimationFor(label, effects, true);
   }
 

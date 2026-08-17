@@ -161,7 +161,8 @@ class Grid {
       for (let col = 1; col < this.cols-1; col++) {
         const objectAtRowCol = this.#maze.objectAt(row, col);
 
-        if (!(objectAtRowCol === OBJECTS.wall || objectAtRowCol === OBJECTS.path)) return false;
+        if (objectAtRowCol.fixed === true) continue;
+        if (!(objectAtRowCol !== OBJECTS.path || objectAtRowCol !== OBJECTS.wall)) return false;
       }
     }
     return true;

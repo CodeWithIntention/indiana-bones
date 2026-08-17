@@ -544,10 +544,12 @@ function tallyScore() {
     list.push(`<div>${Grid.symbolFor("maze-bonus")} &times; ${mazeBonus()} &times; ${settings.pointsPerPath}</div><div class='score'>${mazeBonusPoints}</div>`);
   }
 
-  if (grid.isMazeCleared && characters.killables.length === 0) {
+  if (grid.isMazeCleared && characters.killables().length === 0) {
     const points = settings.mazeClearedBonusPoints * player.level;
     scores.push(points);
-    list.push(`<div>${MESSAGES.mazeClearedBonus} ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
+    list.push(`<div>${MESSAGES.mazeClearedMessage} ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
+  } else {
+    list.push(`<div>${MESSAGES.mazeNotClearedMessage}</div><div class='score'>0</div>`);
   }
 
   if (gameState.levelRelic) {
@@ -556,7 +558,7 @@ function tallyScore() {
     }
     const points = gameState.levelRelic.points * player.level;
     scores.push(points);
-    list.push(`<div>${Grid.symbolFor(gameState.levelRelic.kind)} &times; ${player.level} &times; ${gameState.levelRelic.points}</div><div class='score'>${points}</div>`);
+    list.push(`<div>${MESSAGES.relicRetrievedMessage} ${Grid.symbolFor(gameState.levelRelic.kind)} &times; ${player.level} &times; ${gameState.levelRelic.points}</div><div class='score'>${points}</div>`);
   }
 
   gameScreen.scorecard.innerHTML = "";
@@ -771,7 +773,7 @@ function setupCharacters() {
     }
 
     characters.killables = () => {
-        return characters.filter(item => item.lives >= 0);
+        return characters.filter(item => item.priority <= player.priority);
     }
 
     Object.values(CHARACTERS).forEach(createCharacters);

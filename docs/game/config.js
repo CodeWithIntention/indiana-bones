@@ -3,7 +3,9 @@ import { Direction } from "./util.js";
 export { OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS }
 
 const MESSAGES = {
-  mazeClearedBonus: "Cave emptied!",
+  mazeClearedMessage: "Cave emptied!",
+  mazeNotClearedMessage: "Cave NOT emptied!",
+  relicRetrievedMessage: "Relic Retrieved!",
   nextMazeLinkText: "Go Deeper",
   nextLevelLinkText: "Next Level",
 }
@@ -75,7 +77,7 @@ const CHARACTERS = {
                     isChompable: true, isGrabable: true, grabSound: "grab", chompSound: 'ack',
                     dropObject: OBJECTS.banana, movesToDrop: 25, dropProbability: .50,
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
-    rock:       {points: 1000, priority: 2, speed: 55, lives: 0, qty: () => 0, 
+    rock:       {points: 1000, priority: 2.5, speed: 55, lives: 0, qty: () => 0, 
                     isChompable: true, chompSound: "splat", allowedDirections: [Direction.DOWN],
                     dropObject: OBJECTS.gem, movesToDrop: 1, dropProbability: .005},
     relic:      {points: 50000, priority: 4, speed: 0, lives: 0, qty: () => 0, 

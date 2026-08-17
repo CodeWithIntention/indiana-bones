@@ -177,6 +177,7 @@ function playerTNT(character) {
     && grid.hasCharacterCollidedWithRect(player, blastRect)) {
     // Beware! If the player is waiting to respawn and
     // is blown up, then its game over!
+    grid.addAnimationCharacterFor(player, {explode: true});
     playerKilled(!player.isAlive);
     updateGameState(player);
   } else {

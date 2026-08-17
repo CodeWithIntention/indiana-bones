@@ -15,7 +15,13 @@ function showGameUI(show = true) {
   dashboard.style.display = show ? 'flex' : 'none';
 }
 
+let startingGame = false;
+
 function zoomStartGame() {
+  if (startingGame) return;
+
+  startingGame = true;
+
   // Set style for game screen zoom in 
   gameScreen.classList.add("zoomIn");
   gameScreen.hidden = false;
@@ -30,7 +36,10 @@ function zoomStartGame() {
     // starting the game.
     setTimeout(() => {
       gameScreen.classList.remove("zoomIn", "expanded", "spin", "zoom");
-      gameWindow.requestAnimationFrame(() => gameScreen.startGame());
+      gameWindow.requestAnimationFrame(() => {
+        startingGame = false;
+        gameScreen.startGame();
+    });
     }, TIMEOUTS.startGameZoomDuration);
   });
 }

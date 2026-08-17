@@ -165,8 +165,7 @@ function playerTNT(character) {
         setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
       } else {
         const blast = mazeObjAtRowCol !== OBJECTS.path;
-        const flash = !blast;
-        grid.placeObjectAt(row, col, OBJECTS.path, {flash: flash, blast: blast});
+        grid.placeObjectAt(row, col, OBJECTS.path, {flash: true, blast: blast});
       }
     }
   });

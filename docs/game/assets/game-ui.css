@@ -78,10 +78,11 @@ body {
     margin-top: var(--cell-size);  
 }
 
+#mazeStatusLine b,
 #bagStatusLine b,
 #relicsStatusLine b,
 #playerStatusLine b {
-    font-size: var(--small-font-size);
+    font-size: var(--message-font-size);
 }
 
 #game #mazeStatusLine {
@@ -90,10 +91,6 @@ body {
     right: 0px;
     padding: 0px;
     z-index: 2;
-}
-
-#mazeStatusLine b {
-    font-size: var(--message-font-size);
 }
 
 #maze {

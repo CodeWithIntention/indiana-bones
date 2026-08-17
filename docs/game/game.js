@@ -648,7 +648,7 @@ function nextMaze() {
 
   if (gameState.isLastMaze()) {
     gameState.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
-    grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.edge, {}, true);
+    grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.edge, {});
   }
 
   player.restart();

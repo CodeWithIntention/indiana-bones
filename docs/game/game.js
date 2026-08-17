@@ -585,7 +585,11 @@ function tallyScore() {
       setTimeout(updateScore, TIMEOUTS.updateScoreCardInterval);
     } else {
         gameScreen.nextMazeLink.hidden = false;
-
+        if (gameState.currentMaze === settings.mazesPerLevel) {
+          gameScreen.nextMazeLink.textContent = MESSAGES.nextLevelLinkText;
+        } else {
+          gameScreen.nextMazeLink.textContent = MESSAGES.nextMazeLinkText;
+        }
         if (totalScore === 0) {
           gameScreen.scorecard.innerHTML = "<div>You came out empty this time.</div><div class='score'>😐</div>";
           Sound.alert();

@@ -4,6 +4,8 @@ export { OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS }
 
 const MESSAGES = {
   mazeClearedBonus: "Cave emptied!",
+  nextMazeLinkText: "Go Deeper",
+  nextLevelLinkText: "Next Level",
 }
 
 const TIMEOUTS = {

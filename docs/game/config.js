@@ -90,9 +90,11 @@ const RELIC_CHAMBERS = [
     // Level 1 — 3x3 Solid
     // Introduces the mechanic with no ambiguity.
     [
-        "111",
-        "111",
-        "111"
+        "0000",
+        "1111",
+        "1111",
+        "1111",
+        "0000"
     ],
 
     // Level 2 — 5x5 Diamond

@@ -1,5 +1,5 @@
 import { Direction } from "./util.js";
-import { CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS } from "./config.js";
+import { CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES } from "./config.js";
 import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
@@ -777,7 +777,7 @@ function setupCharacters() {
     }
 
     Object.values(CHARACTERS).forEach(createCharacters);
-    Object.values(OBJECTS).forEach(dropItems);
+    Object.values(MAZE_DROPABLES).forEach(dropItems);
 }
 
 function createCharacters(config) {

@@ -1,6 +1,6 @@
 import { Direction } from "./util.js";
 
-export { OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS }
+export { OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES }
 
 const MESSAGES = {
   mazeClearedMessage: "Cave Bonus",
@@ -24,23 +24,8 @@ const TIMEOUTS = {
   guardianDelayLevelReduction: 200,
 }
 
-// Object configurations
-const OBJECTS = {
-    tnt:        {points: 100, qty: (level => level), grabSound: 'pickup', priority: 1.5},
-    bone:       {points: 1000, qty: (level => level*2), grabSound: 'grab', priority: 0},
-    fountain:   {points: 5000, qty: (level => level-1), grabSound: 'powerup', priority: 0},
-    
-    cheese:     {points: 200, qty: (() => 0), grabSound: 'grab', priority: 0},
-    banana:     {points: 300, qty: (() => 0), grabSound: 'grab', priority: 0},
-    gem:        {points: 10000, qty: (() => 0), grabSound: 'dingDing', priority: 0, isBaggable: false},
-
-    web:        {points: NaN, qty: (() =>  0), priority: 0, 
-                  speedReduction: .50, speedReductionDuration: 1000, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
-    poop:       {points: NaN, qty: (() =>  0), priority: 0, 
-                  speedReduction: .75, speedReductionDuration: 2000, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
-
-    key:        {points: NaN, qty: (level => level), inWalls: true, grabSound: 'grab', priority: 2, fixed: true},
-
+// Maze architecture objects
+const MAZE_CELLS = {
     path:       {priority: 0, visitable: true,  fixed: false},
     rock:       {priority: 4, visitable: false, fixed: true},
     wall:       {priority: 3.5, visitable: false, fixed: false,
@@ -49,6 +34,40 @@ const OBJECTS = {
     exit:       {priority: 2, visitable: true, fixed: true},
 };
 
+// Special game objects found in maze
+const SPECIAL = {
+    tnt:        {points: 100, qty: (level => level), grabSound: 'pickup', priority: 1.5},
+    key:        {points: NaN, qty: (level => level), inWalls: true, grabSound: 'grab', priority: 2, fixed: true},
+};
+
+// Artifacts found in maze
+const ARTIFACTS = {
+    bone:       {points: 1000, qty: (level => level*2), grabSound: 'grab', priority: 0},
+    fountain:   {points: 5000, qty: (level => level-1), grabSound: 'powerup', priority: 0},
+}
+
+// Objects dropped by characters
+const DROPPINGS = {
+    cheese:     {points: 200, grabSound: 'grab', priority: 0},
+    banana:     {points: 300, grabSound: 'grab', priority: 0},
+    gem:        {points: 10000, grabSound: 'dingDing', priority: 0, isBaggable: false},
+
+    web:        {points: NaN, qty: (() =>  0), priority: 0, 
+                  speedReduction: .50, speedReductionDuration: 1000, speedReductionReason: 'webbed', grabSound: 'oops', priority: 0},
+    poop:       {points: NaN, qty: (() =>  0), priority: 0, 
+                  speedReduction: .75, speedReductionDuration: 2000, speedReductionReason: 'pooped', grabSound: 'oops', priority: 0},
+};
+
+// Objects randomly dropped in a maze
+const MAZE_DROPABLES = {...SPECIAL, ...ARTIFACTS};
+
+// Maze items that can be picked up
+const MAZE_ITEMS = {...MAZE_DROPABLES, ...DROPPINGS};
+
+// Combine into all objects
+const OBJECTS = {...MAZE_CELLS, ...SPECIAL, ...ARTIFACTS, ...DROPPINGS};
+
+// Assign object kind using associated key
 Object.entries(OBJECTS).forEach(([key, value]) => value.kind = key);
 
 // Character configurations starting at Level 1
@@ -56,30 +75,34 @@ const CHARACTERS = {
     player:     {points: 0, priority: 2, speed: 55, lives: 3, tnts: 1, qty: () => 0, 
                     chompSound: 'chomp',
                     powerUpDuration: 3000, rotationTransform: null},
+
     ghost:      {points: 0, priority: 3, speed: 60, lives: -1, qty: (level => 0), 
                     phaseProbability: .50,
                     rotationTransform: null}, 
+
     scorpion:   {points: 4000, priority: 2, speed: 50, lives: 1, qty: (level => Math.floor((level-1)/2)), 
-                    dropObject: OBJECTS.poop, movesToDrop: 50, dropProbability: .75,
+                    dropObject: DROPPINGS.poop, movesToDrop: 50, dropProbability: .75,
                     rotationTransform: [[Direction.UP, 180], [Direction.DOWN, 0], [Direction.LEFT, 90], [Direction.RIGHT, 270]]}, 
     spider:     {points: 2000, priority: 1, speed: 45, lives: 0, qty: (level => level), 
                     isChompable: true, 
-                    dropObject: OBJECTS.web, movesToDrop: 50, dropProbability: .75,
+                    dropObject: DROPPINGS.web, movesToDrop: 50, dropProbability: .75,
                     rotationTransform: [[Direction.UP, 0], [Direction.DOWN, 180], [Direction.LEFT, 270], [Direction.RIGHT, 90]]},
+
     cat:        {points: 1000, priority: 0.75, speed: -45, lives: 0, qty: (level => Math.floor(level/2)+1), 
                     isChompable: true, isGrabable: true, grabSound: 'meow', chompSound: 'hiss',
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
     mouse:      {points: 2000, priority: 0.75, speed: -35, lives: 0, qty: (level => level-2), 
                     isChompable: true, isGrabable: true, grabSound: "grab", chompSound: "eat",
-                    dropObject: OBJECTS.cheese, movesToDrop: 25, dropProbability: .50,
+                    dropObject: DROPPINGS.cheese, movesToDrop: 25, dropProbability: .50,
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
     monkey:     {points: 3000, priority: 0.75, speed: -25, lives: 0, qty: (level => level-4), 
                     isChompable: true, isGrabable: true, grabSound: "grab", chompSound: 'ack',
-                    dropObject: OBJECTS.banana, movesToDrop: 25, dropProbability: .50,
+                    dropObject: DROPPINGS.banana, movesToDrop: 25, dropProbability: .50,
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
     rock:       {points: 1000, priority: 2.5, speed: 55, lives: 0, qty: () => 0, 
                     isChompable: true, chompSound: "splat", allowedDirections: [Direction.DOWN],
-                    dropObject: OBJECTS.gem, movesToDrop: 1, dropProbability: .005},
+                    dropObject: DROPPINGS.gem, movesToDrop: 1, dropProbability: .005},
+
     relic:      {points: 50000, priority: 4, speed: 0, lives: 0, qty: () => 0, 
                     isChompable: false, isGrabable: true, isBaggable: false, isRelic: true},
     skull:      {points: 10000, priority: 4, speed: 0, lives: 0, qty: () => 0, 

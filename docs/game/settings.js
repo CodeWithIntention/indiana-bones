@@ -43,7 +43,7 @@ class Settings {
     this.pointsPerFreeLife = 10000;
     this.freeTNTsWithLife = 5;
     this.maxLives = 5;
-    this.maxTnts = 99;
+    this.maxTnts = 50;
     this.mazeClearedBonusPoints = 5000;
     this.caveInThreshold = .80;
 

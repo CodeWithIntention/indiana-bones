@@ -1,5 +1,5 @@
 import { Direction } from "./util.js";
-import { OBJECTS } from "./config.js";
+import { OBJECTS, MAZE_ITEMS } from "./config.js";
 import { Character } from "./character.js";
 import { Label } from "./characters.js";
 
@@ -157,12 +157,14 @@ class Grid {
   }
 
   get isMazeCleared() {
+    const mazeItems = Object.values(MAZE_ITEMS);
+
     for (let row = 1; row < this.rows-1; row++) {
       for (let col = 1; col < this.cols-1; col++) {
         const objectAtRowCol = this.#maze.objectAt(row, col);
 
         if (objectAtRowCol.fixed === true) continue;
-        if (!(objectAtRowCol !== OBJECTS.path || objectAtRowCol !== OBJECTS.wall)) return false;
+        if (mazeItems.some(item => item.kind === objectAtRowCol.kind)) return false;
       }
     }
     return true;

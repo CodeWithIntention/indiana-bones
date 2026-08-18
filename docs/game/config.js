@@ -3,9 +3,9 @@ import { Direction } from "./util.js";
 export { OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS }
 
 const MESSAGES = {
-  mazeClearedMessage: "Cave emptied!",
+  mazeClearedMessage: "Cave Bonus",
   mazeNotClearedMessage: "Cave NOT emptied!",
-  relicRetrievedMessage: "Relic Retrieved!",
+  relicRetrievedMessage: "Relic Bonus",
   nextMazeLinkText: "Go Deeper",
   nextLevelLinkText: "Next Level",
 }

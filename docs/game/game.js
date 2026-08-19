@@ -1,4 +1,4 @@
-import { Direction } from "./util.js";
+import { Direction, RNG } from "./util.js";
 import { CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES } from "./config.js";
 import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
@@ -417,7 +417,7 @@ function moveCharacter(character, delta) {
   function getDirections(direction) {
     // The default is to pick a random direction
     const directions = [...Direction.ALL];
-    Direction.shuffle(directions);
+    Direction.shuffle(directions, gameState.random);
     const dirs = [Direction.NONE, ...directions];
 
     // If the character is already moving in a direction, then favor
@@ -435,7 +435,7 @@ function moveCharacter(character, delta) {
         if (!(character.priority >= player.priority && canSeePlayer)) {
             // Add a random turn before the perferred direction.
             const turns = Direction.turnsFor(direction);
-            const randomTurnIndex = Math.floor(Math.random()*10);
+            const randomTurnIndex = Math.floor(gameState.random()*10);
             if (randomTurnIndex < 5) {
                 dirs.push(turns[randomTurnIndex % turns.length]);
             }
@@ -444,8 +444,8 @@ function moveCharacter(character, delta) {
         // Hunt down the player by favoring the player's location.
         // The vision distance is random up to on the player's level.
         if (character.canKill(player) && player.isAlive && 
-          Math.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
-          const huntDistance = Math.random() * character.manhattanDistanceTo(player) + Math.random() * player.level;
+          gameState.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
+          const huntDistance = gameState.random() * character.manhattanDistanceTo(player) + gameState.random() * player.level;
           if (huntDistance < player.level) {
             const huntUD = player.row < character.row ? Direction.UP : Direction.DOWN;
             const huntLR = player.col < character.col ? Direction.LEFT : Direction.RIGHT;
@@ -621,7 +621,7 @@ function goDeeper() {
 
 function nextMaze() {
   gameScreen.scoreboard.style.display = "none";
-  gameState.reset();
+  gameState.onNextMaze();
 
   gameState.currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
   gameState.currentMaze = (player.mazes % settings.mazesPerLevel)+1;
@@ -649,7 +649,7 @@ function nextMaze() {
     Sound.maze();
   }
 
-  grid = new Grid(rows, cols, settings.cellSize);
+  grid = new Grid(rows, cols, settings.cellSize, gameState.random);
 
   if (gameState.isLastMaze()) {
     gameState.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
@@ -820,7 +820,7 @@ function startRelicChamber() {
   const positions = grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.wall, {pulse: true, rock: true});
 
   // Where the relic is buried is randomized
-  const positionIndex = Math.floor(Math.random() * positions.length);
+  const positionIndex = Math.floor(gameState.random() * positions.length);
   const position = positions[positionIndex];
 
   // The Guardian is hiding at the same location as the relic, so the
@@ -880,7 +880,7 @@ function findRandomRockPositions(count) {
   }
 
   const positions = [];
-  let tries = Math.random() * 10;
+  let tries = gameState.random() * 10;
 
   // When there are enough walls in the maze, try to place rocks in the walls first.
   while (--tries > 0 && (grid.pathCount / grid.cellCount) < settings.caveInThreshold) {
@@ -895,7 +895,7 @@ function findRandomRockPositions(count) {
   // If no wall was found, then try to place rocks at top
   tries = grid.cols;
   while (--tries > 0 && positions.length < count) {
-    const col = Math.floor(Math.random() * grid.cols);
+    const col = Math.floor(gameState.random() * grid.cols);
     let row = 0;
     
     // Place rocks at the top if a path cell exists.
@@ -917,8 +917,8 @@ function findRandomRockPositions(count) {
 
 function findRandomPathCell(inWalls = false) {
   while (true) {
-    const row = Math.floor(Math.random() * grid.rows);
-    const col = Math.floor(Math.random() * grid.cols);
+    const row = Math.floor(gameState.random() * grid.rows);
+    const col = Math.floor(gameState.random() * grid.cols);
     const obj = grid.objectAt(row, col);
 
     if (inWalls ? !(obj === OBJECTS.wall || obj === OBJECTS.rock) : (obj !== OBJECTS.path)) continue;
@@ -938,7 +938,8 @@ function getHighScore() {
 }
 
 function startGame() {
-  gameState.gameOver = false;
+  const seed = Math.random() * 1_000_000 + 1;
+  gameState.onStartGame(seed);
 
   settings.setDefaults();
   player.reset();
@@ -1014,7 +1015,13 @@ let grid = null;
 let characters = [];
 
 const gameState = {
-  reset() {
+  onStartGame(seed) {
+    this.seed = seed;
+    this.gameOver = false;
+    this.random = RNG.randomizer(seed);
+  },
+
+  onNextMaze() {
     this.gameOver = false; 
     this.caveInStarted = false;
     this.keysNeeded = 0;
@@ -1029,7 +1036,7 @@ const gameState = {
   },
 
   isCaveInThreshold() { 
-    const pathCount = this.caveInStarted ? grid.pathCount + Math.random() * 10 : grid.pathCount;
+    const pathCount = this.caveInStarted ? grid.pathCount + gameState.random() * 10 : grid.pathCount;
     return pathCount / grid.cellCount > settings.caveInThreshold;
   },
 };

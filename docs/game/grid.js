@@ -8,9 +8,9 @@ export { Maze, Grid }
 class Maze {
   #maze;
 
-  constructor(rows, cols, cellSize) {
+  constructor(rows, cols, cellSize, random) {
     this.cellSize = cellSize;
-    this.#createGrid(rows, cols);
+    this.#createGrid(rows, cols, random);
   }
 
   get rows() {
@@ -55,7 +55,7 @@ class Maze {
     return objects;
   }
 
-  #createGrid(rows, cols) {
+  #createGrid(rows, cols, random) {
     const maze = Array.from({ length: rows }, () =>
       Array(cols).fill(OBJECTS.wall),
     );
@@ -70,7 +70,7 @@ class Maze {
       }
     }
 
-    function carve(row, col, loopedBack) {
+    function carve(row, col, loopedBack, random) {
       maze[row][col] = OBJECTS.path;
 
       const directions = [
@@ -80,7 +80,7 @@ class Maze {
         [-2, 0],
       ];
 
-      Direction.shuffle(directions);
+      Direction.shuffle(directions, random);
 
       for (const [dr, dc] of directions) {
         const newRow = row + dr;
@@ -88,18 +88,18 @@ class Maze {
         const allowLoopback = !loopedBack 
           && newRow > 2 && newCol > 2
           && newRow < rows - 2 && newCol < cols - 2
-          && Math.random() < 0.25;
+          && random() < 0.25;
 
         if (newRow > 0 && newRow < rows - 1 
           && newCol > 0 && newCol < cols - 1 
           && (maze[newRow][newCol] === OBJECTS.wall || allowLoopback)) {
             maze[row + dr / 2][col + dc / 2] = OBJECTS.path;
-            carve(newRow, newCol, allowLoopback);
+            carve(newRow, newCol, allowLoopback, random);
           }
       }
     }
 
-    carve(1, 1, false);
+    carve(1, 1, false, random);
 
     this.#maze = maze;
   }
@@ -129,13 +129,15 @@ class Grid {
   #collisionThreshold;
   #pathCount;
   #visitedPathCount;
+  #random;
 
-  constructor(rows, cols, cellSize) {
-    this.#maze = new Maze(rows, cols, cellSize);
+  constructor(rows, cols, cellSize, random) {
+    this.#maze = new Maze(rows, cols, cellSize, random);
     this.#cells = null;
     this.#collisionThreshold = .5;
     this.#pathCount = 0;
     this.#visitedPathCount = 0;
+    this.#random = random;
 
     this.#createCells(this.#maze);
   }
@@ -482,8 +484,8 @@ class Grid {
   ensureExit(randomize = false) {
     if (randomize) {
       while (true) {
-        const row = Math.floor(Math.random() * this.rows);
-        const col = Math.floor(Math.random() * this.cols);
+        const row = Math.floor(this.#random() * this.rows);
+        const col = Math.floor(this.#random() * this.cols);
         const objectAtRowCol = this.objectAt(row, col);
 
         if (objectAtRowCol.fixed === false) {

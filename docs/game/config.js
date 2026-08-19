@@ -12,12 +12,11 @@ const MESSAGES = {
 
 const TIMEOUTS = {
   startGameZoomDuration: 2500,
-  characterPointsLabel: 2000,
+  characterPointsLabel: 1500,
   tallyScoreDelay: 2000,
   updateScoreCardInterval: 750,
   useArrowsMessageTimeout: 3000,
   nextMazeDelay: 1000,
-  mazeRumbleDuration: 2000,
   caveInInterval: 1500,
   tntDetonationDelay: 1500,
   guardianDelay: 3000,

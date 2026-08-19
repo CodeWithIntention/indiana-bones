@@ -429,42 +429,6 @@ class Grid {
       ((heightSpan - heightCollision) / targetHeight >= this.#collisionThreshold);
   }
 
-  moveCharacter(character, direction, delta, row, col) {
-    // reserved: row, col
-
-    if (!(character instanceof Character)) return;
-
-    const characterCell = character.gridCell;
-    
-    if (characterCell) {
-        // Test if character is not enroute
-        if (direction !== character.direction) {
-          if (Direction.isOnSameLine(character.direction, direction)) {
-            // Allow reversing direction 
-            character.direction = direction;
-            this.#orientCharacter(character, characterCell);
-          } else if (this.hasCharacterArrived(character)) {
-            // Commit to new course once character has arrived
-            character.direction = direction;
-            this.placeCharacter(character);
-          }
-        }
-        this.#updateCharacterPosition(character, characterCell, delta);
-    }
-  }
-
-  isCharacterEnroute(character, delta) {
-    if (!(character instanceof Character && Direction.isGood(character.direction))) return false;
-
-    const characterCell = character.gridCell;
-    
-    if (characterCell) {
-        this.#updateCharacterPosition(character, characterCell, delta);
-        return !this.hasCharacterArrived(character);
-    }
-    return false;
-  }
-
   showCharacterLabel(character, label, duration) {
     const hideLabel = (label) => {
       if (label && label !== characterCell.textContent) return;
@@ -572,13 +536,49 @@ class Grid {
     return position;
   }
 
+  isCharacterEnroute(character, delta) {
+    if (!(character instanceof Character && Direction.isGood(character.direction))) return false;
+
+    const characterCell = character.gridCell;
+    
+    if (characterCell) {
+        this.#updateCharacterPosition(character, characterCell, delta);
+        return !this.hasCharacterArrived(character);
+    }
+    return false;
+  }
+
   hasCharacterArrived(character) {
-    const MIN_COURSE_CORRECTION_DISTANCE = 2;
+    const MIN_COURSE_CORRECTION_DISTANCE = this.cellSize * .1;
     const cell = this.cellAtRowCol(character.row, character.col);
     if (!cell) return false;
 
     return (Math.abs(character.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
       && (Math.abs(character.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
+  }
+
+  moveCharacter(character, direction, delta, row, col) {
+    // reserved: row, col
+
+    if (!(character instanceof Character)) return;
+
+    const characterCell = character.gridCell;
+    
+    if (characterCell) {
+        // Test if character is not enroute
+        if (direction !== character.direction) {
+          if (Direction.isOnSameLine(character.direction, direction)) {
+            // Allow reversing direction 
+            character.direction = direction;
+            this.#orientCharacter(character, characterCell);
+          } else if (this.hasCharacterArrived(character)) {
+            // Commit to new course once character has arrived
+            character.direction = direction;
+            this.placeCharacter(character);
+          }
+        }
+        this.#updateCharacterPosition(character, characterCell, delta);
+    }
   }
 
   #updateCharacterPosition(character, characterCell, delta) {
@@ -600,8 +600,9 @@ class Grid {
     const nextRow = currentRow + character.direction[0];
     const nextCol = currentCol + character.direction[1];
 
-    if (!this.hasCharacterArrived(character) 
-      || this.canCharacterMoveTo(character, nextRow, nextCol)) {
+    if (this.hasCharacterArrived(character) && !this.canCharacterMoveTo(character, nextRow, nextCol)) {
+      this.placeCharacter(character);
+    } else {
       character.offsetTop += character.vy;
       character.offsetLeft += character.vx;
 
@@ -619,8 +620,6 @@ class Grid {
       } else if (Direction.isRight(character.direction)) {
         character.col = location.right;
       }
-    } else {
-        this.placeCharacter(character);
     }
 
     if (character.row !== currentRow || character.col !== currentCol) {

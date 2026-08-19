@@ -680,19 +680,27 @@ function nextMaze() {
 }
 
 function play() {
-    let lastTime = gameWindow.document.timeline.currentTime;
     const mazes = player.mazes;
+    let lastTime = 0;
+    let timeSlice = 0;
 
+    gameState.ticks = 0;
     keysPressed.clear();
 
     function gameLoop(time) {
         if (gameState.gameOver || player.exitMaze || mazes !== player.mazes) return;
 
-        const delta = Math.min((time - lastTime) / 1000, 0.05);
+        if (lastTime === 0) {
+          lastTime = time;
+        }
+        timeSlice += Math.min(settings.maxTimeSlice, time-lastTime);
         lastTime = time;
 
-        movePlayer(getMoveDirection(), delta);
-        moveCharacters(delta);
+        while (timeSlice >= settings.gameStepInterval) {
+          timeSlice -= settings.gameStepInterval;
+          const delta = settings.gameStepInterval/1000;
+          performGameStep(delta);
+        }
 
         if (keysPressed.NextMaze) {
           keysPressed.NextMaze = false;
@@ -706,6 +714,13 @@ function play() {
         }
     }
     gameWindow.requestAnimationFrame(gameLoop);
+}
+
+function performGameStep(delta) {
+  gameState.ticks++;
+
+  movePlayer(getMoveDirection(), delta);
+  moveCharacters(delta);
 }
 
 function handleKeyEvents() {

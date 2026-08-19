@@ -72,34 +72,34 @@ Object.entries(OBJECTS).forEach(([key, value]) => value.kind = key);
 
 // Character configurations starting at Level 1
 const CHARACTERS = {
-    player:     {points: 0, priority: 2, speed: 55, lives: 3, tnts: 1, qty: () => 0, 
+    player:     {points: 0, priority: 2, speed: 75, lives: 3, tnts: 1, qty: () => 0, 
                     chompSound: 'chomp',
                     powerUpDuration: 3000, rotationTransform: null},
 
-    ghost:      {points: 0, priority: 3, speed: 60, lives: -1, qty: (level => 0), 
+    ghost:      {points: 0, priority: 3, speed: 65, lives: -1, qty: (level => 0), 
                     phaseProbability: .50,
                     rotationTransform: null}, 
 
-    scorpion:   {points: 4000, priority: 2, speed: 50, lives: 1, qty: (level => Math.floor((level-1)/2)), 
+    scorpion:   {points: 4000, priority: 2, speed: 60, lives: 1, qty: (level => Math.floor((level-1)/2)), 
                     dropObject: DROPPINGS.poop, movesToDrop: 50, dropProbability: .75,
                     rotationTransform: [[Direction.UP, 180], [Direction.DOWN, 0], [Direction.LEFT, 90], [Direction.RIGHT, 270]]}, 
-    spider:     {points: 2000, priority: 1, speed: 45, lives: 0, qty: (level => level), 
+    spider:     {points: 2000, priority: 1, speed: 50, lives: 0, qty: (level => level), 
                     isChompable: true, 
                     dropObject: DROPPINGS.web, movesToDrop: 50, dropProbability: .75,
                     rotationTransform: [[Direction.UP, 0], [Direction.DOWN, 180], [Direction.LEFT, 270], [Direction.RIGHT, 90]]},
 
-    cat:        {points: 1000, priority: 0.75, speed: -45, lives: 0, qty: (level => Math.floor(level/2)+1), 
+    cat:        {points: 1000, priority: 0.75, speed: -30, lives: 0, qty: (level => Math.floor(level/2)+1), 
                     isChompable: true, isGrabable: true, grabSound: 'meow', chompSound: 'hiss',
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
     mouse:      {points: 2000, priority: 0.75, speed: -35, lives: 0, qty: (level => level-2), 
                     isChompable: true, isGrabable: true, grabSound: "grab", chompSound: "eat",
                     dropObject: DROPPINGS.cheese, movesToDrop: 25, dropProbability: .50,
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
-    monkey:     {points: 3000, priority: 0.75, speed: -25, lives: 0, qty: (level => level-4), 
+    monkey:     {points: 3000, priority: 0.75, speed: -40, lives: 0, qty: (level => level-4), 
                     isChompable: true, isGrabable: true, grabSound: "grab", chompSound: 'ack',
                     dropObject: DROPPINGS.banana, movesToDrop: 25, dropProbability: .50,
                     rotationTransform: [[Direction.UP, 90], [Direction.DOWN, 270], [Direction.LEFT, 0], [Direction.RIGHT, -180]]},
-    rock:       {points: 1000, priority: 2.5, speed: 55, lives: 0, qty: () => 0, 
+    rock:       {points: 1000, priority: 2.5, speed: -80, lives: 0, qty: () => 0, 
                     isChompable: true, chompSound: "splat", allowedDirections: [Direction.DOWN],
                     dropObject: DROPPINGS.gem, movesToDrop: 1, dropProbability: .005},
 

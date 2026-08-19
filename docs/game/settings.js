@@ -2,6 +2,9 @@ export { settings }
 
 // Global game settings
 class Settings {
+  gameStepInterval;
+  maxTimeSlice;
+
   mazesPerLevel;
   maxRows;
   maxCols;
@@ -31,6 +34,9 @@ class Settings {
   }
 
   setDefaults() {
+    this.gameStepInterval = 1000/60;
+    this.maxTimeSlice = 250;
+
     this.mazesPerLevel = 3;
     this.maxRows = 21;
     this.maxCols = 19;
@@ -53,7 +59,7 @@ class Settings {
 
     this.oddsOfBeingHunted = 10;
     this.powerUpSpeedBoost = 1.5;
-    this.speedUpRatePerLevel = .05;
+    this.speedUpRatePerLevel = 0;
   }
 }
 

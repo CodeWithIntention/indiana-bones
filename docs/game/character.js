@@ -172,9 +172,9 @@ class Character {
       }
   
       if (Direction.isUp(direction) || Direction.isDown(direction)) {
-          this.vy = direction[0] * Math.max(.5, speed * delta);
+          this.vy = direction[0] * speed * delta;
       } else if (Direction.isLeft(direction) || Direction.isRight(direction)) {
-          this.vx = direction[1] * Math.max(.5, speed * delta);
+          this.vx = direction[1] * speed * delta;
       }
     }
 

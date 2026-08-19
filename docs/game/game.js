@@ -690,6 +690,12 @@ function play() {
     function gameLoop(time) {
         if (gameState.gameOver || player.exitMaze || mazes !== player.mazes) return;
 
+        if (keysPressed.NextMaze) {
+          keysPressed.NextMaze = false;
+          nextMaze();
+          return;
+        }
+
         if (lastTime === 0) {
           lastTime = time;
         }
@@ -702,14 +708,7 @@ function play() {
           performGameStep(delta);
         }
 
-        if (keysPressed.NextMaze) {
-          keysPressed.NextMaze = false;
-          nextMaze();
-          return;
-        }
-
         if (!(player.exitMaze || gameState.gameOver)) {
-            handleKeyEvents();
             gameWindow.requestAnimationFrame(gameLoop);
         }
     }
@@ -721,6 +720,7 @@ function performGameStep(delta) {
 
   movePlayer(getMoveDirection(), delta);
   moveCharacters(delta);
+  handleKeyEvents();
 }
 
 function handleKeyEvents() {

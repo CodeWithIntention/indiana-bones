@@ -1,4 +1,4 @@
-import { Direction } from "./util.js";
+import { Direction, Timer } from "./util.js";
 import { OBJECTS, MAZE_ITEMS } from "./config.js";
 import { Character } from "./character.js";
 import { Label } from "./characters.js";
@@ -322,7 +322,7 @@ class Grid {
     label.gridCell.innerHTML = html;
     
     if (duration > 0) {
-      setTimeout(this.removeCharacter, duration, label);
+      Timer.setTimeout(this.removeCharacter, duration, label);
     }
   }
 
@@ -448,7 +448,7 @@ class Grid {
         } else {
           characterCell.innerHTML = `<span>${label}</span>`;
           if (duration > 0) {
-            setTimeout(hideLabel, duration, label);
+            Timer.setTimeout(hideLabel, duration, label);
           }
         }
       } else {

@@ -1,4 +1,4 @@
-export { Direction, RNG }
+export { Direction, RNG, Timer }
 
 class Direction {
     static UP = [-1, 0];
@@ -82,11 +82,92 @@ const RNG = {
         // mulberry32 method: small deterministic pseudo-random number generator (PRNG)
         return function (returnSeed = false) {
             if (returnSeed === true) return seed;
-            
+
             let t = seed += 0x6D2B79F5;
             t = Math.imul(t ^ t >>> 15, t | 1);
             t ^= t + Math.imul(t ^ t >>> 7, t | 61);
             return ((t ^ t >>> 14) >>> 0) / 4294967296;
         };
     }
-}
+};
+
+const Timer = {
+    timers: [],
+    nextId: 1,
+    ticks: 0,
+    stepInterval: 0,
+
+    msToTicks(ms) {
+        return Math.ceil(ms / this.stepInterval);
+    },
+
+    setStepInterval(stepInterval) {
+        this.stepInterval = stepInterval;
+    },
+
+    setTicks(ticks) {
+        this.ticks = ticks;
+    },
+
+    setTimeout(callback, delay, ...args) {
+        const id = this.nextId++;
+
+        this.timers.push({
+            id,
+            callback,
+            args,
+            nextTick: this.ticks + this.msToTicks(delay),
+            intervalTicks: 0
+        });
+
+        return id;
+    },
+
+    setInterval(callback, interval, ...args) {
+        const id = this.nextId++;
+        const intervalTicks = this.msToTicks(interval);
+
+        this.timers.push({
+            id,
+            callback,
+            args,
+            nextTick: this.ticks + intervalTicks,
+            intervalTicks
+        });
+
+        return id;
+    },
+
+    clear(id) {
+        const index = this.timers.findIndex(
+            timer => timer.id === id
+        );
+
+        if (index !== -1) {
+            this.timers.splice(index, 1);
+        }
+    },
+
+    update(ticks) {
+        if (ticks >= 0) this.setTicks(ticks);
+
+        for (let i = this.timers.length - 1; i >= 0; i--) {
+            const timer = this.timers[i];
+
+            if (this.ticks >= timer.nextTick) {
+                timer.callback(...timer.args);
+
+                if (timer.intervalTicks) {
+                    timer.nextTick += timer.intervalTicks;
+                } else {
+                    this.timers.splice(i, 1);
+                }
+            }
+        }
+    },
+
+    reset() {
+        this.timers.length = 0;
+        this.nextId = 1;
+    }
+};

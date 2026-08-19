@@ -1,4 +1,4 @@
-import { Direction, RNG } from "./util.js";
+import { Direction, RNG, Timer } from "./util.js";
 import { CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES } from "./config.js";
 import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
@@ -46,7 +46,7 @@ function updateGameState(reason) {
             player.exitMaze = true;
             attributes.spin = true;
             Sound.yeah();
-            setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
+            gameWindow.setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
           }
         } else if (grid.isCharacterAtEntrance(reason)) {
             attributes.entrance = true;
@@ -55,7 +55,7 @@ function updateGameState(reason) {
           Sound.portal();
 
           if (gameState.isLastMaze()) {
-              setTimeout(startRelicChamber, TIMEOUTS.caveInInterval);
+              Timer.setTimeout(startRelicChamber, TIMEOUTS.caveInInterval);
           } else {
             grid.ensureExit();
           }
@@ -162,7 +162,7 @@ function playerTNT(character) {
     if (mazeObjAtRowCol && mazeObjAtRowCol.fixed !== true) {
       if (mazeObjAtRowCol === OBJECTS.tnt) {
         grid.updateCellAtRowCol(row, col, {strobe: true});
-        setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
+        Timer.setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
       } else {
         const blast = mazeObjAtRowCol !== OBJECTS.path;
         grid.placeObjectAt(row, col, OBJECTS.path, {flash: true, blast: blast});
@@ -192,7 +192,7 @@ function disableCharacter(character, disabledDuration) {
   character.disabled = true;
   const disabledTime = character.disabledTime;
 
-  setTimeout(() => {
+  Timer.setTimeout(() => {
     if (disabledTime === character.disabledTime) {
       character.disabled = false;
       updateGameState(character);
@@ -265,7 +265,7 @@ function playerGrab(object) {
         gameState.levelRelic = object.config;
         Sound.portal();
         grid.ensureExit(true);  
-        setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
+        Timer.setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
       } else {
         player.grab(object.config);
       }
@@ -291,7 +291,7 @@ function playerGrab(object) {
         player.powerUp = true;
         const powerUpTime = player.powerUpTime;
 
-        setTimeout(() => {
+        Timer.setTimeout(() => {
           if (powerUpTime === player.powerUpTime) {
             player.powerUp = false;
             updateGameState(player);
@@ -584,7 +584,7 @@ function tallyScore() {
       gameScreen.scorecard.innerHTML = list.slice(0, scoreIndex).join("");
       Sound.ta_ding();
 
-      setTimeout(updateScore, TIMEOUTS.updateScoreCardInterval);
+      gameWindow.setTimeout(updateScore, TIMEOUTS.updateScoreCardInterval);
     } else {
         gameScreen.nextMazeLink.hidden = false;
         if (gameState.currentMaze === settings.mazesPerLevel) {
@@ -599,7 +599,7 @@ function tallyScore() {
           gameScreen.scorecard.innerHTML = list.join("") + `<div style='justify-self: right'>Total:</div><div class='score'>${totalScore}</div>`;
           player.score += totalScore;
           Sound.ding();
-          setTimeout(updateGameUI, TIMEOUTS.updateScoreCardInterval);
+          gameWindow.setTimeout(updateGameUI, TIMEOUTS.updateScoreCardInterval);
         }
     }
   }
@@ -616,7 +616,7 @@ function goDeeper() {
   grid.placeCharacter(player);
   Sound.deeper();
 
-  setTimeout(nextMaze, TIMEOUTS.nextMazeDelay);
+  gameWindow.setTimeout(nextMaze, TIMEOUTS.nextMazeDelay);
 }
 
 function nextMaze() {
@@ -684,8 +684,8 @@ function play() {
     let lastTime = 0;
     let timeSlice = 0;
 
-    gameState.ticks = 0;
     keysPressed.clear();
+    Timer.clear();
 
     function gameLoop(time) {
         if (gameState.gameOver || player.exitMaze || mazes !== player.mazes) return;
@@ -716,11 +716,13 @@ function play() {
 }
 
 function performGameStep(delta) {
-  gameState.ticks++;
+  Timer.update(gameState.ticks);
 
   movePlayer(getMoveDirection(), delta);
   moveCharacters(delta);
   handleKeyEvents();
+
+  gameState.ticks++;
 }
 
 function handleKeyEvents() {
@@ -837,11 +839,11 @@ function startCaveIn() {
   gameState.caveInStarted = true;
   Grid.mazeEl.classList.toggle("rumble", true);
 
-  const caveInInterval = setInterval(() => {
+  const caveInInterval = Timer.setInterval(() => {
     if (!gameState.caveInStarted || player.exitMaze || gameState.gameOver) {
       gameState.caveInStarted = false;
       Grid.mazeEl.classList.toggle("rumble", false);
-      clearInterval(caveInInterval);
+      Timer.clear(caveInInterval);
       return;
     }
     dropRandomRocks();
@@ -944,6 +946,8 @@ function startGame() {
   settings.setDefaults();
   player.reset();
 
+  Timer.setStepInterval(settings.gameStepInterval);
+
   gameScreen.showGameUI();
   nextMaze();
 }
@@ -1018,6 +1022,7 @@ const gameState = {
   onStartGame(seed) {
     this.seed = seed;
     this.gameOver = false;
+    this.ticks = 0;
     this.random = RNG.randomizer(seed);
   },
 

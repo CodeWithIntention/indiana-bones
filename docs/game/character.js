@@ -99,8 +99,11 @@ class Character {
 
     get canDrop() {
         return this.#config.movesToDrop > 0 && 
-        (this.moves % this.#config.movesToDrop === this.#config.movesToDrop-1) &&
-        Math.random() < this.#config.dropProbability;
+        (this.moves % this.#config.movesToDrop === this.#config.movesToDrop-1);
+    }
+
+    get dropProbability() {
+        return this.#config.dropProbability;
     }
 
     get dropObject() {
@@ -133,13 +136,11 @@ class Character {
     get disabledTime() {
       return this.#disabledTime;
     }
-
-    canPassThroughObject(object) {
-        const objPriority = object && object.priority;
-        return (objPriority - this.priority) < 1 && this.#phaseProbability > 0
-            && Math.random() <= this.#phaseProbability;
-    }
     
+    get phaseProbability() {
+        return this.#phaseProbability;
+    }
+
     reduceSpeedBy(object) {
         if (!(object && Number.isFinite(object.speedReduction) && Number.isFinite(object.speedReductionDuration))) return;
 

@@ -80,14 +80,18 @@ class Direction {
 const RNG = {
     randomizer(seed) {
         // mulberry32 method: small deterministic pseudo-random number generator (PRNG)
-        return function (returnSeed = false) {
-            if (returnSeed === true) return seed;
+        let state = seed >>> 0;
 
-            let t = seed += 0x6D2B79F5;
+        const random = function () {
+            let t = state += 0x6D2B79F5;
             t = Math.imul(t ^ t >>> 15, t | 1);
             t ^= t + Math.imul(t ^ t >>> 7, t | 61);
             return ((t ^ t >>> 14) >>> 0) / 4294967296;
         };
+
+        random.getSeed = () => state >>> 0;
+
+        return random;
     }
 };
 

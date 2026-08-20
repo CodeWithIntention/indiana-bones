@@ -45,3 +45,9 @@
 .score.minus {
     color: var(--score-minus-color);
 }
+
+.linkRow {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+}

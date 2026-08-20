@@ -16,7 +16,6 @@ class Player extends Character {
   #alive;
   #powerUpTime;
   #bag;
-  #relics;
   #exitMaze;
   #score;
   #lastFreeLifeScore;
@@ -116,8 +115,15 @@ class Player extends Character {
     this.#exitMaze = bool;
   }
 
-  get relics() {
-    return this.#relics;
+  get state() {
+    return {score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, lives: this.lives, tnts: this.tnts};
+  }
+
+  set state(value) {
+    this.#score = value.score;
+    this.#lastFreeLifeScore = value.lastFreeLifeScore;
+    this.lives = value.lives;
+    this.tnts = value.tnts;
   }
 
   countInBag(obj) {
@@ -141,8 +147,6 @@ class Player extends Character {
     } else if (obj.points > 0) {
       if (obj.isBaggable !== false) {
         this.#bag.push(obj);
-      } else if (obj.isRelic === true) {
-        this.#relics.push(obj);
       }
     }
   }
@@ -165,7 +169,6 @@ class Player extends Character {
     this.bonusAwarded = false;
 
     this.#lastFreeLifeScore = 0;
-    this.#relics = [];
 
     this.restart();
   }

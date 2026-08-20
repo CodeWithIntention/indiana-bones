@@ -1,4 +1,4 @@
-import { Direction } from "./util.js";
+import { Direction, Timer } from "./util.js";
 
 export { Character }
 
@@ -6,8 +6,8 @@ class Character {
     #config;
     #speed;
     #disabled;
-    #disabledTime;
-    #speedReductionExpirationTime;
+    #disabledTimerTick;
+    #speedReductionExpirationTimerTick;
     #phaseProbability;
 
     speedReduction;
@@ -31,8 +31,8 @@ class Character {
         this.#config = config;
         this.#speed = config.speed || 0;
         this.#disabled = false;
-        this.#disabledTime = Date.now();
-        this.#speedReductionExpirationTime = Date.now();
+        this.#disabledTimerTick = 0;
+        this.#speedReductionExpirationTimerTick = 0;
         this.#phaseProbability = config.phaseProbability || 0;
 
         this.speedReduction = 0;
@@ -128,13 +128,13 @@ class Character {
 
     set disabled(value) {
       if (value) {
-        this.#disabledTime = Date.now();
+        this.#disabledTimerTick = Timer.ticks;
       }
       this.#disabled = value;
     }
 
     get disabledTime() {
-      return this.#disabledTime;
+      return this.#disabledTimerTick;
     }
     
     get phaseProbability() {
@@ -146,7 +146,7 @@ class Character {
 
         this.speedReduction = object.speedReduction;
         this.speedReductionReason = object.speedReductionReason;
-        this.#speedReductionExpirationTime = Date.now() + object.speedReductionDuration;
+        this.#speedReductionExpirationTimerTick = Timer.ticks + Timer.msToTicks(object.speedReductionDuration);
     }
 
     isAtRowCol(row, col) {
@@ -166,7 +166,7 @@ class Character {
 
       if (speed === 0) return;
 
-      if (this.speedReduction > 0 && Date.now() < this.#speedReductionExpirationTime) {
+      if (this.speedReduction > 0 && Timer.ticks < this.#speedReductionExpirationTimerTick) {
           speed -= speed * this.speedReduction;
       } else {
           this.speedReduction = 0;

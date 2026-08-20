@@ -903,13 +903,17 @@ function findRandomRockPositions(count) {
   }
 
   const positions = [];
+  positions.contains = (position) => {
+    positions.some(item => item.row === position.row && item.col === position.col);
+  };
+
   let tries = gameState.random() * 10;
 
   // When there are enough walls in the maze, try to place rocks in the walls first.
   while (--tries > 0 && (grid.pathCount / grid.cellCount) < settings.caveInThreshold) {
     const position = findRandomPathCell(true);
     // There must be a path cell below the wall to place a rock in the wall.
-    if (canPlaceRockAt(position.row+1, position.col)) {
+    if (canPlaceRockAt(position.row+1, position.col) && !positions.contains(position)) {
       positions.push(position);
       break;
     }
@@ -922,15 +926,17 @@ function findRandomRockPositions(count) {
     let row = 0;
     
     // Place rocks at the top if a path cell exists.
-    if (canPlaceRockAt(row+1, col)) {
-      positions.push({ row, col });
+    const position = { row, col };
+    if (canPlaceRockAt(row+1, col) && !positions.contains(position)) {
+      positions.push(position);
       continue;
     }
 
     // Otherwise place rocks at lowest possible row in the column if a path cell exists.
     while (++row < grid.rows-1) {
-      if (canPlaceRockAt(row, col)) {
-        positions.push({ row: row-1, col });
+      const position = { row: row-1, col }
+      if (canPlaceRockAt(row, col) && !position.contains(position)) {
+        positions.push(position);
         break;
       }
     }
@@ -960,8 +966,22 @@ function getHighScore() {
   return Number(localStorage.getItem("indiana-bones-high-score")) || 0;
 }
 
-function startGame() {
-  const seed = Math.random() * 1_000_000 + 1;
+function setGameOver() {
+  gameState.gameOver = true;
+  Sound.gameover();
+  saveHighScore(settings.highScore);
+  dismissInstructions();
+
+  gameScreen.showGameOver(gameState);
+}
+
+function dismissInstructions(dismiss = true) {
+  if (gameScreen.instructionsPanel.dismissed === true) return;
+  gameScreen.instructionsPanel.dismissed = dismiss;
+  gameScreen.instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
+}
+
+function startGame(seed = 0) {
   gameState.onStartGame(seed);
 
   settings.setDefaults();
@@ -973,19 +993,12 @@ function startGame() {
   nextMaze();
 }
 
-function setGameOver() {
-  gameScreen.restartGamePanel.style.display = 'flex';
-  dismissInstructions();
-
-  gameState.gameOver = true;
-  Sound.gameover();
-  saveHighScore(settings.highScore);
+function playAgain() {
+  startGame(gameState.seed);
 }
 
-function dismissInstructions(dismiss = true) {
-  if (gameScreen.instructionsPanel.dismissed === true) return;
-  gameScreen.instructionsPanel.dismissed = dismiss;
-  gameScreen.instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
+function replayGame() {
+
 }
 
 gameScreen.scoreboardLinks.nextMazeLink.addEventListener("click", goDeeper);
@@ -1094,14 +1107,13 @@ const gameState = {
 };
 
 gameScreen.startGame = startGame;
+gameScreen.replayGame = replayGame;
+gameScreen.playAgain = playAgain;
 
 keysPressed.onSpacePressed = () => {
-    if (gameState.gameOver) {
-      gameScreen.restartGame();
-    } else if (player.exitMaze && scoreboard.style.display !== 'none') {
+    if (player.exitMaze && scoreboard.style.display !== 'none') {
       goDeeper();
-    } else {
-      return false;
+      return true;
     }
-    return true;
+    return false;
 }

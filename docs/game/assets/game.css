@@ -3,6 +3,10 @@
 @import "characters.css";
 @import "items.css";
 
+.banner {
+    font-size: var(--large-font-size);
+}
+
 .shadowGlow {
     box-shadow: var(--shadow-glow);
     cursor: default;

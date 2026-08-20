@@ -17,9 +17,12 @@ function showGameUI(show = true) {
 
 let startingGame = false;
 
-function zoomStartGame() {
+function zoomStartGame(seed) {
   if (startingGame) return;
 
+  if (!Number.isFinite(seed)) {
+    seed = Math.random() * 1_000_000 + 1;
+  }
   startingGame = true;
 
   // Set style for game screen zoom in 
@@ -38,7 +41,7 @@ function zoomStartGame() {
       gameScreen.classList.remove("zoomIn", "expanded", "spin", "zoom");
       gameWindow.requestAnimationFrame(() => {
         startingGame = false;
-        gameScreen.startGame();
+        gameScreen.startGame(seed);
     });
     }, TIMEOUTS.startGameZoomDuration);
   });
@@ -50,14 +53,31 @@ function enterSpiderCave(source) {
   zoomStartGame();
 }
 
-function restartGame() {
-  if (restartGamePanel.style.display === 'none') return;
+function replayGame() {
+  hideGameOver();
+  gameScreen.replayGame();
+}
+
+function playAgain() {
+  hideGameOver();
+  gameScreen.playAgain()
+}
+
+function newGame() {
+  hideGameOver();
+  gameWindow.requestAnimationFrame(zoomStartGame);
+}
+
+function hideGameOver() {
+  if (gameOverPanel.style.display === 'none') return;
   
-  restartGamePanel.style.display = 'none';
+  gameOverPanel.style.display = 'none';
   mazeGrid.innerHTML = "";
   showGameUI(false);
+}
 
-  gameWindow.requestAnimationFrame(zoomStartGame);
+function showGameOver(gameState) {
+  gameScreen.gameOverPanel.style.display = 'flex';
 }
 
 function showGameMessage(text, duration = 0) {
@@ -97,25 +117,32 @@ const relicsStatusLine = gameWindow.document.getElementById("relicsStatusLine");
 
 const scoreboard = gameWindow.document.getElementById("scoreboard"); 
 const scorecard = gameWindow.document.getElementById("scorecard");
-const restartGamePanel = gameWindow.document.getElementById("restartGamePanel"); 
+const gameOverPanel = gameWindow.document.getElementById("gameOverPanel"); 
 const gameMessagePanel = gameWindow.document.getElementById("gameMessagePanel"); 
 const instructionsPanel = gameWindow.document.getElementById("instructionsPanel"); 
 
 const enterLink = gameWindow.document.getElementById("enterLink");
-const restartGameLink = gameWindow.document.getElementById("restartGameLink");
+const gameOverLinks = gameWindow.document.getElementById("gameOverLinks");
 const scoreboardLinks = gameWindow.document.getElementById("scoreboardLinks");
 const dismissInstructionsLink = gameWindow.document.getElementById("dismissInstructionsLink");
+
+gameOverLinks.replayGameLink = gameWindow.document.getElementById("replayGameLink");
+gameOverLinks.playAgainLink = gameWindow.document.getElementById("playAgainLink");
+gameOverLinks.newGameLink = gameWindow.document.getElementById("newGameLink");
 
 scoreboardLinks.nextMazeLink = gameWindow.document.getElementById("nextMazeLink");
 scoreboardLinks.replayMazeLink = gameWindow.document.getElementById("replayMazeLink");
 
 enterLink.addEventListener("click", enterSpiderCave);
-restartGameLink.addEventListener("click", restartGame);
+
+gameOverLinks.replayGameLink.addEventListener("click", replayGame);
+gameOverLinks.playAgainLink.addEventListener("click", playAgain);
+gameOverLinks.newGameLink.addEventListener("click", newGame);
 
 gameScreen.overlay = overlay;
 gameScreen.scoreboard = scoreboard;
 gameScreen.scorecard = scorecard;
-gameScreen.restartGamePanel = restartGamePanel;
+gameScreen.gameOverPanel = gameOverPanel;
 gameScreen.instructionsPanel = instructionsPanel;
 gameScreen.playerStatusLine = playerStatusLine;
 gameScreen.highScoreStatusLine = highScoreStatusLine;
@@ -124,13 +151,14 @@ gameScreen.mazeStatusLine = mazeStatusLine;
 gameScreen.bagStatusLine = bagStatusLine;
 gameScreen.relicsStatusLine = relicsStatusLine;
 gameScreen.scoreboardLinks = scoreboardLinks;
-gameScreen.restartGameLink = restartGameLink;
+gameScreen.gameOverLinks = gameOverLinks;
 gameScreen.dismissInstructionsLink = dismissInstructionsLink;
 
 gameScreen.showGameUI = showGameUI;
 gameScreen.showGameMessage = showGameMessage;
 gameScreen.hideGameMessage = hideGameMessage;
-gameScreen.restartGame = restartGame;
+gameScreen.newGame = newGame;
+gameScreen.showGameOver = showGameOver;
 
 const keysPressed = {
   // BEGIN: Input Keys (do not change order)
@@ -185,6 +213,11 @@ const keysPressed = {
 function onKeyEvent(event, pressed) {
     if (pressed && event.code === "Space") {
       if (keysPressed.onSpacePressed()) return;
+
+      if (gameOverPanel.style.display && gameOverPanel.style.display !== 'none') {
+        gameScreen.newGame();
+        return;
+      }
     }
 
     if (event.key === " " && event.code === "Space") {

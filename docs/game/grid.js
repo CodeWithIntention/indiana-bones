@@ -1,3 +1,4 @@
+import { settings } from "./settings.js";
 import { Direction, Timer } from "./util.js";
 import { OBJECTS, MAZE_ITEMS } from "./config.js";
 import { Character } from "./character.js";
@@ -126,7 +127,6 @@ class Grid {
 
   #maze;
   #cells;
-  #collisionThreshold;
   #pathCount;
   #visitedPathCount;
   #random;
@@ -134,7 +134,6 @@ class Grid {
   constructor(rows, cols, cellSize, random) {
     this.#maze = new Maze(rows, cols, cellSize, random);
     this.#cells = null;
-    this.#collisionThreshold = .5;
     this.#pathCount = 0;
     this.#visitedPathCount = 0;
     this.#random = random;
@@ -187,12 +186,18 @@ class Grid {
   canCharacterMoveTo(character, row, col) {
     if (!(character instanceof Character)) return false;
 
+    function canPassThroughObject(character, object, random) {
+      const objPriority = object && object.priority;
+      return (objPriority - character.priority) < 1 && character.phaseProbability > 0
+          && random() <= character.phaseProbability;
+    }
+
     const object = this.objectAt(row, col);
     if (object === null) return false;
 
     let allow = object.visitable !== false && (object.priority - character.priority) < 1;
 
-    if (!allow && character.canPassThroughObject(object)) {
+    if (!allow && canPassThroughObject(character, object, this.#random)) {
       allow = true;
     }
     return allow;
@@ -205,8 +210,28 @@ class Grid {
   }
 
   cellRectAtRowCol(row, col) {
-    const cell = this.cellAtRowCol(row, col);
-    return (cell && cell.getBoundingClientRect()) || null;
+    if (this.cellAtRowCol(row, col) === null) return null;
+
+    const left = col * this.cellSize;
+    const right = left + this.cellSize;
+    const top = row * this.cellSize;
+    const bottom = top + this.cellSize;
+
+    return {left, top, right, bottom};
+  }
+
+  boundingRectForCharacter(character) {
+    if (!(character instanceof Character)) return null;
+
+    if (Number.isFinite(character.offsetLeft) && Number.isFinite(character.offsetTop)) {
+      const left = character.offsetLeft;
+      const right = left + this.cellSize;
+      const top = character.offsetTop;
+      const bottom = top + this.cellSize;
+
+      return {left, top, right, bottom};
+    }
+    return this.cellRectAtRowCol(character.row, character.col);
   }
 
   objectAt(characterOrRow, col) {
@@ -340,7 +365,9 @@ class Grid {
     if (!((character instanceof Character) && effects)) return;
 
     for (const [key, value] of Object.entries(effects)) {
-      if (value === true) {
+      if (key === "kind") {
+        character.gridCell.classList.add(value);
+      } else if (value === true) {
         character.gridCell.classList.add(key);
       }
     }
@@ -379,20 +406,20 @@ class Grid {
   }
 
   placeCharacter(character, top, left) {
-    const characterCell = character.gridCell;
-    
-    if (characterCell) {
-      let offsetTop = top;
-      let offsetLeft = left;
+    let offsetTop = top;
+    let offsetLeft = left;
 
-      if (!(Number.isFinite(offsetTop) && Number.isFinite(offsetLeft))) {
-        const cell = this.cellAtRowCol(character.row, character.col);
-        if (cell) {
-          offsetTop = cell.offsetTop;
-          offsetLeft = cell.offsetLeft;
-        }
+    if (!(Number.isFinite(offsetTop) && Number.isFinite(offsetLeft))) {
+      const cell = this.cellAtRowCol(character.row, character.col);
+      if (cell) {
+        offsetTop = cell.offsetTop;
+        offsetLeft = cell.offsetLeft;
       }
-      if (Number.isFinite(offsetTop) && Number.isFinite(offsetLeft)) {
+    }
+    if (Number.isFinite(offsetTop) && Number.isFinite(offsetLeft)) {
+      const characterCell = character.gridCell;
+      
+      if (characterCell) {
         characterCell.style.top = `${offsetTop}px`;
         characterCell.style.left = `${offsetLeft}px`;
       }
@@ -406,12 +433,12 @@ class Grid {
     if (character1 === character2) return false;
     if (character1.gridCell === null || character2.gridCell === null) return false;
 
-    return this.hasRectCollidedWithRect(character1.gridCell.getBoundingClientRect(), 
-      character2.gridCell.getBoundingClientRect());
+    return this.hasRectCollidedWithRect(this.boundingRectForCharacter(character1), 
+      this.boundingRectForCharacter(character2));
   }
 
   hasCharacterCollidedWithRect(character, rect) {
-    return this.hasRectCollidedWithRect(rect, character.gridCell.getBoundingClientRect());
+    return this.hasRectCollidedWithRect(rect, this.boundingRectForCharacter(character));
   }
 
   hasRectCollidedWithRect(rect1, rect2) {
@@ -427,8 +454,8 @@ class Grid {
     const heightCollision = rect1.top < rect2.top ? rect2.bottom - rect1.top : rect1.bottom - rect2.top;
   
     return widthCollision < widthSpan && heightCollision < heightSpan &&
-      ((widthSpan - widthCollision) / targetWidth >= this.#collisionThreshold) && 
-      ((heightSpan - heightCollision) / targetHeight >= this.#collisionThreshold);
+      ((widthSpan - widthCollision) / targetWidth >= settings.collisionThreshold) && 
+      ((heightSpan - heightCollision) / targetHeight >= settings.collisionThreshold);
   }
 
   showCharacterLabel(character, label, duration) {
@@ -497,13 +524,15 @@ class Grid {
               this.placeObjectAt(row+dir[0], col+dir[1], OBJECTS.wall, {pulse: true, rock: true});
             }
           });
-          return;
+          break;
         }
       }
-    } else if (OBJECTS.wall === this.objectAt(this.rows - 2, this.cols - 2)) {
-      this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
+    } else {
+      if (OBJECTS.wall === this.objectAt(this.rows - 2, this.cols - 2)) {
+        this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);
+      }
+      this.placeObjectAt(this.rows - 2, this.cols - 1, OBJECTS.exit);
     }
-    this.placeObjectAt(this.rows - 2, this.cols - 1, OBJECTS.exit);
   }
 
   placeObjectFormation(formation, object, effects, maskAll = false) {
@@ -551,12 +580,13 @@ class Grid {
   }
 
   hasCharacterArrived(character) {
-    const MIN_COURSE_CORRECTION_DISTANCE = this.cellSize * .1;
-    const cell = this.cellAtRowCol(character.row, character.col);
-    if (!cell) return false;
+    const targetRect = this.cellRectAtRowCol(character.row, character.col);
+    if (targetRect === null) return false;
 
-    return (Math.abs(character.offsetLeft - cell.offsetLeft) < MIN_COURSE_CORRECTION_DISTANCE) 
-      && (Math.abs(character.offsetTop - cell.offsetTop) < MIN_COURSE_CORRECTION_DISTANCE);
+    const minCourseCorrectionDistance = this.cellSize * settings.positionThreshold;
+
+    return Math.abs(character.offsetLeft - targetRect.left) < minCourseCorrectionDistance &&
+          Math.abs(character.offsetTop - targetRect.top) < minCourseCorrectionDistance;
   }
 
   moveCharacter(character, direction, delta, row, col) {
@@ -585,7 +615,7 @@ class Grid {
 
   #updateCharacterPosition(character, characterCell, delta) {
     function getLocation(offsetTop, offsetLeft) {
-      const EPSILON = this.cellSize * this.#collisionThreshold;
+      const EPSILON = this.cellSize * settings.collisionThreshold;
 
       return {
           left: Math.floor((offsetLeft + EPSILON) / this.cellSize),

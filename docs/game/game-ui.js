@@ -1,7 +1,7 @@
 import { MESSAGES, TIMEOUTS } from "./config.js";
 import { Sound } from "./sound.js";
 
-export { gameWindow, gameScreen }
+export { gameWindow, gameScreen, keysPressed }
 
 function showGameUI(show = true) {
   const hide = !show;
@@ -103,8 +103,11 @@ const instructionsPanel = gameWindow.document.getElementById("instructionsPanel"
 
 const enterLink = gameWindow.document.getElementById("enterLink");
 const restartGameLink = gameWindow.document.getElementById("restartGameLink");
-const nextMazeLink = gameWindow.document.getElementById("nextMazeLink");
+const scoreboardLinks = gameWindow.document.getElementById("scoreboardLinks");
 const dismissInstructionsLink = gameWindow.document.getElementById("dismissInstructionsLink");
+
+scoreboardLinks.nextMazeLink = gameWindow.document.getElementById("nextMazeLink");
+scoreboardLinks.replayMazeLink = gameWindow.document.getElementById("replayMazeLink");
 
 enterLink.addEventListener("click", enterSpiderCave);
 restartGameLink.addEventListener("click", restartGame);
@@ -120,7 +123,7 @@ gameScreen.scoreStatusLine = scoreStatusLine;
 gameScreen.mazeStatusLine = mazeStatusLine;
 gameScreen.bagStatusLine = bagStatusLine;
 gameScreen.relicsStatusLine = relicsStatusLine;
-gameScreen.nextMazeLink = nextMazeLink;
+gameScreen.scoreboardLinks = scoreboardLinks;
 gameScreen.restartGameLink = restartGameLink;
 gameScreen.dismissInstructionsLink = dismissInstructionsLink;
 
@@ -128,3 +131,76 @@ gameScreen.showGameUI = showGameUI;
 gameScreen.showGameMessage = showGameMessage;
 gameScreen.hideGameMessage = hideGameMessage;
 gameScreen.restartGame = restartGame;
+
+const keysPressed = {
+  // BEGIN: Input Keys (do not change order)
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false,
+    Space: false,
+    NextMaze: false,
+  // END
+
+    onSpacePressed: () => false,
+
+    clear() {
+      this.enumerateInputs(key => this[key] = false);
+    },
+
+    mask() {
+        let mask = 0;
+        let bit = 0;
+
+        this.enumerateInputs((key, value) => {
+          if (value) {
+            mask |= (1 << bit);
+          }
+          bit++;
+        });
+
+        return mask;
+    },
+
+    applyMask(mask) {
+        if (!Number.isInteger(mask) || mask < 0) return;
+
+        let bit = 0;
+
+        this.enumerateInputs(key => {
+          this[key] = !!(mask & (1 << bit));
+          bit++;
+        });
+    },
+
+    enumerateInputs(callback) {
+      for (const [key, value] of Object.entries(this)) {
+        if (typeof value !== 'boolean') break; 
+        
+        callback(key, value);
+      }
+    }
+}
+
+function onKeyEvent(event, pressed) {
+    if (pressed && event.code === "Space") {
+      if (keysPressed.onSpacePressed()) return;
+    }
+
+    if (event.key === " " && event.code === "Space") {
+      event.preventDefault();
+      keysPressed[event.code] = pressed;
+    } else if (typeof keysPressed[event.key] !== "undefined") {
+      event.preventDefault();
+      keysPressed[event.key] = pressed;
+    }
+
+    if (!pressed && event.key === "ArrowLeft") {
+      keysPressed.NextMaze = event.shiftKey && event.ctrlKey;
+    } else {
+      keysPressed.NextMaze = false;
+    }
+}
+
+gameWindow.document.addEventListener("keydown", e => onKeyEvent(e, true));
+gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));

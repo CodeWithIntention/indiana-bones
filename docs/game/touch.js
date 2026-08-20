@@ -1,5 +1,4 @@
-import { gameScreen } from "./game-ui.js";
-import { keysPressed } from "./game.js";
+import { gameScreen, keysPressed } from "./game-ui.js";
 
 let touchStartX = 0;
 let touchStartY = 0;

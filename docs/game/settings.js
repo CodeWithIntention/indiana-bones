@@ -29,6 +29,9 @@ class Settings {
 
   relicChamberSize;
 
+  collisionThreshold;
+  positionThreshold;
+
   constructor() {
     this.setDefaults();
   }
@@ -60,6 +63,9 @@ class Settings {
     this.oddsOfBeingHunted = 10;
     this.powerUpSpeedBoost = 1.5;
     this.speedUpRatePerLevel = 0;
+
+    this.collisionThreshold = 0.55;
+    this.positionThreshold = 0.05;
   }
 }
 

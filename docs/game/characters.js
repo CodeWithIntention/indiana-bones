@@ -39,7 +39,7 @@ class Rock extends Character {
     }
 
     canKill(character) {
-        return this.priority >= character.priority;
+        return !(character instanceof Rock) && this.priority >= character.priority;
     }
 
     get powerUp() {

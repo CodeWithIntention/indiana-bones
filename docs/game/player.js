@@ -176,6 +176,8 @@ class Player extends Character {
   }
 
   restart() {
+    super.clear();
+
     this.row = 1;
     this.col = 0;
     this.moves = 0;

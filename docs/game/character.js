@@ -30,27 +30,15 @@ class Character {
     constructor(config, row, col) {
         this.#config = config;
         this.#speed = config.speed || 0;
-        this.#disabled = false;
-        this.#disabledTimerTick = 0;
-        this.#speedReductionExpirationTimerTick = 0;
         this.#phaseProbability = config.phaseProbability || 0;
 
-        this.speedReduction = 0;
-        this.speedReductionReason = null;
-
+        this.lives = config.lives || 0;
         this.allowedDirections = config.allowedDirections || Direction.ALL;
-    
+
         this.row = row;
         this.col = col;
-        this.left = 0;
-        this.top = 0;
 
-        this.direction = Direction.NONE;
-        this.vx = 0;
-        this.vy = 0;
-        
-        this.lives = config.lives || 0;
-        this.moves = 0;
+        this.clear();
     }
 
     get kind() {
@@ -139,6 +127,24 @@ class Character {
     
     get phaseProbability() {
         return this.#phaseProbability;
+    }
+
+    clear() {
+        this.#disabled = false;
+        this.#disabledTimerTick = 0;
+        this.#speedReductionExpirationTimerTick = 0;
+
+        this.speedReduction = 0;
+        this.speedReductionReason = null;
+    
+        this.left = 0;
+        this.top = 0;
+
+        this.direction = Direction.NONE;
+        this.vx = 0;
+        this.vy = 0;
+        
+        this.moves = 0;
     }
 
     reduceSpeedBy(object) {

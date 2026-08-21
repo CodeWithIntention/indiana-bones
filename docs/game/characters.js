@@ -2,7 +2,7 @@ import { CHARACTERS } from "./config.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
 
-export { Ghost, Relic, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label, Skull }
+export { Ghost, Relic, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label }
 
 class Killer extends Character {
     constructor(config, position) {
@@ -65,34 +65,46 @@ class Monkey extends Character {
     }
 }
 
-class Skull extends Character {
-  constructor(position) {
-    super(CHARACTERS.skull, position.row, position.col)
-  }
-}
-
 class Relic extends Character {
+  level;
+  symbol;
+  description;
+
+  static kindForLevel(level) {
+    return `${CHARACTERS.relic.kind}-${level}`;
+  }
+
+  static parse(symbolDescription) {
+    return symbolDescription.split(':');
+  }
+
   constructor(position) {
     // Copy the configuration so that kind can be modified for each instance
     const config = {};
     Object.entries(CHARACTERS.relic).forEach(([key, value]) => {
-        config[key] = value;
+      config[key] = value;
     });
-    super(config, position.row, position.col)
+    super(config, position.row, position.col);
   }
 
-  set kind(value) {
-    this.config.kind = value;
+  setSymbolDescription(level, value) {
+    const parts = Relic.parse(value)
+
+    this.level = level;
+    this.symbol = parts[0];
+    this.description = parts[1];
+
+    this.config.kind = Relic.kindForLevel(this.level);
 
     if (this.gridCell) {
-        this.gridCell.textContent = value;
+      this.gridCell.textContent = this.symbol;
     }
   }
 }
 
 class Label extends Character {
   constructor(row, col) {
-    super(CHARACTERS.label, row, col)
+    super(CHARACTERS.label, row, col);
   }
 }
 
@@ -105,4 +117,3 @@ CHARACTERS.monkey.class = Monkey;
 CHARACTERS.rock.class = Rock;
 CHARACTERS.ghost.class = Ghost;
 CHARACTERS.relic.class = Relic;
-CHARACTERS.skull.class = Skull;

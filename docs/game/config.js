@@ -7,7 +7,6 @@ export { GAME_VERSION, OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, 
 const MESSAGES = {
   mazeClearedMessage: "Cave Bonus",
   mazeNotClearedMessage: "Cave NOT emptied!",
-  relicRetrievedMessage: "Relic Bonus",
   nextMazeLinkText: "Go Deeper",
   nextLevelLinkText: "Next Level",
 }
@@ -104,9 +103,7 @@ const CHARACTERS = {
                     isChompable: true, chompSound: "splat", allowedDirections: [Direction.DOWN],
                     dropObject: DROPPINGS.gem, movesToDrop: 1, dropProbability: .005},
 
-    relic:      {points: 50000, priority: 4, speed: 0, lives: 0, qty: () => 0, 
-                    isChompable: false, isGrabable: true, isBaggable: false, isRelic: true},
-    skull:      {points: 10000, priority: 4, speed: 0, lives: 0, qty: () => 0, 
+    relic:      {points: 10000, priority: 4, speed: 0, lives: 0, qty: () => 0, 
                     isChompable: false, isGrabable: true, isBaggable: false, isRelic: true},
     label:      {points: 0, priority: 0, speed: 0, lives: 0, qty: () => 0, 
                     isChompable: false, isGrabable: false},

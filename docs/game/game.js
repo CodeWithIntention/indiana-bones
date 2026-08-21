@@ -4,7 +4,7 @@ import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
-import { Ghost, Relic, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Skull } from "./characters.js";
+import { Spider, Scorpion, Cat, Monkey, Mouse, Ghost, Rock, Relic } from "./characters.js";
 import { Grid } from "./grid.js";
 import { gameWindow, gameScreen, keysPressed } from "./game-ui.js";
 
@@ -56,7 +56,7 @@ function updateGameState(reason) {
           Sound.portal();
 
           if (gameState.isLastMaze()) {
-              Timer.setTimeout(startRelicChamber, TIMEOUTS.caveInInterval);
+              Timer.setTimeout(showRelicChamber, TIMEOUTS.caveInInterval);
           } else {
             grid.ensureExit();
           }
@@ -99,19 +99,24 @@ function updateGameUI() {
     Object.entries(OBJECTS).forEach(([kind, object]) => {
       const count = player.countInBag(object);
       if (count > 0) {
-        list.push(`${Grid.symbolFor(kind)}<b>${count}</b>`);
+        list.push(`<div>${Grid.symbolFor(kind)}<b>${count}</b></div>`);
       }
     });
     Object.entries(CHARACTERS).forEach(([kind, object]) => {
       const count = player.countInBag(object);
       if (count > 0) {
-        list.push(`${Grid.symbolFor(kind)}<b>${count}</b>`);
+        list.push(`<div>${Grid.symbolFor(kind)}<b>${count}</b></div>`);
       }
     });
+    
+    if (gameState.levelRelic) {
+      list.push(`<div class='pulse'>${gameState.levelRelic.symbol}</span>`);
+    }
+
     if (player.score > settings.highScore) {
       settings.highScore = player.score;
     }
-    gameScreen.bagStatusLine.innerHTML = list.join("&nbsp;");
+    gameScreen.bagStatusLine.innerHTML = list.join('');
 
     gameScreen.scoreStatusLine.classList.toggle("minus", player.score < 0);
     gameScreen.scoreStatusLine.textContent = `${Math.abs(player.score)}`
@@ -124,7 +129,9 @@ function updateGameUI() {
 
     list = [];
     for (let i = 1; i < player.level; i++) {
-      list.push(`<div>${Grid.symbolFor(CHARACTERS.skull.kind)}</div>`);
+      const relicKind = Relic.kindForLevel(i);
+      const parts = Relic.parse(Grid.symbolFor(relicKind));
+      list.push(`<div>${parts[0]}</div>`);
     }
     gameScreen.relicsStatusLine.innerHTML = list.join("");
 }
@@ -263,7 +270,7 @@ function playerChomp(character, object) {
 function playerGrab(object) {
   if (object instanceof Character && object.isGrabable) {
     if (object.isRelic) {
-      gameState.levelRelic = object.config;
+      gameState.levelRelic = object;
       Sound.portal();
       grid.ensureExit(true);  
       Timer.setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
@@ -555,9 +562,10 @@ function tallyScore() {
   }
 
   if (gameState.levelRelic) {
-    const points = gameState.levelRelic.points * player.level;
+    const relic = gameState.levelRelic;
+    const points = relic.points * relic.level;
     scores.push(points);
-    list.push(`<div>${MESSAGES.relicRetrievedMessage} ${Grid.symbolFor(gameState.levelRelic.kind)} &times; ${player.level} &times; ${gameState.levelRelic.points}</div><div class='score'>${points}</div>`);
+    list.push(`<div>${relic.description} ${relic.symbol} &times; ${relic.level} &times; ${relic.points}</div><div class='score'>${points}</div>`);
   }
 
   gameScreen.scorecard.innerHTML = "";
@@ -854,7 +862,7 @@ function dropItems(config) {
     }
 }
 
-function startRelicChamber() {
+function showRelicChamber() {
   const positions = grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.wall, {pulse: true, rock: true});
 
   // Where the relic is buried is randomized
@@ -864,8 +872,8 @@ function startRelicChamber() {
   // The Guardian is hiding at the same location as the relic, so the
   // astute will see where the Guardian originated from and dig there.
   const guardian = createCharacter(CHARACTERS.ghost, {row: position.row, col: position.col});
-  const relic = createCharacter(CHARACTERS.skull, position);
-
+  const relic = createCharacter(CHARACTERS.relic, position);
+  relic.setSymbolDescription(gameState.currentLevel, Grid.symbolFor(Relic.kindForLevel(gameState.currentLevel)));
   disableCharacter(guardian, TIMEOUTS.guardianDelay-player.level*TIMEOUTS.guardianDelayLevelReduction);
 }
 

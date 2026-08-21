@@ -10,8 +10,9 @@ function showGameUI(show = true) {
   playerStatusLine.hidden = hide;
   scoreStatusLine.hidden = hide;
   mazeStatusLine.hidden = hide;
-  bagStatusLine.hidden = hide;
-  relicsStatusLine.hidden = hide;
+
+  bagStatusLine.style.display = show ? 'flex' : 'none';
+  relicsStatusLine.style.display = show ? 'flex' : 'none';
   dashboard.style.display = show ? 'flex' : 'none';
 }
 

@@ -8,7 +8,7 @@
     z-index: 2;
     display: flex;
     justify-content: center;
-    background: transparent;
+    background-color: transparent;
     transform: 1s linear;
     transform-origin: center center;
 }
@@ -19,7 +19,8 @@
 }
 
 .character span.relic {
-    font-size: var(--medium-font-size);
+    color: var(--relic-text-color);
+    text-align: center;
     animation: glow 0.5s infinite alternate;
 }
 

@@ -16,6 +16,7 @@
     
     --cell-visited-color: rgba(255, 255, 255, 0.5);
     --cell-text-color: rgba(255, 255, 255, 0.5);
+    --relic-text-color:rgba(255, 255, 255, 1);
 }
 
 #maze {

@@ -542,16 +542,19 @@ class Grid {
     const positions = [];
 
     for (let row = 0; row < formation.length; row++) {
-        for (let col = 0; col < formation[row].length; col++) {
-            const pos = {row: position.row+row, col: position.col+col};
+      for (let col = 0; col < formation[row].length; col++) {
+        const c = formation[row][col];
+        if (c === '.') continue;
 
-            if (formation[row][col] === "1" || maskAll) {
-              this.placeObjectAt(pos.row, pos.col, object, effects);
-              positions.push(pos);
-            } else {
-              this.placeObjectAt(pos.row, pos.col, OBJECTS.path);
-            }
+        const pos = {row: position.row+row, col: position.col+col};
+
+        if (formation[row][col] === "1" || maskAll) {
+          this.placeObjectAt(pos.row, pos.col, object, effects);
+          positions.push(pos);
+        } else {
+          this.placeObjectAt(pos.row, pos.col, OBJECTS.path);
         }
+      }
     }
     return positions;
   }

@@ -515,6 +515,7 @@ class Grid {
       while (true) {
         const row = Math.floor(this.#randomizers.game() * this.rows);
         const col = Math.floor(this.#randomizers.game() * this.cols);
+
         if (row === exclude.row && col === exclude.col) continue;
 
         const objectAtRowCol = this.objectAt(row, col);
@@ -526,7 +527,12 @@ class Grid {
           for (const dir of Grid.ALL_DIRECTIONS) {
             const outerRow = row+dir[0];
             const outerCol = col+dir[1];
-            if (outerRow === exclude.row && outerCol === exclude.col) continue;
+
+            // Find a new portal position if excluded position was found
+            if (outerRow === exclude.row && outerCol === exclude.col) {
+              positions.length = 0;
+              break;
+            }
 
             const objectAtRowCol = this.objectAt(outerRow, outerCol);
 
@@ -534,7 +540,7 @@ class Grid {
               positions.push({row: outerRow, col: outerCol});
             }
           }
-          break;
+          if (positions.length > 0) break;
         }
       }
       for (let i = 1; i < positions.length; i++) {

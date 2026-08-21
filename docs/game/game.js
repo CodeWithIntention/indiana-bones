@@ -935,7 +935,7 @@ function findRandomRockPositions(count) {
     // Otherwise place rocks at lowest possible row in the column if a path cell exists.
     while (++row < grid.rows-1) {
       const position = { row: row-1, col }
-      if (canPlaceRockAt(row, col) && !position.contains(position)) {
+      if (canPlaceRockAt(row, col) && !positions.contains(position)) {
         positions.push(position);
         break;
       }

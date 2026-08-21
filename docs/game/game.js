@@ -273,7 +273,7 @@ function playerGrab(object) {
       gameState.levelRelic = object;
       Sound.portal();
       grid.addHtmlCharacterFor(object, `<span class='relic'>${object.description}</span>`, TIMEOUTS.relicLabelDuration);
-      grid.ensureExit(true);  
+      grid.ensureExit(true, {row: player.row, col: player.col});
       Timer.setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
     } else {
       player.grab(object.config);
@@ -1038,7 +1038,7 @@ const gameState = {
     this.seed = seed;
     this.randomizer = RNG.randomizer(seed);
     this.ticks = 0;
-    
+
     Timer.reset();
 
     this.gameRecording = {

@@ -508,25 +508,39 @@ class Grid {
     this.updateCellAtRowCol(row, col, effects);
   }
 
-  ensureExit(randomize = false) {
-    if (randomize) {
+  ensureExit(randomize, exclude = {row: -1, col: -1}) {
+    if (randomize === true) {
+      const positions = [];
+
       while (true) {
         const row = Math.floor(this.#randomizers.game() * this.rows);
         const col = Math.floor(this.#randomizers.game() * this.cols);
+        if (row === exclude.row && col === exclude.col) continue;
+
         const objectAtRowCol = this.objectAt(row, col);
 
         if (objectAtRowCol.fixed === false) {
-          this.placeObjectAt(row, col, OBJECTS.exit);
+          positions.length = 0;
+          positions.push({row, col});
 
-          Grid.ALL_DIRECTIONS.forEach(dir => {
-            const objectAtRowCol = this.objectAt(row+dir[0], col+dir[1]);
+          for (const dir of Grid.ALL_DIRECTIONS) {
+            const outerRow = row+dir[0];
+            const outerCol = col+dir[1];
+            if (outerRow === exclude.row && outerCol === exclude.col) continue;
+
+            const objectAtRowCol = this.objectAt(outerRow, outerCol);
+
             if (objectAtRowCol && objectAtRowCol.fixed !== true) {
-              this.placeObjectAt(row+dir[0], col+dir[1], OBJECTS.wall, {pulse: true, rock: true});
+              positions.push({row: outerRow, col: outerCol});
             }
-          });
+          }
           break;
         }
       }
+      for (let i = 1; i < positions.length; i++) {
+        this.placeObjectAt(positions[i].row, positions[i].col, OBJECTS.wall, {pulse: true, rock: true});
+      }
+      this.placeObjectAt(positions[0].row, positions[0].col, OBJECTS.exit);
     } else {
       if (OBJECTS.wall === this.objectAt(this.rows - 2, this.cols - 2)) {
         this.placeObjectAt(this.rows - 2, this.cols - 2, OBJECTS.path);

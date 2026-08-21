@@ -18,6 +18,11 @@
     font-size: var(--small-font-size);
 }
 
+.character span.relic {
+    font-size: var(--medium-font-size);
+    animation: glow 0.5s infinite alternate;
+}
+
 .character.player {
     align-self: center;
     transition: transform 1s ease;

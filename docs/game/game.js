@@ -110,7 +110,7 @@ function updateGameUI() {
     });
     
     if (gameState.levelRelic) {
-      list.push(`<div class='pulse'>${gameState.levelRelic.symbol}</span>`);
+      list.push(`<div class='pulse'>${gameState.levelRelic.symbol}</div>`);
     }
 
     if (player.score > settings.highScore) {
@@ -272,6 +272,7 @@ function playerGrab(object) {
     if (object.isRelic) {
       gameState.levelRelic = object;
       Sound.portal();
+      grid.addHtmlCharacterFor(object, `<span class='relic'>${object.description}</span>`, TIMEOUTS.relicLabelDuration);
       grid.ensureExit(true);  
       Timer.setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
     } else {

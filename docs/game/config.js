@@ -22,6 +22,7 @@ const TIMEOUTS = {
   tntDetonationDelay: 1500,
   guardianDelay: 3000,
   guardianDelayLevelReduction: 200,
+  relicLabelDuration: 3000
 }
 
 // Maze architecture objects

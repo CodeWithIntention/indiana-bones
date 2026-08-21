@@ -59,6 +59,11 @@ function replayGame() {
   gameScreen.replayGame();
 }
 
+function replayFinalMaze() {
+  hideGameOver();
+  gameScreen.replayFinalMaze();
+}
+
 function playAgain() {
   hideGameOver();
   gameScreen.playAgain()
@@ -79,6 +84,7 @@ function hideGameOver() {
 
 function showGameOver(gameState) {
   gameScreen.gameOverPanel.style.display = 'flex';
+  showInstructions(false);
 }
 
 function showGameMessage(text, duration = 0) {
@@ -99,6 +105,13 @@ function hideGameMessage(text) {
 
     gameMessagePanel.style.display = 'none';
     gameMessagePanel.textContent = "";
+}
+
+function showInstructions(show) {
+  if (gameScreen.instructionsPanel.dismissed === true) return;
+
+  gameScreen.instructionsPanel.dismissed = !show;
+  gameScreen.instructionsPanel.style.display =  show ? 'flex' : 'none';
 }
 
 const gameWindow = window;
@@ -127,6 +140,7 @@ const gameOverLinks = gameWindow.document.getElementById("gameOverLinks");
 const scoreboardLinks = gameWindow.document.getElementById("scoreboardLinks");
 const dismissInstructionsLink = gameWindow.document.getElementById("dismissInstructionsLink");
 
+gameOverLinks.replayFinalMazeLink = gameWindow.document.getElementById("replayFinalMazeLink");
 gameOverLinks.replayGameLink = gameWindow.document.getElementById("replayGameLink");
 gameOverLinks.playAgainLink = gameWindow.document.getElementById("playAgainLink");
 gameOverLinks.newGameLink = gameWindow.document.getElementById("newGameLink");
@@ -136,6 +150,7 @@ scoreboardLinks.replayMazeLink = gameWindow.document.getElementById("replayMazeL
 
 enterLink.addEventListener("click", enterSpiderCave);
 
+gameOverLinks.replayFinalMazeLink.addEventListener("click", replayFinalMaze);
 gameOverLinks.replayGameLink.addEventListener("click", replayGame);
 gameOverLinks.playAgainLink.addEventListener("click", playAgain);
 gameOverLinks.newGameLink.addEventListener("click", newGame);
@@ -160,6 +175,9 @@ gameScreen.showGameMessage = showGameMessage;
 gameScreen.hideGameMessage = hideGameMessage;
 gameScreen.newGame = newGame;
 gameScreen.showGameOver = showGameOver;
+gameScreen.showInstructions = showInstructions;
+
+gameScreen.dismissInstructionsLink.addEventListener("click", () => showInstructions(false));
 
 const keysPressed = {
   // BEGIN: Input Keys (do not change order)

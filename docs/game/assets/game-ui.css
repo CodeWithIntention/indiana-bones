@@ -38,7 +38,7 @@ body {
     border-radius: var(--border-radius);
     background-color: transparent;
     backdrop-filter: var(--backdrop-blur);
-    overflow: hidden;
+    overflow: visible;
     touch-action: none;
     overscroll-behavior: none;
 }
@@ -160,8 +160,20 @@ body {
 }
 
 #gameMessagePanel,
-#gameOverPanel {
+#gameOverPanel,
+#scoreboard {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);    
+    z-index: 5;
     display: none;
+    width: max-content;
+    overflow: hidden;
+}
+
+#gameMessagePanel,
+#gameOverPanel {
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -169,7 +181,6 @@ body {
     background-color: var(--maze-bg);
     gap: 8px;
     padding: 8px 8px 8px 8px;
-    overflow: hidden;
 }
 
 /** 
@@ -181,14 +192,6 @@ body {
 
 #gameMessagePanel {
     color: var(--shadow-glow-color);
-}
-
-#restartGamePanel a {
-    cursor: pointer;
-}
-
-#overlay a:hover {
-    animation: glow 0.5s infinite alternate;
 }
 
 #scorecard {
@@ -204,20 +207,15 @@ body {
 }
 
 #scoreboard {
-    position: relative;
-    height: fit-content;
-    width: fit-content;
-    align-self: center;
     display: none;
     flex-direction: column;
-    height: fit-content;
     align-items: center;
     background-color: var(--maze-bg);
     border: 4px solid var(--maze-path);
     border-radius: var(--border-radius);
-    overflow: hidden;
     gap: 16px;
     padding: 16px;
+    overflow: hidden;
 }
 
 #instructionsPanel {

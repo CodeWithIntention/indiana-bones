@@ -641,6 +641,7 @@ function nextMaze() {
   gameState.currentMaze = (player.mazes % settings.mazesPerLevel)+1;
   player.mazes++;
   
+  gameScreen.showInstructions(player.mazes === 1);
   startMaze();
 }
 
@@ -686,8 +687,6 @@ function startMaze() {
       }
   });
 
-  dismissInstructions(player.mazes > 1);
-
   gameWindow.focus();
   buildMaze();
   updateGameState(player);
@@ -703,29 +702,36 @@ function play() {
     Timer.reset();
 
     function gameLoop(time) {
-        if (gameState.gameOver || player.exitMaze || mazes !== player.mazes) return;
+      function canContinue() {
+        return !(gameState.gameOver || player.exitMaze || mazes !== player.mazes);
+      }
 
-        if (keysPressed.NextMaze) {
-          keysPressed.NextMaze = false;
-          nextMaze();
-          return;
-        }
+      if (!canContinue()) return;
 
-        if (lastTime === 0) {
-          lastTime = time;
-        }
-        timeSlice += Math.min(settings.maxTimeSlice, time-lastTime);
+      if (keysPressed.NextMaze) {
+        keysPressed.NextMaze = false;
+        gameState.onMazeExited();
+        nextMaze();
+        return;
+      }
+
+      if (lastTime === 0) {
         lastTime = time;
+      }
+      timeSlice += Math.min(settings.maxTimeSlice, time-lastTime);
+      lastTime = time;
 
-        while (timeSlice >= settings.gameStepInterval) {
-          timeSlice -= settings.gameStepInterval;
-          const delta = settings.gameStepInterval/1000;
-          playGameStep(delta);
-        }
+      while (timeSlice >= settings.gameStepInterval && canContinue()) {
+        timeSlice -= settings.gameStepInterval;
+        const delta = settings.gameStepInterval/1000;
+        playGameStep(delta);
+      }
 
-        if (!(player.exitMaze || gameState.gameOver)) {
-            gameWindow.requestAnimationFrame(gameLoop);
-        }
+      if (canContinue()) {
+          gameWindow.requestAnimationFrame(gameLoop);
+      } else {
+        gameState.onMazeExited();
+      }
     }
     gameWindow.requestAnimationFrame(gameLoop);
 }
@@ -744,10 +750,6 @@ function playGameStep(delta) {
   moveCharacters(delta);
 
   gameState.onGameStepCompleted(inputMask);
-
-  if (gameState.gameOver || player.exitMaze) {
-    gameState.onMazeExited();
-  }
 }
 
 function handleInput() {
@@ -977,15 +979,8 @@ function getHighScore() {
 function setGameOver() {
   gameState.onGameOver(settings.highScore);
   Sound.gameover();
-  dismissInstructions();
-
+  
   gameScreen.showGameOver(gameState);
-}
-
-function dismissInstructions(dismiss = true) {
-  if (gameScreen.instructionsPanel.dismissed === true) return;
-  gameScreen.instructionsPanel.dismissed = dismiss;
-  gameScreen.instructionsPanel.style.display =  dismiss ? 'none' : 'flex';
 }
 
 function startGame(seed = 0) {
@@ -1008,9 +1003,13 @@ function replayGame() {
 
 }
 
+function replayFinalMaze() {
+  gameScreen.showGameUI();
+  replayMaze();
+}
+
 gameScreen.scoreboardLinks.nextMazeLink.addEventListener("click", goDeeper);
 gameScreen.scoreboardLinks.replayMazeLink.addEventListener("click", replayMaze);
-gameScreen.dismissInstructionsLink.addEventListener("click", () => dismissInstructions());
 
 const player = new Player(CHARACTERS.player, settings);
 settings.highScore = getHighScore();
@@ -1132,6 +1131,7 @@ const gameState = {
 gameScreen.startGame = startGame;
 gameScreen.replayGame = replayGame;
 gameScreen.playAgain = playAgain;
+gameScreen.replayFinalMaze = replayFinalMaze;
 
 keysPressed.onSpacePressed = () => {
     if (player.exitMaze && scoreboard.style.display !== 'none') {

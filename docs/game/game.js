@@ -700,7 +700,7 @@ function play() {
     let timeSlice = 0;
 
     keysPressed.clear();
-    Timer.reset();
+    Timer.clear();
 
     function gameLoop(time) {
       function canContinue() {
@@ -1038,6 +1038,8 @@ const gameState = {
     this.seed = seed;
     this.randomizer = RNG.randomizer(seed);
     this.ticks = 0;
+    
+    Timer.reset();
 
     this.gameRecording = {
       version: GAME_VERSION,

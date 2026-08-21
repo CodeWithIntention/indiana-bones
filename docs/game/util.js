@@ -125,12 +125,17 @@ const Timer = {
     },
 
     clear(id) {
-        const index = this.timers.findIndex(
-            timer => timer.id === id
-        );
+        if (id === undefined) {
+            this.timers.length = 0;
+            this.nextId = 1;
+        } else {
+            const index = this.timers.findIndex(
+                timer => timer.id === id
+            );
 
-        if (index !== -1) {
-            this.timers.splice(index, 1);
+            if (index !== -1) {
+                this.timers.splice(index, 1);
+            }
         }
     },
 
@@ -153,8 +158,8 @@ const Timer = {
     },
 
     reset() {
-        this.timers.length = 0;
-        this.nextId = 1;
+        this.clear();
+        this.ticks = 0;
     }
 };
 

@@ -223,10 +223,10 @@ class Grid {
   boundingRectForCharacter(character) {
     if (!(character instanceof Character)) return null;
 
-    if (Number.isFinite(character.offsetLeft) && Number.isFinite(character.offsetTop)) {
-      const left = character.offsetLeft;
+    if (Number.isFinite(character.left) && Number.isFinite(character.top)) {
+      const left = character.left;
       const right = left + this.cellSize;
-      const top = character.offsetTop;
+      const top = character.top;
       const bottom = top + this.cellSize;
 
       return {left, top, right, bottom};
@@ -343,7 +343,7 @@ class Grid {
     if (!((character instanceof Character) && html)) return;
     
     const label = new Label(character.row, character.col);
-    this.addCharacter(label, character.offsetTop, character.offsetLeft);
+    this.addCharacter(label, character.top, character.left);
     label.gridCell.innerHTML = html;
     
     if (duration > 0) {
@@ -357,7 +357,7 @@ class Grid {
     
     const label = new Label(character.row, character.col);
     const cellRect = this.cellAtRowCol(character.row, character.col);
-    this.addCharacter(label, character.offsetTop || cellRect.top, character.offsetLeft || cellRect.left);
+    this.addCharacter(label, character.top || cellRect.top, character.left || cellRect.left);
     this.applyAnimationFor(label, effects, true);
   }
 
@@ -423,8 +423,8 @@ class Grid {
         characterCell.style.top = `${offsetTop}px`;
         characterCell.style.left = `${offsetLeft}px`;
       }
-      character.offsetLeft = offsetLeft;
-      character.offsetTop = offsetTop;
+      character.left = offsetLeft;
+      character.top = offsetTop;
       this.#orientCharacter(character, characterCell);
     }
   }
@@ -585,8 +585,8 @@ class Grid {
 
     const minCourseCorrectionDistance = this.cellSize * settings.positionThreshold;
 
-    return Math.abs(character.offsetLeft - targetRect.left) < minCourseCorrectionDistance &&
-          Math.abs(character.offsetTop - targetRect.top) < minCourseCorrectionDistance;
+    return Math.abs(character.left - targetRect.left) < minCourseCorrectionDistance &&
+          Math.abs(character.top - targetRect.top) < minCourseCorrectionDistance;
   }
 
   moveCharacter(character, direction, delta, row, col) {
@@ -635,13 +635,13 @@ class Grid {
     if (this.hasCharacterArrived(character) && !this.canCharacterMoveTo(character, nextRow, nextCol)) {
       this.placeCharacter(character);
     } else {
-      character.offsetTop += character.vy;
-      character.offsetLeft += character.vx;
+      character.top += character.vy;
+      character.left += character.vx;
 
-      characterCell.style.top = `${character.offsetTop}px`;
-      characterCell.style.left = `${character.offsetLeft}px`;
+      characterCell.style.top = `${character.top}px`;
+      characterCell.style.left = `${character.left}px`;
 
-      const location = getLocation.call(this, character.offsetTop, character.offsetLeft);
+      const location = getLocation.call(this, character.top, character.left);
 
       if (Direction.isUp(character.direction)) {
         character.row = location.up;

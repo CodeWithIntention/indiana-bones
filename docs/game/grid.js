@@ -129,14 +129,14 @@ class Grid {
   #cells;
   #pathCount;
   #visitedPathCount;
-  #random;
+  #randomizers;
 
-  constructor(rows, cols, cellSize, random) {
-    this.#maze = new Maze(rows, cols, cellSize, random);
+  constructor(rows, cols, cellSize, randomizers) {
+    this.#maze = new Maze(rows, cols, cellSize, randomizers.grid);
     this.#cells = null;
     this.#pathCount = 0;
     this.#visitedPathCount = 0;
-    this.#random = random;
+    this.#randomizers = randomizers;
 
     this.#createCells(this.#maze);
   }
@@ -197,7 +197,7 @@ class Grid {
 
     let allow = object.visitable !== false && (object.priority - character.priority) < 1;
 
-    if (!allow && canPassThroughObject(character, object, this.#random)) {
+    if (!allow && canPassThroughObject(character, object, this.#randomizers.game)) {
       allow = true;
     }
     return allow;
@@ -511,8 +511,8 @@ class Grid {
   ensureExit(randomize = false) {
     if (randomize) {
       while (true) {
-        const row = Math.floor(this.#random() * this.rows);
-        const col = Math.floor(this.#random() * this.cols);
+        const row = Math.floor(this.#randomizers.game() * this.rows);
+        const col = Math.floor(this.#randomizers.game() * this.cols);
         const objectAtRowCol = this.objectAt(row, col);
 
         if (objectAtRowCol.fixed === false) {

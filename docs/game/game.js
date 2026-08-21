@@ -657,7 +657,7 @@ function startMaze() {
   gameState.onMazeStart();
 
   Grid.mazeEl.classList.toggle("rumble", false);
-  grid = new Grid(rows, cols, settings.cellSize, gameState.random);
+  grid = new Grid(rows, cols, settings.cellSize, gameState.randomizers);
 
   if (gameState.isLastMaze()) {
     gameState.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
@@ -824,7 +824,7 @@ function createCharacters(config) {
     let count = config.qty(player.level);
 
     while (count-- > 0) {
-      const position = findRandomPathCell();
+      const position = findRandomPathCell(gameState.randomizers.grid, false);
       createCharacter(config, position);
     }
 }
@@ -837,6 +837,21 @@ function createCharacter(config, position) {
     characters.add(character);
 
     return character;
+}
+
+function dropItems(config) {
+    if (!config.qty) return;
+
+    let count = config.qty(player.level);
+
+    if (config === OBJECTS.key) {
+      gameState.keysNeeded = count;
+    }
+
+    while (count-- > 0) {
+      const position = findRandomPathCell(gameState.randomizers.grid, config.inWalls);
+      grid.placeObjectAt(position.row, position.col, config);
+    }
 }
 
 function startRelicChamber() {
@@ -871,21 +886,6 @@ function startCaveIn() {
   }, TIMEOUTS.caveInInterval);
 }
 
-function dropItems(config) {
-    if (!config.qty) return;
-
-    let count = config.qty(player.level);
-
-    if (config === OBJECTS.key) {
-      gameState.keysNeeded = count;
-    }
-
-    while (count-- > 0) {
-      const position = findRandomPathCell(config.inWalls);
-      grid.placeObjectAt(position.row, position.col, config);
-    }
-}
-
 function dropRandomRocks() {
   const positions = findRandomRockPositions(player.level);
   if (positions.length === 0) return;
@@ -911,7 +911,7 @@ function findRandomRockPositions(count) {
 
   // When there are enough walls in the maze, try to place rocks in the walls first.
   while (--tries > 0 && (grid.pathCount / grid.cellCount) < settings.caveInThreshold) {
-    const position = findRandomPathCell(true);
+    const position = findRandomPathCell(gameState.random, true);
     // There must be a path cell below the wall to place a rock in the wall.
     if (canPlaceRockAt(position.row+1, position.col) && !positions.contains(position)) {
       positions.push(position);
@@ -944,10 +944,10 @@ function findRandomRockPositions(count) {
   return positions;
 }
 
-function findRandomPathCell(inWalls = false) {
+function findRandomPathCell(random, inWalls = false) {
   while (true) {
-    const row = Math.floor(gameState.random() * grid.rows);
-    const col = Math.floor(gameState.random() * grid.cols);
+    const row = Math.floor(random() * grid.rows);
+    const col = Math.floor(random() * grid.cols);
     const obj = grid.objectAt(row, col);
 
     if (inWalls ? !(obj === OBJECTS.wall || obj === OBJECTS.rock) : (obj !== OBJECTS.path)) continue;
@@ -967,9 +967,8 @@ function getHighScore() {
 }
 
 function setGameOver() {
-  gameState.gameOver = true;
+  gameState.onGameOver(settings.highScore);
   Sound.gameover();
-  saveHighScore(settings.highScore);
   dismissInstructions();
 
   gameScreen.showGameOver(gameState);
@@ -1029,11 +1028,31 @@ const gameState = {
 
   onStartGame(seed) {
     this.seed = seed;
-    this.random = RNG.randomizer(seed);
-    this.recording = [];
+    this.randomizers = {
+      game: RNG.randomizer(seed),
+      grid: RNG.randomizer(RNG.deriveSeed(seed))
+    }
+    this.random = this.randomizers.game;
+
     this.ticks = 0;
 
+    this.gameRecording = {
+      version: GAME_VERSION,
+      seed: seed,
+      mazeRecordings: [],
+    };
+
     this.reset();
+  },
+
+  onGameOver(highScore) {
+    this.gameOver = true;
+    saveHighScore(highScore);
+
+    this.gameRecording.ticks = this.ticks;
+    this.gameRecording.playerState = player.state;
+    this.gameRecording.currentLevel = this.currentLevel;
+    this.gameRecording.currentMaze = this.currentMaze;
   },
 
   onNextMaze() {
@@ -1046,7 +1065,10 @@ const gameState = {
     this.mazeRecording = {
       level: this.currentLevel,
       maze: this.currentMaze,
-      seed: this.random.getSeed(),
+      randomizerStates: {
+        game: this.randomizers.game.getState(),
+        grid: this.randomizers.grid.getState(),
+      },
       ticks: this.ticks,
       playerState: player.state,
       gameSteps: null
@@ -1067,23 +1089,29 @@ const gameState = {
   onMazeExited() {
     if (this.mazeRecording) {
       this.mazeRecording.gameSteps = this.gameSteps;
-      this.recording.push(this.mazeRecording);
+      this.gameRecording.mazeRecordings.push(this.mazeRecording);
       this.mazeRecording = null;
     }
   },
 
   onReplayMaze() {
     this.reset();
-    const record = this.recording.at(-1);
+    const mazeRecording = this.gameRecording.mazeRecordings.at(-1);
 
-    if (record) {
+    if (mazeRecording) {
       this.isReplaying = true;
-      this.currentLevel = record.level;
-      this.currentMaze = record.maze;
-      this.ticks = record.ticks;
-      this.gameSteps = record.gameSteps.toReversed();
-      this.random = RNG.randomizer(record.seed);
-      player.state = record.playerState;
+      this.currentLevel = mazeRecording.level;
+      this.currentMaze = mazeRecording.maze;
+      this.ticks = mazeRecording.ticks;
+      this.gameSteps = mazeRecording.gameSteps.toReversed();
+
+      this.randomizers = {
+        game: RNG.randomizer(mazeRecording.randomizerStates.game),
+        grid: RNG.randomizer(mazeRecording.randomizerStates.grid)
+      }
+      this.random = this.randomizers.game;
+
+      player.state = mazeRecording.playerState;
     }
   },
 

@@ -657,7 +657,7 @@ function startMaze() {
   gameState.onMazeStart();
 
   Grid.mazeEl.classList.toggle("rumble", false);
-  grid = new Grid(rows, cols, settings.cellSize, gameState.randomizers);
+  grid = new Grid(rows, cols, settings.cellSize, {grid: gameState.randomizer, game: gameState.random});
 
   if (gameState.isLastMaze()) {
     gameState.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
@@ -824,7 +824,7 @@ function createCharacters(config) {
     let count = config.qty(player.level);
 
     while (count-- > 0) {
-      const position = findRandomPathCell(gameState.randomizers.grid, false);
+      const position = findRandomPathCell(gameState.randomizer, false);
       createCharacter(config, position);
     }
 }
@@ -849,7 +849,7 @@ function dropItems(config) {
     }
 
     while (count-- > 0) {
-      const position = findRandomPathCell(gameState.randomizers.grid, config.inWalls);
+      const position = findRandomPathCell(gameState.randomizer, config.inWalls);
       grid.placeObjectAt(position.row, position.col, config);
     }
 }
@@ -1028,12 +1028,7 @@ const gameState = {
 
   onStartGame(seed) {
     this.seed = seed;
-    this.randomizers = {
-      game: RNG.randomizer(seed),
-      grid: RNG.randomizer(RNG.deriveSeed(seed))
-    }
-    this.random = this.randomizers.game;
-
+    this.randomizer = RNG.randomizer(seed);
     this.ticks = 0;
 
     this.gameRecording = {
@@ -1060,15 +1055,13 @@ const gameState = {
   },
 
   onMazeStart() {
+    this.random = RNG.randomizer(RNG.deriveSeed(this.randomizer.getState()));
     if (this.isReplaying) return;
   
     this.mazeRecording = {
       level: this.currentLevel,
       maze: this.currentMaze,
-      randomizerStates: {
-        game: this.randomizers.game.getState(),
-        grid: this.randomizers.grid.getState(),
-      },
+      randomizerState: this.randomizer.getState(),
       ticks: this.ticks,
       playerState: player.state,
       gameSteps: null
@@ -1104,13 +1097,7 @@ const gameState = {
       this.currentMaze = mazeRecording.maze;
       this.ticks = mazeRecording.ticks;
       this.gameSteps = mazeRecording.gameSteps.toReversed();
-
-      this.randomizers = {
-        game: RNG.randomizer(mazeRecording.randomizerStates.game),
-        grid: RNG.randomizer(mazeRecording.randomizerStates.grid)
-      }
-      this.random = this.randomizers.game;
-
+      this.randomizer = RNG.randomizer(mazeRecording.randomizerState);
       player.state = mazeRecording.playerState;
     }
   },

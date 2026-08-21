@@ -116,7 +116,7 @@ class Player extends Character {
   }
 
   get state() {
-    return {score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, lives: this.lives, tnts: this.tnts};
+    return {score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, lives: this.lives, tnts: this.tnts, level: this.level, mazes: this.mazes};
   }
 
   set state(value) {
@@ -124,6 +124,8 @@ class Player extends Character {
     this.#lastFreeLifeScore = value.lastFreeLifeScore;
     this.lives = value.lives;
     this.tnts = value.tnts;
+    this.level = value.level;
+    this.mazes = value.mazes;
   }
 
   countInBag(obj) {

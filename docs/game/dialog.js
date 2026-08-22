@@ -9,6 +9,8 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])'
 ].join(",");
 
+const DEFAULT_BUTTON_SELECTOR = "button[data-default], a[data-default]";
+
 export class Dialog {
   static #container = null;
   static #controls = [];
@@ -47,20 +49,6 @@ export class Dialog {
       Dialog.#onArrowKeyPressed;
 
     Dialog.#refreshControls();
-
-    /*
-    * If something inside the dialog already has focus, retain
-    * that selection. Otherwise, select the first control.
-    */
-    const focusedIndex = Dialog.#controls.indexOf(
-        document.activeElement
-    );
-
-    if (focusedIndex !== -1) {
-        Dialog.#selectedIndex = focusedIndex;
-    } else {
-        Dialog.#focusControl(0);
-    }
   }
 
   static unbind(dialog, restoreFocus = true) {
@@ -196,37 +184,64 @@ export class Dialog {
 
   static #refreshControls() {
     if (!Dialog.#container) {
-      Dialog.#controls = [];
-      Dialog.#selectedIndex = -1;
-      return;
+        Dialog.#controls = [];
+        Dialog.#selectedIndex = -1;
+        return;
     }
 
+    // Retain previous selection
     const selectedControl =
-      Dialog.#controls[Dialog.#selectedIndex];
+        Dialog.#controls[Dialog.#selectedIndex];
 
+    // Refresh controls
     Dialog.#controls = Array.from(
-      Dialog.#container.querySelectorAll(
+        Dialog.#container.querySelectorAll(
         FOCUSABLE_SELECTOR
-      )
+        )
     ).filter(Dialog.#isVisible);
 
+    // If no controls yet, then schedule another refresh later
     if (Dialog.#controls.length === 0) {
-      Dialog.#selectedIndex = -1;
-      return;
+        Dialog.#selectedIndex = -1;
+
+        const dialogWindow = Dialog.#container.ownerDocument.defaultView;
+
+        dialogWindow?.requestAnimationFrame(Dialog.#refreshControls);
+
+        return;
     }
 
-    const refreshedIndex =
-      Dialog.#controls.indexOf(selectedControl);
+    const refreshedIndex = Dialog.#controls.indexOf(selectedControl);
 
     if (refreshedIndex !== -1) {
-      Dialog.#selectedIndex = refreshedIndex;
-    } else if (
-      Dialog.#selectedIndex >=
-      Dialog.#controls.length
-    ) {
-      Dialog.#selectedIndex =
-        Dialog.#controls.length - 1;
+        /*
+        * Preserve the currently selected control.
+        */
+        Dialog.#selectedIndex = refreshedIndex;
+        return;
     }
+
+    /*
+    * Search the filtered controls for the default
+    */
+    let focusIndex = Dialog.#controls.findIndex(control =>
+        control.matches(DEFAULT_BUTTON_SELECTOR)
+    );
+
+    if (focusIndex === -1) {
+        /*
+        * Retain the previously selected control's approximate
+        * position. For a newly opened dialog, select the first one.
+        */
+        focusIndex = Dialog.#selectedIndex >= 0
+        ? Math.min(
+            Dialog.#selectedIndex,
+            Dialog.#controls.length - 1
+            )
+        : 0;
+    }
+
+    Dialog.#focusControl(focusIndex);
   }
 
   static #isVisible(element) {

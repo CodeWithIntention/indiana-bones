@@ -9,12 +9,44 @@ const BUTTON_DPAD_DOWN = 13;
 const BUTTON_DPAD_LEFT = 14;
 const BUTTON_DPAD_RIGHT = 15;
 
+const ARROW_KEYS_MAP = {
+  ArrowUp: BUTTON_DPAD_UP,
+  ArrowDown: BUTTON_DPAD_DOWN, 
+  ArrowLeft: BUTTON_DPAD_LEFT,
+  ArrowRight: BUTTON_DPAD_RIGHT
+}
+Object.entries(ARROW_KEYS_MAP).forEach(([key, value]) => ARROW_KEYS_MAP[value] = key);
+
 let activeGamepadIndex = null;
 let controllerDirection = null;
+let physicalControllerDirection = null;
 let primaryButtonPressed = false;
 
 function updateControllerDirection(direction) {
-  if (!direction || (direction === controllerDirection && keysPressed[controllerDirection])) return;
+  /*
+   * Returning the stick to center releases the physical-input
+   * edge without stopping the player's current movement.
+   */
+  if (!direction) {
+    physicalControllerDirection = null;
+    return;
+  }
+
+  /*
+   * Only generate one arrow-key press per physical movement.
+   */
+  if (direction === physicalControllerDirection) {
+    return;
+  }
+
+  physicalControllerDirection = direction;
+
+  /*
+   * A dialog or another UI component can consume the input.
+   */
+  if (keysPressed.onArrowKeyPressed(direction)) {
+    return;
+  }
 
   if (controllerDirection) {
     keysPressed[controllerDirection] = false;
@@ -29,6 +61,7 @@ function clearControllerInput() {
     keysPressed[controllerDirection] = false;
   }
 
+  physicalControllerDirection = null;
   controllerDirection = null;
   primaryButtonPressed = false;
 }
@@ -38,10 +71,10 @@ function isButtonPressed(gamepad, buttonIndex) {
 }
 
 function getDPadDirection(gamepad) {
-  if (isButtonPressed(gamepad, BUTTON_DPAD_UP)) return "ArrowUp";
-  if (isButtonPressed(gamepad, BUTTON_DPAD_DOWN)) return "ArrowDown";
-  if (isButtonPressed(gamepad, BUTTON_DPAD_LEFT)) return "ArrowLeft";
-  if (isButtonPressed(gamepad, BUTTON_DPAD_RIGHT)) return "ArrowRight";
+  if (isButtonPressed(gamepad, BUTTON_DPAD_UP)) return ARROW_KEYS_MAP[BUTTON_DPAD_UP];
+  if (isButtonPressed(gamepad, BUTTON_DPAD_DOWN)) return ARROW_KEYS_MAP[BUTTON_DPAD_DOWN];
+  if (isButtonPressed(gamepad, BUTTON_DPAD_LEFT)) return ARROW_KEYS_MAP[BUTTON_DPAD_LEFT];
+  if (isButtonPressed(gamepad, BUTTON_DPAD_RIGHT)) return ARROW_KEYS_MAP[BUTTON_DPAD_RIGHT];
 
   return null;
 }
@@ -58,10 +91,10 @@ function getJoystickDirection(gamepad) {
   }
 
   if (absHorizontal > absVertical) {
-    return horizontal > 0 ? "ArrowRight" : "ArrowLeft";
+    return ARROW_KEYS_MAP[horizontal > 0 ? BUTTON_DPAD_RIGHT : BUTTON_DPAD_LEFT];
   }
 
-  return vertical > 0 ? "ArrowDown" : "ArrowUp";
+  return ARROW_KEYS_MAP[vertical > 0 ? BUTTON_DPAD_DOWN : BUTTON_DPAD_UP];
 }
 
 function updatePrimaryButton(gamepad) {

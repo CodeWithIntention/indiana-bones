@@ -127,9 +127,9 @@ export class Dialog {
       return false;
     }
 
-    if (direction === "ArrowLeft") {
+    if (direction === "ArrowLeft" || direction === "ArrowUp") {
       Dialog.#moveSelection(-1);
-    } else if (direction === "ArrowRight") {
+    } else if (direction === "ArrowRight" || direction === "ArrowDown") {
       Dialog.#moveSelection(1);
     }
 

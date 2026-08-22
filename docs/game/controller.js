@@ -14,7 +14,7 @@ let controllerDirection = null;
 let primaryButtonPressed = false;
 
 function updateControllerDirection(direction) {
-  if (!direction || direction === controllerDirection) return;
+  if (!direction || (direction === controllerDirection && keysPressed[controllerDirection])) return;
 
   if (controllerDirection) {
     keysPressed[controllerDirection] = false;
@@ -88,16 +88,20 @@ function getActiveGamepad() {
     }
   }
 
-  // Y button on controller will select it when connected
-  const firstConnectedGamepad = Array.from(gamepads).find(
-    (gamepad) => gamepad?.connected && isButtonPressed(gamepad, BUTTON_Y)
-  );
+  const selectedGamepad = (() => {
+    // Only interested in connected gamepads
+    const connectedGamepads = Array.from(gamepads).filter(gamepad => gamepad?.connected);
 
-  if (firstConnectedGamepad) {
-    activeGamepadIndex = firstConnectedGamepad.index;
+    // If more than one then Y button on controller will select it
+    if (connectedGamepads.length == 1) return connectedGamepads[0];
+    return connectedGamepads.find(gamepad => isButtonPressed(gamepad, BUTTON_Y));
+  })();
+
+  if (selectedGamepad) {
+    activeGamepadIndex = selectedGamepad.index;
   }
 
-  return firstConnectedGamepad ?? null;
+  return selectedGamepad;
 }
 
 function updateController() {

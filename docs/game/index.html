@@ -64,10 +64,10 @@
             <div id="gameOverPanel" class="shadowGlow">
                 <div class="banner">G A M E&nbsp;&nbsp;O V E R</div>
                 <div id="gameOverLinks" class="linkRow">
-                    <a id="replayGameLink" class="shadowGlow">Replay</a>
-                    <a id="replayFinalMazeLink" class="shadowGlow">Replay Final Maze</a>
-                    <a id="playAgainLink" class="shadowGlow">Play Again</a>
-                    <a id="newGameLink" class="shadowGlow">New Game</a>
+                    <button type="button" id="replayGameLink">Replay</button>
+                    <button type="button" id="replayFinalMazeLink">Replay Final Maze</button>
+                    <button type="button" id="playAgainLink">Play Again</button>
+                    <button type="button" id="newGameLink">New Game</button>
                 </div>
                 <div>Press Space to Play Again.</div>
             </div>
@@ -75,10 +75,11 @@
             <div id="scoreboard" class="shadowGlow">
                 <div id="scorecard"></div>
                 <div id="scoreboardLinks" class="linkRow">
-                    <a id="replayMazeLink" class="shadowGlow">Replay</a>
-                    <a id="nextMazeLink" class="shadowGlow">Go Deeper</a>
+                    <button type="button" id="replayMazeLink">Replay</button>
+                    <button type="button" id="nextMazeLink">Go Deeper</button>
                 </div>
             </div>
+            <div id="gameReplayBarPanel" class="shadowGlow" hidden></div>
         </div>
         <div id="instructionsPanel" class="shadowGlow">
             <div>Use Arrow keys or swipe on maze to move.</div>
@@ -94,7 +95,7 @@
             </div>
             <div>Bugs (<b>🕷️,🦂</b>) kill and nasty things (<b><span style="color: white;">🕸</span>,💩</span></b>) slow you down.</div>
             <div>Enter the cave when the coast is clear.<br/>Empty the cave and get a BIG BONUS!</div>
-            <div><a id="dismissInstructionsLink">Got It!</a></div>
+            <div><button type="button" id="dismissInstructionsLink">Got It!</button></div>
         </div>
         <div id="copyright">Indiana Bones & A-Maze-In Spider Caves © 2026 Chuong Mai</div>
     </div>
@@ -102,5 +103,6 @@
     <script type="module" src="./game.js"></script>
     <script type="module" src="./touch.js"></script>
     <script type="module" src="./controller.js"></script>
+    <script type="module" src="./dialog.js"></script>
 </body>
 </html>

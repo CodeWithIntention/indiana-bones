@@ -75,15 +75,17 @@ function newGame() {
 }
 
 function hideGameOver() {
-  if (gameOverPanel.style.display === 'none') return;
+  if (gameScreen.gameOverPanel.style.display === 'none') return;
   
-  gameOverPanel.style.display = 'none';
+  gameScreen.dismissDialog(gameOverPanel);
   mazeGrid.innerHTML = "";
   showGameUI(false);
 }
 
 function showGameOver(gameState) {
-  gameScreen.gameOverPanel.style.display = 'flex';
+  if (gameScreen.gameOverPanel.style.display === 'flex') return;
+
+  gameScreen.showDialog(gameOverPanel);
   showInstructions(false);
 }
 
@@ -191,6 +193,8 @@ const keysPressed = {
 
     onSpacePressed: () => false,
 
+    onArrowKeyPressed: (arrowKey) => false,
+
     clear() {
       this.enumerateInputs(key => this[key] = false);
     },
@@ -231,10 +235,15 @@ const keysPressed = {
 
 function onKeyEvent(event, pressed) {
     if (pressed && event.code === "Space") {
-      if (keysPressed.onSpacePressed()) return;
+      if (keysPressed.onSpacePressed()) {
+        event.preventDefault();
+        return;
+      }
+    }
 
-      if (gameOverPanel.style.display && gameOverPanel.style.display !== 'none') {
-        gameScreen.newGame();
+    if (event.key.startsWith("Arrow") && pressed) {
+      if (keysPressed.onArrowKeyPressed(event.key)) {
+        event.preventDefault();
         return;
       }
     }
@@ -247,6 +256,7 @@ function onKeyEvent(event, pressed) {
       keysPressed[event.key] = pressed;
     }
 
+    // DEBUG: Hidden keystroke for advancing to next maze immediately.
     if (!pressed && event.key === "ArrowLeft") {
       keysPressed.NextMaze = event.shiftKey && event.ctrlKey;
     } else {
@@ -256,3 +266,32 @@ function onKeyEvent(event, pressed) {
 
 gameWindow.document.addEventListener("keydown", e => onKeyEvent(e, true));
 gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));
+
+gameScreen.DialogEvents = {
+  show: {name: "showdialog"},
+  dismiss: {name: "dismissdialog"}
+}
+
+gameScreen.showDialog = function (dialog, display = 'flex') {
+  if (!(dialog && dialog.style) || dialog.style.display === display) return;
+
+  dialog.style.display = display;
+
+  gameWindow.requestAnimationFrame(() => {
+    this.DialogEvents.show.dispatch(dialog);
+  });
+}
+
+gameScreen.dismissDialog = function (dialog, display = 'none') {
+  if (!(dialog && dialog.style) || dialog.style.display === display) return;
+
+  dialog.style.display = display;
+
+  gameWindow.requestAnimationFrame(() => {
+    this.DialogEvents.dismiss.dispatch(dialog);
+  });
+}
+
+Object.values(gameScreen.DialogEvents).forEach(value => {
+  value.dispatch = (dialog) => gameScreen.dispatchEvent(new CustomEvent(value.name, {detail: {dialog}}));
+});

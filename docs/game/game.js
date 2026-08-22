@@ -571,7 +571,7 @@ function tallyScore() {
 
   gameScreen.scorecard.innerHTML = "";
   gameScreen.scoreboardLinks.style.display = "none";
-  gameScreen.scoreboard.style.display = "flex";
+  gameScreen.showDialog(gameScreen.scoreboard);
 
   let totalScore = 0;
   let scoreIndex = 0;
@@ -601,6 +601,7 @@ function tallyScore() {
         } else {
           gameScreen.scoreboardLinks.nextMazeLink.textContent = MESSAGES.nextMazeLinkText;
         }
+
         if (totalScore === 0) {
           gameScreen.scorecard.innerHTML = "<div>You came out empty this time.</div><div class='score'>😐</div>";
           Sound.alert();
@@ -616,13 +617,13 @@ function tallyScore() {
 }
 
 function replayMaze() {
-  gameScreen.scoreboard.style.display = "none";
+  gameScreen.dismissDialog(gameScreen.scoreboard);
   gameState.onReplayMaze();
   startMaze();
 }
 
 function goDeeper() {
-  gameScreen.scoreboard.style.display = "none";
+  gameScreen.dismissDialog(gameScreen.scoreboard);
 
   player.row = grid.rows-1;
   player.col = grid.cols-1;
@@ -635,7 +636,7 @@ function goDeeper() {
 }
 
 function nextMaze() {
-  gameScreen.scoreboard.style.display = "none";
+  gameScreen.dismissDialog(gameScreen.scoreboard);
   gameState.onNextMaze();
 
   gameState.currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
@@ -1135,11 +1136,3 @@ gameScreen.startGame = startGame;
 gameScreen.replayGame = replayGame;
 gameScreen.playAgain = playAgain;
 gameScreen.replayFinalMaze = replayFinalMaze;
-
-keysPressed.onSpacePressed = () => {
-    if (player.exitMaze && scoreboard.style.display !== 'none') {
-      goDeeper();
-      return true;
-    }
-    return false;
-}

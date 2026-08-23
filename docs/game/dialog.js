@@ -2,7 +2,7 @@ import { Keyboard } from "./keyboard.js";
 
 const FOCUSABLE_SELECTOR = [
   "button:not([disabled])",
-  "a[href]",
+  "a",
   "input:not([disabled])",
   "select:not([disabled])",
   "textarea:not([disabled])",

@@ -388,8 +388,8 @@ body {
 }
 
 #bio {
+    display: none;
     position: absolute;
-    display: flex;
     height: 475px;
     flex-direction: column;
     align-items: center;

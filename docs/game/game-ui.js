@@ -55,7 +55,7 @@ function zoomStartGame(seed) {
 
 function enterSpiderCave(source) {
   // Switch screens
-  bioMessage.style.display = 'none';
+  gameScreen.dismissDialog(document.getElementById("bio"));
   zoomStartGame();
 }
 
@@ -158,8 +158,6 @@ gameOverLinks.newGameLink = gameWindow.document.getElementById("newGameLink");
 scoreboardLinks.nextMazeLink = gameWindow.document.getElementById("nextMazeLink");
 scoreboardLinks.replayMazeLink = gameWindow.document.getElementById("replayMazeLink");
 
-enterLink.addEventListener("click", enterSpiderCave);
-
 gameOverLinks.replayFinalMazeLink.addEventListener("click", replayFinalMaze);
 gameOverLinks.replayGameLink.addEventListener("click", replayGame);
 gameOverLinks.playAgainLink.addEventListener("click", playAgain);
@@ -227,3 +225,10 @@ Keyboard.initWith(gameWindow);
 Controller.initWith(gameWindow);
 Touch.initWith(gameScreen);
 Dialog.initWith(gameScreen);
+
+gameScreen.showDialog(document.getElementById("bio"));
+gameWindow.requestAnimationFrame(() => {
+  document.getElementById("bioContent").classList.toggle("open");
+});
+enterLink.addEventListener("click", enterSpiderCave);
+

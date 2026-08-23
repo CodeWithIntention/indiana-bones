@@ -60,13 +60,13 @@ function clearControllerInput() {
   if (controllerDirection) {
     Keyboard[controllerDirection] = false;
   }
-  clear();  
+  primaryButtonPressed = false;
+  clearDirection();  
 }
 
-function clear() {
+function clearDirection() {
   physicalControllerDirection = null;
   controllerDirection = null;
-  primaryButtonPressed = false;
 }
 
 function isButtonPressed(gamepad, buttonIndex) {
@@ -174,7 +174,7 @@ export class Controller {
 
     const forwardClear = Keyboard.clear;
     Keyboard.clear = function () {
-      clear();
+      clearDirection();
       forwardClear.call(Keyboard);
     }
   }

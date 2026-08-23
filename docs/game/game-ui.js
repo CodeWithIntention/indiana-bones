@@ -89,7 +89,8 @@ function hideGameOver() {
 
 function showGameOver(gameState) {
   if (gameScreen.gameOverPanel.style.display === 'flex') return;
-
+  
+  gameScreen.gameOverTrophyBonus.innerHTML = "";
   gameScreen.showDialog(gameOverPanel);
   showInstructions(false);
 }

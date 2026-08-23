@@ -600,7 +600,6 @@ function tallyScore() {
 
       gameWindow.setTimeout(updateScore, TIMEOUTS.updateScoreCardInterval);
     } else {
-      totalScore = 200000;
         gameScreen.scoreboardLinks.style.display = "flex";
         
         if (gameState.currentMaze === settings.mazesPerLevel) {
@@ -1002,15 +1001,14 @@ function setGameOver() {
   Sound.gameover();
   gameScreen.showGameOver(gameState);
 
-  if (player.trophiesAwarded > 0) {
-    gameWindow.requestAnimationFrame(tallyTrophyBonus);
-  } else {
-    gameState.onGameOver(settings.highScore);
-  }
+  gameWindow.requestAnimationFrame(tallyTrophyBonus);
 }
 
 function tallyTrophyBonus() {
-  if (!(player.trophiesAwarded > 0)) return;
+  if (player.trophiesAwarded <= 0) {
+    updateFinalScore();
+    return;
+  }
 
   const trophySymbol = Grid.symbolFor("maze-trophy");
   let trophies = 0;
@@ -1019,6 +1017,7 @@ function tallyTrophyBonus() {
   function updateFinalScore() {
     player.score += settings.pointsPerTrophy * player.trophiesAwarded;
     updateGameUI();
+    gameScreen.gameOverTrophyBonus.innerHTML += `<div>${MESSAGES.finalScore}</div><div class="shadowGlow pulse">${player.score}</div>`;
     gameState.onGameOver(settings.highScore);
   }
 
@@ -1032,7 +1031,6 @@ function tallyTrophyBonus() {
     if (trophies === player.trophiesAwarded) {
       // Display final score awarded
       Sound.dingDing();
-      gameScreen.gameOverTrophyBonus.innerHTML += `<div>${MESSAGES.finalScore}</div><div class="shadowGlow pulse">${player.score + bonusPoints}</div>`;
       updateFinalScore();
     } else {
       // Tally each trophy

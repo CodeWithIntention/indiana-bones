@@ -69,13 +69,21 @@ class Player extends Character {
 
     if (value >= this.#lastFreeLifeScore + this.#settings.pointsPerFreeLife) {
       const freeLives = Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife);
+
+      // Transfer excess lives to TNT adward
       lifeCount += freeLives;
       if (lifeCount > this.#settings.maxLives) {
         const excessLives = lifeCount - this.#settings.maxLives;
         lifeCount = this.#settings.maxLives;
         tntCount += excessLives * this.#settings.freeTNTsWithLife;
       }
-      tntCount = Math.min(tntCount + freeLives * this.#settings.freeTNTsWithLife, this.#settings.maxTnts);
+
+      // Only award more TNT if current count has not exceed max
+      if (this.tnts < this.#settings.maxTnts) {
+        tntCount = Math.min(tntCount + freeLives * this.#settings.freeTNTsWithLife, this.#settings.maxTnts);
+      } else {
+        tntCount = this.tnts;
+      }
       this.#lastFreeLifeScore += freeLives * this.#settings.pointsPerFreeLife;
     }
     if (lifeCount !== this.lives || tntCount !== this.tnts) {

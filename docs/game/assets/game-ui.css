@@ -192,7 +192,7 @@ body {
     gap: 8px;
 }
 
-#game #relicsStatusLine {
+#game #relicStatusLine {
     position: absolute;
     top: 0px;
     right: 0px;
@@ -203,9 +203,20 @@ body {
     margin-top: var(--cell-size);  
 }
 
+#game #trophyStatusLine {
+    position: absolute;
+    top: var(--cell-size);
+    left: 0px;
+    z-index: 2;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 4px;
+    margin-top: var(--cell-size);  
+}
+
 #mazeStatusLine b,
 #bagStatusLine b,
-#relicsStatusLine b,
 #playerStatusLine b {
     font-size: var(--message-font-size);
 }
@@ -303,6 +314,20 @@ body {
     background-color: var(--maze-bg);
     gap: 8px;
     padding: 8px 8px 8px 8px;
+}
+
+#gameOverPanel #gameOverTrophyBonus {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 8px 8px 8px;
+}
+
+#gameOverTrophyBonus div {
+    display: flex;
+    justify-content: center;
+    font-weight: bold;
+    font-size: var(--medium-font-size);
 }
 
 #gameReplayBarPanel {

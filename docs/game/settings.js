@@ -32,6 +32,8 @@ class Settings {
   collisionThreshold;
   positionThreshold;
 
+  pointsPerTrophy;
+
   constructor() {
     this.setDefaults();
   }
@@ -66,6 +68,8 @@ class Settings {
 
     this.collisionThreshold = 0.55;
     this.positionThreshold = 0.05;
+
+    this.pointsPerTrophy = 100_000;
   }
 }
 

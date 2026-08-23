@@ -16,7 +16,8 @@ function showGameUI(show = true) {
   mazeStatusLine.hidden = hide;
 
   bagStatusLine.style.display = show ? 'flex' : 'none';
-  relicsStatusLine.style.display = show ? 'flex' : 'none';
+  relicStatusLine.style.display = show ? 'flex' : 'none';
+  trophyStatusLine.style.display = show ? 'flex' : 'none';
   dashboard.style.display = show ? 'flex' : 'none';
 }
 
@@ -133,11 +134,13 @@ const highScoreStatusLine = gameWindow.document.getElementById("highScoreStatusL
 const scoreStatusLine = gameWindow.document.getElementById("scoreStatusLine");
 const mazeStatusLine = gameWindow.document.getElementById("mazeStatusLine");
 const bagStatusLine = gameWindow.document.getElementById("bagStatusLine");
-const relicsStatusLine = gameWindow.document.getElementById("relicsStatusLine");
+const relicStatusLine = gameWindow.document.getElementById("relicStatusLine");
+const trophyStatusLine = gameWindow.document.getElementById("trophyStatusLine");
 
 const scoreboard = gameWindow.document.getElementById("scoreboard"); 
 const scorecard = gameWindow.document.getElementById("scorecard");
 const gameOverPanel = gameWindow.document.getElementById("gameOverPanel"); 
+const gameOverTrophyBonus = gameWindow.document.getElementById("gameOverTrophyBonus");
 const gameMessagePanel = gameWindow.document.getElementById("gameMessagePanel"); 
 const instructionsPanel = gameWindow.document.getElementById("instructionsPanel"); 
 
@@ -171,10 +174,12 @@ gameScreen.highScoreStatusLine = highScoreStatusLine;
 gameScreen.scoreStatusLine = scoreStatusLine;
 gameScreen.mazeStatusLine = mazeStatusLine;
 gameScreen.bagStatusLine = bagStatusLine;
-gameScreen.relicsStatusLine = relicsStatusLine;
+gameScreen.relicStatusLine = relicStatusLine;
+gameScreen.trophyStatusLine = trophyStatusLine;
 gameScreen.scoreboardLinks = scoreboardLinks;
 gameScreen.gameOverLinks = gameOverLinks;
 gameScreen.dismissInstructionsLink = dismissInstructionsLink;
+gameScreen.gameOverTrophyBonus = gameOverTrophyBonus;
 
 gameScreen.showGameUI = showGameUI;
 gameScreen.showGameMessage = showGameMessage;

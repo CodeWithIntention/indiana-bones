@@ -9,6 +9,11 @@ const MESSAGES = {
   mazeNotClearedMessage: "Cave NOT emptied!",
   nextMazeLinkText: "Go Deeper",
   nextLevelLinkText: "Next Level",
+  totalPoints: "Total:",
+  pointNeedForTrophy: "Points needed for",
+  pointNeedForNextTrophy: "Points needed for next",
+  trophyAwarded: ["Trophy Awarded:", "Trophies Awarded:"],
+  finalScore: "Final Score"
 }
 
 const TIMEOUTS = {
@@ -22,7 +27,8 @@ const TIMEOUTS = {
   tntDetonationDelay: 1500,
   guardianDelay: 3000,
   guardianDelayLevelReduction: 200,
-  relicLabelDuration: 3000
+  relicLabelDuration: 3000,
+  gameOverTrophyTallyInterval: 500
 }
 
 // Maze architecture objects

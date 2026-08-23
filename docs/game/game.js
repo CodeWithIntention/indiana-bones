@@ -127,12 +127,19 @@ function updateGameUI() {
       <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
 
     list = [];
-    for (let i = 1; i < player.level; i++) {
+    for (let i = 1; i <= player.level; i++) {
       const relicKind = Relic.kindForLevel(i);
       const parts = Relic.parse(Grid.symbolFor(relicKind));
       list.push(`<div>${parts[0]}</div>`);
     }
-    gameScreen.relicsStatusLine.innerHTML = list.join("");
+    gameScreen.relicStatusLine.innerHTML = list.join("");
+
+    list = [];
+    const trophySymbol = Grid.symbolFor("maze-trophy");
+    for (let i = 0; i < player.trophiesAwarded; i++) {
+      list.push(`<div>${trophySymbol}</div>`);
+    }
+    gameScreen.trophyStatusLine.innerHTML = list.join("");
 }
 
 function playerTNT(character) {
@@ -605,7 +612,20 @@ function tallyScore() {
           gameScreen.scorecard.innerHTML = "<div>You came out empty this time.</div><div class='score'>😐</div>";
           Sound.alert();
         } else {
-          gameScreen.scorecard.innerHTML = list.join("") + `<div style='justify-self: right'>Total:</div><div class='score'>${totalScore}</div>`;
+          list.push(`<div style='justify-self: right'>${MESSAGES.totalPoints}</div><div class='score'>${totalScore}</div>`);
+          
+          const trophiesAwarded = Math.floor(totalScore / settings.pointsPerTrophy);
+          const pointsNeeded = settings.pointsPerTrophy - totalScore % settings.pointsPerTrophy;
+          const trophySymbol = Grid.symbolFor("maze-trophy");
+
+          if (trophiesAwarded === 0) {
+            list.push(`<div>${MESSAGES.pointNeedForTrophy} ${trophySymbol}:</div><div class='score'>${pointsNeeded}</div>`);
+          } else {
+            player.trophiesAwarded += trophiesAwarded;
+            list.push(`<div>${MESSAGES.trophyAwarded[trophiesAwarded > 1 ? 1 : 0]}</div><div class='score'>${trophySymbol.repeat(trophiesAwarded)}</div>`);
+            list.push(`<div>${MESSAGES.pointNeedForNextTrophy} ${trophySymbol}:</div><div class='score'>${pointsNeeded}</div>`);
+          }
+          gameScreen.scorecard.innerHTML = list.join("");
           player.score += totalScore;
           Sound.ding();
           gameWindow.setTimeout(updateGameUI, TIMEOUTS.updateScoreCardInterval);
@@ -704,7 +724,7 @@ function play() {
 
     function gameLoop(time) {
       function canContinue() {
-        return !(gameState.gameOver || player.exitMaze || mazes !== player.mazes);
+        return !(gameState.gameOver || player.isBuried || player.exitMaze || mazes !== player.mazes);
       }
 
       if (!canContinue()) return;
@@ -978,10 +998,50 @@ function getHighScore() {
 }
 
 function setGameOver() {
-  gameState.onGameOver(settings.highScore);
   Sound.gameover();
-  
   gameScreen.showGameOver(gameState);
+
+  if (player.trophiesAwarded > 0) {
+    gameWindow.requestAnimationFrame(tallyTrophyBonus);
+  } else {
+    gameState.onGameOver(settings.highScore);
+  }
+}
+
+function tallyTrophyBonus() {
+  if (!(player.trophiesAwarded > 0)) return;
+
+  const trophySymbol = Grid.symbolFor("maze-trophy");
+  let trophies = 0;
+  let bonusPoints = 0;
+
+  function updateFinalScore() {
+    player.score += settings.pointsPerTrophy * player.trophiesAwarded;
+    updateGameUI();
+    gameState.onGameOver(settings.highScore);
+  }
+
+  function nextTrophy() {
+    if (gameScreen.gameOverPanel.style.display === 'none') {
+      // Game over screen was dismissed
+      updateFinalScore();
+      return;
+    };
+
+    if (trophies === player.trophiesAwarded) {
+      // Display final score awarded
+      Sound.dingDing();
+      gameScreen.gameOverTrophyBonus.innerHTML += `<div>${MESSAGES.finalScore}</div><div>${player.score + bonusPoints}</div>`;
+      updateFinalScore();
+    } else {
+      // Tally each trophy
+      Sound.ding();
+      bonusPoints = settings.pointsPerTrophy * (++trophies);
+      gameScreen.gameOverTrophyBonus.innerHTML = `<div>${trophySymbol.repeat(trophies)} &equals; ${bonusPoints}</div>`;
+      gameWindow.setTimeout(nextTrophy, TIMEOUTS.gameOverTrophyTallyInterval);    
+    }
+  }
+  gameWindow.setTimeout(nextTrophy, TIMEOUTS.gameOverTrophyTallyInterval);
 }
 
 function startGame(seed = 0) {
@@ -1027,7 +1087,7 @@ const gameState = {
     this.currentMaze = 0;
     this.levelRelic = null;
     this.relicChamberFormation = null;
-
+    
     this.isReplaying = false;
     this.mazeRecording = null;
     this.gameSteps = null;
@@ -1131,7 +1191,7 @@ const gameState = {
   },
 };
 
-gameScreen.startGame = startGame;
-gameScreen.replayGame = replayGame;
-gameScreen.playAgain = playAgain;
-gameScreen.replayFinalMaze = replayFinalMaze;
+gameScreen.startGame = () => gameWindow.setTimeout(startGame, TIMEOUTS.gameOverTrophyTallyInterval);
+gameScreen.replayGame = () => gameWindow.setTimeout(replayGame, TIMEOUTS.gameOverTrophyTallyInterval);
+gameScreen.playAgain = () => gameWindow.setTimeout(playAgain, TIMEOUTS.gameOverTrophyTallyInterval);
+gameScreen.replayFinalMaze = () => gameWindow.setTimeout(replayFinalMaze, TIMEOUTS.gameOverTrophyTallyInterval);

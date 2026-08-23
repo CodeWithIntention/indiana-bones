@@ -181,6 +181,27 @@ gameScreen.showInstructions = showInstructions;
 
 gameScreen.dismissInstructionsLink.addEventListener("click", () => showInstructions(false));
 
+const KEY_MAPPINGS = {
+    ArrowUp: "ArrowUp",
+    ArrowDown: "ArrowDown",
+    ArrowLeft: "ArrowLeft",
+    ArrowRight: "ArrowRight",
+
+    KeyW: "ArrowUp",
+    KeyS: "ArrowDown",
+    KeyA: "ArrowLeft",
+    KeyD: "ArrowRight",
+
+    Space: "Space",
+    Enter: "Space",
+    NumpadEnter: "Space",
+
+    mappedKey: (keyCode) => {
+      return KEY_MAPPINGS[keyCode] ?? keyCode
+    }
+};
+
+
 const keysPressed = {
   // BEGIN: Input Keys (do not change order)
     ArrowUp: false,
@@ -234,30 +255,32 @@ const keysPressed = {
 }
 
 function onKeyEvent(event, pressed) {
-    if (pressed && event.code === "Space") {
+    const keyCode = KEY_MAPPINGS.mappedKey(event.code);
+
+    if (pressed && keyCode === "Space") {
       if (keysPressed.onSpacePressed()) {
         event.preventDefault();
         return;
       }
     }
 
-    if (event.key.startsWith("Arrow") && pressed) {
-      if (keysPressed.onArrowKeyPressed(event.key)) {
+    if (pressed && keyCode.startsWith("Arrow")) {
+      if (keysPressed.onArrowKeyPressed(keyCode)) {
         event.preventDefault();
         return;
       }
     }
 
-    if (event.key === " " && event.code === "Space") {
+    if (keyCode === "Space") {
       event.preventDefault();
-      keysPressed[event.code] = pressed;
-    } else if (typeof keysPressed[event.key] !== "undefined") {
+      keysPressed[keyCode] = pressed;
+    } else if (typeof keysPressed[keyCode] !== "undefined") {
       event.preventDefault();
-      keysPressed[event.key] = pressed;
+      keysPressed[keyCode] = pressed;
     }
 
     // DEBUG: Hidden keystroke for advancing to next maze immediately.
-    if (!pressed && event.key === "ArrowLeft") {
+    if (!pressed && keyCode === "ArrowLeft") {
       keysPressed.NextMaze = event.shiftKey && event.ctrlKey;
     } else {
       keysPressed.NextMaze = false;

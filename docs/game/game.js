@@ -612,6 +612,7 @@ function tallyScore() {
           gameScreen.scorecard.innerHTML = "<div>You came out empty this time.</div><div class='score'>😐</div>";
           Sound.alert();
         } else {
+          totalScore = 200_500;
           list.push(`<div style='justify-self: right'>${MESSAGES.totalPoints}</div><div class='score'>${totalScore}</div>`);
           
           const trophiesAwarded = Math.floor(totalScore / settings.pointsPerTrophy);
@@ -619,11 +620,11 @@ function tallyScore() {
           const trophySymbol = Grid.symbolFor("maze-trophy");
 
           if (trophiesAwarded === 0) {
-            list.push(`<div>${MESSAGES.pointNeedForTrophy} ${trophySymbol}:</div><div class='score'>${pointsNeeded}</div>`);
+            list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForTrophy}</div><div>${trophySymbol}</div>`);
           } else {
             player.trophiesAwarded += trophiesAwarded;
             list.push(`<div>${MESSAGES.trophyAwarded[trophiesAwarded > 1 ? 1 : 0]}</div><div class='score'>${trophySymbol.repeat(trophiesAwarded)}</div>`);
-            list.push(`<div>${MESSAGES.pointNeedForNextTrophy} ${trophySymbol}:</div><div class='score'>${pointsNeeded}</div>`);
+            list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForNextTrophy}</div><div>${trophySymbol}</div>`);
           }
           gameScreen.scorecard.innerHTML = list.join("");
           player.score += totalScore;

@@ -10,8 +10,8 @@ const MESSAGES = {
   nextMazeLinkText: "Go Deeper",
   nextLevelLinkText: "Next Level",
   totalPoints: "Total:",
-  pointNeedForTrophy: "Points needed for",
-  pointNeedForNextTrophy: "Points needed for next",
+  pointNeedForTrophy: "more points to win a",
+  pointNeedForNextTrophy: "more points to win another",
   trophyAwarded: ["Trophy Awarded:", "Trophies Awarded:"],
   finalScore: "Final Score"
 }

@@ -1,5 +1,3 @@
-import { gameWindow } from "./game-ui.js";
-
 const KEY_MAPPINGS = {
     ArrowUp: "ArrowUp",
     ArrowDown: "ArrowDown",
@@ -20,7 +18,6 @@ const KEY_MAPPINGS = {
     }
 };
 
-
 export const Keyboard = {
   // BEGIN: Input Keys (do not change order)
     ArrowUp: false,
@@ -30,6 +27,11 @@ export const Keyboard = {
     Space: false,
     NextMaze: false,
   // END
+
+    initWith(gameWindow) {
+        gameWindow.document.addEventListener("keydown", e => onKeyEvent(e, true));
+        gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));
+    },
 
     onSpacePressed: () => false,
 
@@ -70,7 +72,7 @@ export const Keyboard = {
         
         callback(key, value);
       }
-    }
+    },
 }
 
 function onKeyEvent(event, pressed) {
@@ -105,6 +107,3 @@ function onKeyEvent(event, pressed) {
       Keyboard.NextMaze = false;
     }
 }
-
-gameWindow.document.addEventListener("keydown", e => onKeyEvent(e, true));
-gameWindow.document.addEventListener("keyup", e => onKeyEvent(e, false));

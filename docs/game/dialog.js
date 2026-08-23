@@ -1,4 +1,3 @@
-import { gameScreen } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
 
 const FOCUSABLE_SELECTOR = [
@@ -20,6 +19,18 @@ export class Dialog {
 
   static #previousSpaceHook = null;
   static #previousArrowHook = null;
+
+  static initWith(gameScreen) {
+    gameScreen.addEventListener(gameScreen.DialogEvents.show.name, (event) => {
+        const dialog = event.detail?.dialog;
+        Dialog.bind(dialog);
+    });
+
+    gameScreen.addEventListener(gameScreen.DialogEvents.dismiss.name, (event) => {
+        const dialog = event.detail?.dialog;
+        Dialog.unbind(dialog);
+    });
+  }
 
   static bind(dialog) {
     if (!(dialog instanceof Element)) {
@@ -253,13 +264,3 @@ export class Dialog {
     );
   }
 }
-
-gameScreen.addEventListener(gameScreen.DialogEvents.show.name, (event) => {
-    const dialog = event.detail?.dialog;
-    Dialog.bind(dialog);
-});
-
-gameScreen.addEventListener(gameScreen.DialogEvents.dismiss.name, (event) => {
-    const dialog = event.detail?.dialog;
-    Dialog.unbind(dialog);
-});

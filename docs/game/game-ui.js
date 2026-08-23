@@ -1,5 +1,9 @@
 import { MESSAGES, TIMEOUTS } from "./config.js";
 import { Sound } from "./sound.js";
+import { Keyboard } from "./keyboard.js";
+import { Touch } from "./touch.js";
+import { Controller } from "./controller.js";
+import { Dialog } from "./Dialog.js";
 
 export { gameWindow, gameScreen }
 
@@ -209,3 +213,11 @@ gameScreen.dismissDialog = function (dialog, display = 'none') {
 Object.values(gameScreen.DialogEvents).forEach(value => {
   value.dispatch = (dialog) => gameScreen.dispatchEvent(new CustomEvent(value.name, {detail: {dialog}}));
 });
+
+/*
+ Initialize libraries
+ */
+Keyboard.initWith(gameWindow);
+Controller.initWith(gameWindow);
+Touch.initWith(gameScreen);
+Dialog.initWith(gameScreen);

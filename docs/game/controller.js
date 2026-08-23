@@ -1,4 +1,3 @@
-import { gameWindow } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
 
 const AXIS_DEAD_ZONE = 0.45;
@@ -155,18 +154,22 @@ function updateController() {
   requestAnimationFrame(updateController);
 }
 
-gameWindow.addEventListener("gamepadconnected", (event) => {
-  if (activeGamepadIndex === null) {
-    updateController();
+export class Controller {
+  static initWith(gameWindow) {
+    gameWindow.addEventListener("gamepadconnected", (event) => {
+      if (activeGamepadIndex === null) {
+        updateController();
+      }
+    });
+
+    gameWindow.addEventListener("gamepaddisconnected", (event) => {
+      if (event.gamepad.index !== activeGamepadIndex) return;
+
+      activeGamepadIndex = null;
+      clearControllerInput();
+    });
   }
-});
-
-gameWindow.addEventListener("gamepaddisconnected", (event) => {
-  if (event.gamepad.index !== activeGamepadIndex) return;
-
-  activeGamepadIndex = null;
-  clearControllerInput();
-});
+};
 
 if ("getGamepads" in navigator) {
   requestAnimationFrame(updateController);

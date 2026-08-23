@@ -1,4 +1,3 @@
-import { gameScreen } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
 
 let touchStartX = 0;
@@ -10,6 +9,7 @@ const TAP_MAX_DISTANCE = 20;
 const TAP_MAX_TIME = 350;
 
 let touchDirection = null;
+let gameScreen = null;
 
 function updateTouchDirection(direction) {
   if (direction !== touchDirection) {
@@ -43,58 +43,64 @@ function isTrackingMouseMove(event) {
   return gameScreen.overlay.hasPointerCapture(event.pointerId);
 }
 
-gameScreen.overlay.addEventListener("pointerdown", (event) => {
-  if (event.target !== gameScreen.overlay) return;
+export class Touch {
+  static initWith(target) {
+    gameScreen = target;
 
-  event.preventDefault();
-  beginMouseMove(event);
-});
+    gameScreen.overlay.addEventListener("pointerdown", (event) => {
+      if (event.target !== gameScreen.overlay) return;
 
-gameScreen.overlay.addEventListener("pointermove", (event) => {
-  if (!isTrackingMouseMove(event)) return;
+      event.preventDefault();
+      beginMouseMove(event);
+    });
 
-  event.preventDefault();
+    gameScreen.overlay.addEventListener("pointermove", (event) => {
+      if (!isTrackingMouseMove(event)) return;
 
-  const dx = event.clientX - touchStartX;
-  const dy = event.clientY - touchStartY;
+      event.preventDefault();
 
-  const absX = Math.abs(dx);
-  const absY = Math.abs(dy);
+      const dx = event.clientX - touchStartX;
+      const dy = event.clientY - touchStartY;
 
-  if (Math.max(absX, absY) < SWIPE_MIN_DISTANCE) return;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
 
-  if (absX > absY) {
-    updateTouchDirection(dx > 0 ? "ArrowRight" : "ArrowLeft");
-  } else {
-    updateTouchDirection(dy > 0 ? "ArrowDown" : "ArrowUp");
+      if (Math.max(absX, absY) < SWIPE_MIN_DISTANCE) return;
+
+      if (absX > absY) {
+        updateTouchDirection(dx > 0 ? "ArrowRight" : "ArrowLeft");
+      } else {
+        updateTouchDirection(dy > 0 ? "ArrowDown" : "ArrowUp");
+      }
+    });
+
+    gameScreen.overlay.addEventListener("pointerup", (event) => {
+      event.preventDefault();
+      endMouseMove(event);
+
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapTime;
+      
+      if (timeSinceLastTap > TAP_MAX_TIME) return;
+
+      const dx = event.clientX - touchStartX;
+      const dy = event.clientY - touchStartY;
+
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      // Detect tap (not swipe)
+      const isTap = absX < TAP_MAX_DISTANCE && absY < TAP_MAX_DISTANCE;
+
+      if (isTap) {
+        Keyboard.Space = true;
+      }
+    });
+
+    gameScreen.overlay.addEventListener("pointercancel", (event) => {
+      event.preventDefault();
+      endMouseMove(event);
+      updateTouchDirection(null);
+    });
   }
-});
-
-gameScreen.overlay.addEventListener("pointerup", (event) => {
-  event.preventDefault();
-  endMouseMove(event);
-
-  const now = Date.now();
-  const timeSinceLastTap = now - lastTapTime;
-  
-  if (timeSinceLastTap > TAP_MAX_TIME) return;
-
-  const dx = event.clientX - touchStartX;
-  const dy = event.clientY - touchStartY;
-
-  const absX = Math.abs(dx);
-  const absY = Math.abs(dy);
-
-  // Detect tap (not swipe)
-  const isTap = absX < TAP_MAX_DISTANCE && absY < TAP_MAX_DISTANCE;
-
-  if (isTap) {
-    Keyboard.Space = true;
-  }
-});
-
-gameScreen.overlay.addEventListener("pointercancel", (event) => {
-  event.preventDefault();
-  endMouseMove(event);
-  updateTouchDirection(null);
-});
+};

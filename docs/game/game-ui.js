@@ -3,7 +3,7 @@ import { Sound } from "./sound.js";
 import { Keyboard } from "./keyboard.js";
 import { Touch } from "./touch.js";
 import { Controller } from "./controller.js";
-import { Dialog } from "./Dialog.js";
+import { Dialog } from "./dialog.js";
 
 export { gameWindow, gameScreen }
 

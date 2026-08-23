@@ -11,6 +11,7 @@ class Player extends Character {
   exitMazeTime;
   tnts;
   bonusAwarded;
+  trophiesAwarded;
 
   #settings;
   #alive;
@@ -62,7 +63,10 @@ class Player extends Character {
     let tntCount = this.tnts;
 
     this.#score = value;
-    
+
+    // No awards if score was award after death
+    if (!this.#alive) return;
+
     if (value >= this.#lastFreeLifeScore + this.#settings.pointsPerFreeLife) {
       const freeLives = Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife);
       lifeCount += freeLives;
@@ -116,7 +120,10 @@ class Player extends Character {
   }
 
   get state() {
-    return {score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, lives: this.lives, tnts: this.tnts, level: this.level, mazes: this.mazes};
+    return {
+      score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, 
+      lives: this.lives, tnts: this.tnts, trophiesAwarded: this.trophiesAwarded, 
+      level: this.level, mazes: this.mazes};
   }
 
   set state(value) {
@@ -124,6 +131,7 @@ class Player extends Character {
     this.#lastFreeLifeScore = value.lastFreeLifeScore;
     this.lives = value.lives;
     this.tnts = value.tnts;
+    this.trophiesAwarded = value.trophiesAwarded;
     this.level = value.level;
     this.mazes = value.mazes;
   }
@@ -169,7 +177,8 @@ class Player extends Character {
     this.tnts = this.config.tnts;
     this.lives = this.config.lives;
     this.bonusAwarded = false;
-
+    this.trophiesAwarded = 0;
+    
     this.#lastFreeLifeScore = 0;
 
     this.restart();

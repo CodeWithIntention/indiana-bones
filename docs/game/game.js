@@ -622,7 +622,7 @@ function tallyScore() {
             list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForTrophy}</div><div>${trophySymbol}</div>`);
           } else {
             player.trophiesAwarded += trophiesAwarded;
-            list.push(`<div>${MESSAGES.trophyAwarded[trophiesAwarded > 1 ? 1 : 0]}</div><div class='score'>${trophySymbol.repeat(trophiesAwarded)}</div>`);
+            list.push(`<div style='justify-self: right'>${MESSAGES.trophyAwarded[trophiesAwarded > 1 ? 1 : 0]}</div><div class='score'>${trophySymbol.repeat(trophiesAwarded)}</div>`);
             list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForNextTrophy}</div><div>${trophySymbol}</div>`);
           }
           gameScreen.scorecard.innerHTML = list.join("");

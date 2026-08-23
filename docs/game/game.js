@@ -125,21 +125,6 @@ function updateGameUI() {
 
     mazeStatusLine.innerHTML = `<b>LEVEL ${gameState.currentLevel}.${gameState.currentMaze}</b> 
       <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
-
-    list = [];
-    for (let i = 1; i <= player.level; i++) {
-      const relicKind = Relic.kindForLevel(i);
-      const parts = Relic.parse(Grid.symbolFor(relicKind));
-      list.push(`<div>${parts[0]}</div>`);
-    }
-    gameScreen.relicStatusLine.innerHTML = list.join("");
-
-    list = [];
-    const trophySymbol = Grid.symbolFor("maze-trophy");
-    for (let i = 0; i < player.trophiesAwarded; i++) {
-      list.push(`<div>${trophySymbol}</div>`);
-    }
-    gameScreen.trophyStatusLine.innerHTML = list.join("");
 }
 
 function playerTNT(character) {
@@ -384,6 +369,21 @@ function onCharacterCollide(character, other) {
 function buildMaze() {
   grid.render((cell, row, col) => {
   });
+  
+  let list = [];
+  for (let i = 1; i <  player.level; i++) {
+    const relicKind = Relic.kindForLevel(i);
+    const parts = Relic.parse(Grid.symbolFor(relicKind));
+    list.push(`<div>${parts[0]}</div>`);
+  }
+  gameScreen.relicStatusLine.innerHTML = list.join("");
+
+  list = [];
+  const trophySymbol = Grid.symbolFor("maze-trophy");
+  for (let i = 0; i < player.trophiesAwarded; i++) {
+    list.push(`<div>${trophySymbol}</div>`);
+  }
+  gameScreen.trophyStatusLine.innerHTML = list.join("");
 }
 
 function movePlayer(direction, delta) {

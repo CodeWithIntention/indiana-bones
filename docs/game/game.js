@@ -6,9 +6,8 @@ import { Character } from "./character.js";
 import { Player } from "./player.js";
 import { Spider, Scorpion, Cat, Monkey, Mouse, Ghost, Rock, Relic } from "./characters.js";
 import { Grid } from "./grid.js";
-import { gameWindow, gameScreen, keysPressed } from "./game-ui.js";
-
-export { keysPressed };
+import { gameWindow, gameScreen } from "./game-ui.js";
+import { Keyboard } from "./keyboard.js";
 
 Grid.onCharacterMoved = (character, object) => {
   if (character === player) {
@@ -244,7 +243,7 @@ function playerRespawn() {
 
   player.respawn();
   Sound.respawn();
-  keysPressed.clear();
+  Keyboard.clear();
 
   updateGameState(player);
   return true;
@@ -700,7 +699,7 @@ function play() {
     let lastTime = 0;
     let timeSlice = 0;
 
-    keysPressed.clear();
+    Keyboard.clear();
     Timer.clear();
 
     function gameLoop(time) {
@@ -710,8 +709,8 @@ function play() {
 
       if (!canContinue()) return;
 
-      if (keysPressed.NextMaze) {
-        keysPressed.NextMaze = false;
+      if (Keyboard.NextMaze) {
+        Keyboard.NextMaze = false;
         gameState.onMazeExited();
         nextMaze();
         return;
@@ -743,7 +742,7 @@ function playGameStep(delta) {
   
   if (gameState.isReplaying) {
     const inputMask = gameState.replayInputMask();
-    keysPressed.applyMask(inputMask);
+    Keyboard.applyMask(inputMask);
   }
 
   const inputMask = handleInput(gameState.ticks);
@@ -755,25 +754,25 @@ function playGameStep(delta) {
 }
 
 function handleInput() {
-    const inputMask = keysPressed.mask();
+    const inputMask = Keyboard.mask();
 
-    if (keysPressed.Space) {
+    if (Keyboard.Space) {
         if (player.isAlive) {
             playerTNT(player);
         } else {
             playerRespawn();
         }
         // Don't let it repeat
-        keysPressed.Space = false;
+        Keyboard.Space = false;
     }
     return inputMask;
 }
 
 function getMoveDirection() {
-  if (keysPressed.ArrowLeft)  return Direction.LEFT;
-  if (keysPressed.ArrowRight) return Direction.RIGHT;
-  if (keysPressed.ArrowUp)    return Direction.UP;
-  if (keysPressed.ArrowDown)  return Direction.DOWN;
+  if (Keyboard.ArrowLeft)  return Direction.LEFT;
+  if (Keyboard.ArrowRight) return Direction.RIGHT;
+  if (Keyboard.ArrowUp)    return Direction.UP;
+  if (Keyboard.ArrowDown)  return Direction.DOWN;
 
   return player.direction;
 }

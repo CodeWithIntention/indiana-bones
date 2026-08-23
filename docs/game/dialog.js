@@ -1,4 +1,5 @@
-import { gameScreen, keysPressed } from "./game-ui.js";
+import { gameScreen } from "./game-ui.js";
+import { Keyboard } from "./keyboard.js";
 
 const FOCUSABLE_SELECTOR = [
   "button:not([disabled])",
@@ -37,15 +38,15 @@ export class Dialog {
     Dialog.#previousFocus = document.activeElement;
 
     Dialog.#previousSpaceHook =
-      keysPressed.onSpacePressed;
+      Keyboard.onSpacePressed;
 
     Dialog.#previousArrowHook =
-      keysPressed.onArrowKeyPressed;
+      Keyboard.onArrowKeyPressed;
 
-    keysPressed.onSpacePressed =
+    Keyboard.onSpacePressed =
       Dialog.#onSpacePressed;
 
-    keysPressed.onArrowKeyPressed =
+    Keyboard.onArrowKeyPressed =
       Dialog.#onArrowKeyPressed;
 
     Dialog.#refreshControls();
@@ -68,10 +69,10 @@ export class Dialog {
 
     const previousFocus = Dialog.#previousFocus;
 
-    keysPressed.onSpacePressed =
+    Keyboard.onSpacePressed =
       Dialog.#previousSpaceHook;
 
-    keysPressed.onArrowKeyPressed =
+    Keyboard.onArrowKeyPressed =
       Dialog.#previousArrowHook;
 
     Dialog.#container = null;

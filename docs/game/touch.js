@@ -1,4 +1,5 @@
-import { gameScreen, keysPressed } from "./game-ui.js";
+import { gameScreen } from "./game-ui.js";
+import { Keyboard } from "./keyboard.js";
 
 let touchStartX = 0;
 let touchStartY = 0;
@@ -13,10 +14,10 @@ let touchDirection = null;
 function updateTouchDirection(direction) {
   if (direction !== touchDirection) {
     if (touchDirection) {
-        keysPressed[touchDirection] = false;
+        Keyboard[touchDirection] = false;
     }
     if (direction) {
-        keysPressed[direction] = true;
+        Keyboard[direction] = true;
     }
     touchDirection = direction;
   }
@@ -88,7 +89,7 @@ gameScreen.overlay.addEventListener("pointerup", (event) => {
   const isTap = absX < TAP_MAX_DISTANCE && absY < TAP_MAX_DISTANCE;
 
   if (isTap) {
-    keysPressed.Space = true;
+    Keyboard.Space = true;
   }
 });
 

@@ -1,4 +1,5 @@
-import { gameWindow, keysPressed } from "./game-ui.js";
+import { gameWindow } from "./game-ui.js";
+import { Keyboard } from "./keyboard.js";
 
 const AXIS_DEAD_ZONE = 0.45;
 
@@ -44,21 +45,21 @@ function updateControllerDirection(direction) {
   /*
    * A dialog or another UI component can consume the input.
    */
-  if (keysPressed.onArrowKeyPressed(direction)) {
+  if (Keyboard.onArrowKeyPressed(direction)) {
     return;
   }
 
   if (controllerDirection) {
-    keysPressed[controllerDirection] = false;
+    Keyboard[controllerDirection] = false;
   }
 
-  keysPressed[direction] = true;
+  Keyboard[direction] = true;
   controllerDirection = direction;
 }
 
 function clearControllerInput() {
   if (controllerDirection) {
-    keysPressed[controllerDirection] = false;
+    Keyboard[controllerDirection] = false;
   }
 
   physicalControllerDirection = null;
@@ -101,10 +102,10 @@ function updatePrimaryButton(gamepad) {
   const isPressed = isButtonPressed(gamepad, BUTTON_A);
 
   // Generate one Space press when the primary button is initially pressed.
-  // The game handles clearing keysPressed.Space after consuming the action.
+  // The game handles clearing Keyboard.Space after consuming the action.
   if (isPressed && !primaryButtonPressed) {
-    if (keysPressed.onSpacePressed()) return;
-    keysPressed.Space = true;
+    if (Keyboard.onSpacePressed()) return;
+    Keyboard.Space = true;
   }
 
   primaryButtonPressed = isPressed;

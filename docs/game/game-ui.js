@@ -226,9 +226,9 @@ Controller.initWith(gameWindow);
 Touch.initWith(gameScreen);
 Dialog.initWith(gameScreen);
 
+// Display IB Bio on initial load
 gameScreen.showDialog(document.getElementById("bio"));
 gameWindow.requestAnimationFrame(() => {
   document.getElementById("bioContent").classList.toggle("open");
 });
 enterLink.addEventListener("click", enterSpiderCave);
-

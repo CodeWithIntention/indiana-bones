@@ -350,7 +350,7 @@ body {
     display: grid;
     grid-template-columns: auto auto;
     justify-content: center;
-    gap: 8px;
+    gap: 0px 8px;
     color: var(--shadow-glow-color);
 }
 

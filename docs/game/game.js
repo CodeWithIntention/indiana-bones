@@ -1088,6 +1088,7 @@ const gameState = {
     this.relicChamberFormation = null;
     
     this.isReplaying = false;
+    this.replayStepIndex = 0;
     this.mazeRecording = null;
     this.gameSteps = null;
     this.replayStep = null;
@@ -1162,10 +1163,11 @@ const gameState = {
 
     if (mazeRecording) {
       this.isReplaying = true;
+      this.replayStepIndex = 0;
       this.currentLevel = mazeRecording.level;
       this.currentMaze = mazeRecording.maze;
       this.ticks = mazeRecording.ticks;
-      this.gameSteps = mazeRecording.gameSteps.toReversed();
+      this.gameSteps = mazeRecording.gameSteps;
       this.randomizer = RNG.randomizer(mazeRecording.randomizerState);
       player.state = mazeRecording.playerState;
     }
@@ -1174,8 +1176,8 @@ const gameState = {
   replayInputMask() {
     if (!this.isReplaying) return 0;
 
-    if (this.gameSteps.length > 0 && this.gameSteps.at(-1)[0] === this.ticks) {
-      this.replayStep = this.gameSteps.pop();
+    if (this.replayStepIndex < this.gameSteps.length && this.gameSteps[this.replayStepIndex][0] === this.ticks) {
+      this.replayStep = this.gameSteps[this.replayStepIndex++];
     }
     return this.replayStep && this.replayStep[1] || 0;
   },

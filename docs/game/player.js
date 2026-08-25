@@ -1,4 +1,4 @@
-import { Direction } from "./util.js";
+import { Direction, Timer } from "./util.js";
 import { OBJECTS } from "./config.js";
 import { Character } from "./character.js";
 
@@ -94,16 +94,16 @@ class Player extends Character {
   }
 
   set powerUp(bool) {
-    this.#powerUpTime = Date.now();
+    this.#powerUpTime = Timer.ticks;
 
     if (bool === true) {
       this.reduceSpeedBy(0);
-      this.#powerUpTime += this.config.powerUpDuration;
+      this.#powerUpTime += Timer.msToTicks(this.config.powerUpDuration);
     }
   }
 
   get powerUpTimeRemaining() {
-    return Date.now() - this.powerUpTime;
+    return Timer.ticks - this.powerUpTime;
   }
 
   get powerUpDuration() {
@@ -111,7 +111,7 @@ class Player extends Character {
   }
 
   get powerUp() {
-    return this.#powerUpTime > Date.now();
+    return this.#powerUpTime > Timer.ticks;
   }
 
   get powerUpTime() {
@@ -203,7 +203,7 @@ class Player extends Character {
     this.speed = this.config.speed;
 
     this.#alive = true;
-    this.#powerUpTime = Date.now();
+    this.#powerUpTime = 0;
     this.#bag = [];
   }
 

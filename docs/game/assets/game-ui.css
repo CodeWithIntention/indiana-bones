@@ -340,9 +340,14 @@ body {
 }
 
 #gameReplayBarPanel {
-    margin-top: 8px;
-    width: 100%;
-    max-width: none;
+  margin-top: 8px;
+
+  width: 0;
+  min-width: 100%;
+  max-width: 100%;
+
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 #gameMessagePanel {

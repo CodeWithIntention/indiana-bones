@@ -17,6 +17,12 @@ export class ReplayBar {
   #playButton;
   #speedButton;
 
+  #timelineElement;
+  #minimumMarkerSpacing = 28;
+  
+  #resizeObserver;
+  #resizeObserverIgnore = false;
+
   constructor(host, options = {}) {
     if (typeof host === "string") {
       host = document.querySelector(host);
@@ -54,8 +60,8 @@ export class ReplayBar {
     this.#element = document.createElement("div");
     this.#element.className = "replay-bar";
 
-    const timelineRow = document.createElement("div");
-    timelineRow.className = "replay-bar__timeline";
+    this.#timelineElement = document.createElement("div");
+    this.#timelineElement.className = "replay-bar__timeline";    
 
     this.#track = document.createElement("div");
     this.#track.className = "replay-bar__track";
@@ -75,7 +81,7 @@ export class ReplayBar {
       this.#markers
     );
 
-    timelineRow.append(this.#track);
+    this.#timelineElement.append(this.#track);
 
     const controlsRow = document.createElement("div");
     controlsRow.className = "replay-bar__controls";
@@ -166,11 +172,21 @@ export class ReplayBar {
     );
 
     this.#element.append(
-      timelineRow,
+      this.#timelineElement,
       controlsRow
     );
 
     this.#host.replaceChildren(this.#element);
+
+    this.#resizeObserver = new ResizeObserver(() => {
+      if (this.#resizeObserverIgnore) {
+        this.#resizeObserverIgnore = false;
+      } else {
+        this.#updateTrackWidth();
+      }
+    });
+
+    this.#resizeObserver.observe(this.#host);
   }
 
   #createButton({
@@ -199,7 +215,7 @@ export class ReplayBar {
 
   setRecording(timeline) {
     this.reset();
-    
+
     const markers = Array.isArray(timeline?.markers)
       ? timeline.markers
       : [];
@@ -236,6 +252,7 @@ export class ReplayBar {
     );
 
     this.#renderMarkers();
+    this.#updateTrackWidth();
     this.#update();
   }
 
@@ -309,12 +326,15 @@ export class ReplayBar {
 
   reset() {
     this.#currentTick = 0;
+    this.#activeMarker = null;
+
     this.setPlaying(false);
     this.setSpeed(this.#options.speeds[0] ?? 1);
     this.#update();
   }
 
   destroy() {
+    this.#resizeObserver?.disconnect();
     this.#element.remove();
   }
 
@@ -435,7 +455,8 @@ export class ReplayBar {
 
   #onSelectMarker(marker) {
     if (!(this.#enabled && marker)) return;  
-    
+    if (this.#currentTick === marker.tick) return;
+
     this.setCurrentTick(marker.tick);
 
     if (marker.type === "finish") {
@@ -506,10 +527,110 @@ export class ReplayBar {
       }
     }
 
-    activeMarker?.classList.add(
+    if (!activeMarker) return;
+  
+    activeMarker.classList.add(
       "replay-bar__marker--active"
     );
 
-    this.#activeMarker = activeMarker?.dataset;
+    /*
+    * setCurrentTick() may run every game step. Only scroll
+    * when playback enters a different marker boundary.
+    */
+    if (!this.#activeMarker || this.#activeMarker.index != activeMarker.dataset.index) {
+      this.#activeMarker = activeMarker?.dataset;
+      this.#scrollMarkerIntoView(activeMarker);
+    }
+  }
+
+  #updateTrackWidth() {
+    const totalTicks = this.#timeline.totalTicks;
+
+    const availableWidth =
+      this.#timelineElement.clientWidth;
+
+    if (totalTicks <= 0) {
+      this.#track.style.width = "100%";
+      return;
+    }
+
+    const ticks = this.#timeline.markers
+      .map(marker => marker.tick)
+      .concat(totalTicks)
+      .sort((a, b) => a - b);
+
+    let requiredWidth = availableWidth;
+
+    for (let index = 1; index < ticks.length; index++) {
+      const tickDistance =
+        ticks[index] - ticks[index - 1];
+
+      /*
+      * Markers at an identical tick must be handled as one
+      * boundary rather than placed on top of each other.
+      */
+      if (tickDistance <= 0) continue;
+
+      const proportionalDistance =
+        tickDistance / totalTicks;
+
+      const widthForThisPair =
+        this.#minimumMarkerSpacing /
+        proportionalDistance;
+
+      requiredWidth = Math.max(
+        requiredWidth,
+        widthForThisPair
+      );
+    }
+
+    const width = Math.ceil(requiredWidth);
+    const currentWidth = Math.round(
+      this.#track.getBoundingClientRect().width
+    );
+
+    if (width === currentWidth) {
+      return;
+    }
+
+    this.#resizeObserverIgnore = true;
+    this.#track.style.width = `${width}px`;
+  }
+
+  #scrollMarkerIntoView(marker) {
+    if (!marker) return;
+
+    const viewport = this.#timelineElement;
+
+    const markerCenter =
+      marker.offsetLeft +
+      marker.offsetWidth / 2;
+
+    const desiredScrollLeft =
+      markerCenter -
+      viewport.clientWidth / 2;
+
+    const maximumScrollLeft =
+      viewport.scrollWidth -
+      viewport.clientWidth;
+
+    const scrollLeft = Math.max(
+      0,
+      Math.min(
+        desiredScrollLeft,
+        maximumScrollLeft
+      )
+    );
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    viewport.scrollTo({
+      left: scrollLeft,
+      behavior: reducedMotion
+        ? "auto"
+        : "smooth"
+    });
   }
 }

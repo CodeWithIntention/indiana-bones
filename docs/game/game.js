@@ -1267,6 +1267,8 @@ gameScreen.replayBarHandler = {
       gameState.ticks = recording.ticks;
       player.state = recording.playerState;
 
+      GameRecorder.selectMaze(-1);
+      
       if (recording.outcome === "finished") {
         playerGameOver(true);
       } else {

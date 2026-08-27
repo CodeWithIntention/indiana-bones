@@ -12,8 +12,10 @@ const MESSAGES = {
   totalPoints: "Total:",
   pointNeedForTrophy: "more points to win a",
   pointNeedForNextTrophy: "more points to win another",
-  trophyAwarded: ["Trophy Awarded:", "Trophies Awarded:"],
-  finalScore: "Final Score"
+  trophyAwarded: ["Trophy Awarded", "Trophies Awarded"],
+  relicsFound: "Relics Found",
+  finalScore: "Final Score",
+  none: "NONE!"
 }
 
 const TIMEOUTS = {

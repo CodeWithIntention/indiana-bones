@@ -70,8 +70,10 @@ class Relic extends Character {
   symbol;
   description;
 
+  static maxLevel = 10;
+
   static kindForLevel(level) {
-    return `${CHARACTERS.relic.kind}-${level}`;
+    return `${CHARACTERS.relic.kind}-${Math.min(level, Relic.maxLevel)}`;
   }
 
   static parse(symbolDescription) {

@@ -325,18 +325,44 @@ body {
     padding: 8px 8px 8px 8px;
 }
 
-#gameOverPanel #gameOverTrophyBonus {
+#gameOverPanel #gameOverAchievements {
     flex-direction: row;
+    width: fit-content;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 16px;
     padding: 8px 8px 8px 8px;
 }
 
-#gameOverTrophyBonus div {
-    display: flex;
-    justify-content: center;
-    font-weight: bold;
+#gameOverAchievements .label {
+    color: var(--shadow-glow-color); 
     font-size: var(--medium-font-size);
+}
+
+#gameOverAchievements div {
+    display: flex;
+    flex-direction: row;
+    width: fit-content;
+    align-items: center;
+    justify-self: center;
+    font-weight: bold;
+    gap: 8px;
+    font-size: var(--medium-font-size);
+}
+
+#gameOverAchievements div div {
+    display: flex;
+    flex-direction: column;
+    width: min-content;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: bold;
+    font-size: var(--small-font-size);
+}
+
+#gameOverAchievements div div .icon {
+    font-size: var(--large-font-size);
 }
 
 #gameReplayBarPanel {

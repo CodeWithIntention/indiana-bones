@@ -620,7 +620,7 @@ function tallyScore(replay = false) {
             list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForTrophy}</div><div>${trophySymbol}</div>`);
           } else {
             player.trophiesAwarded += trophiesAwarded;
-            list.push(`<div style='justify-self: right'>${MESSAGES.trophyAwarded[trophiesAwarded > 1 ? 1 : 0]}</div><div class='score'>${trophySymbol.repeat(trophiesAwarded)}</div>`);
+            list.push(`<div style='justify-self: right'>${MESSAGES.trophyAwarded[trophiesAwarded > 1 ? 1 : 0]}:</div><div class='score'>${trophySymbol.repeat(trophiesAwarded)}</div>`);
             list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForNextTrophy}</div><div>${trophySymbol}</div>`);
           }
           gameScreen.scorecard.innerHTML = list.join("");
@@ -1012,31 +1012,53 @@ function playerGameOver(replay = false) {
   gameState.onGameOver();
   gameScreen.showGameOver(replay);
 
-  if (replay === true) {
-    if (player.trophiesAwarded > 0) {
-      const bonusPoints = settings.pointsPerTrophy * player.trophiesAwarded;
-      gameScreen.gameOverTrophyBonus.innerHTML = `<div>${trophySymbol.repeat(player.trophiesAwarded)} &equals; ${bonusPoints}</div>`;
+  if (player.level <= 1) {
+    gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`;
+  } else {
+    const list = [];
+    for (let i = 1; i <  player.level; i++) {
+      const relicKind = Relic.kindForLevel(i);
+      const parts = Relic.parse(Grid.symbolFor(relicKind));
+      list.push(`<div><div class='icon'>${parts[0]}</div><div>${parts[1]}</div></div>`);
     }
-    gameScreen.gameOverTrophyBonus.innerHTML += `<div>${MESSAGES.finalScore}</div><div class="shadowGlow pulse">${player.score}</div>`;
+    gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${list.join("")}</div>`;
+  }
+
+  if (player.trophiesAwarded <= 0) {
+    gameScreen.gameOverAchievements.innerHTML += `<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`;
+  }
+
+  if (replay === true) {
+    let list = [];
+    
+    if (player.trophiesAwarded > 0) {
+      const trophySymbol = Grid.symbolFor("maze-trophy");
+      const bonusPoints = settings.pointsPerTrophy * player.trophiesAwarded;
+      list.push(`<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${trophySymbol.repeat(player.trophiesAwarded)} &equals; ${bonusPoints}</div>`);
+    }
+    list.push(`<div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`);
+    gameScreen.gameOverAchievements.innerHTML += list.join("");
   } else {
     gameWindow.requestAnimationFrame(tallyTrophyBonus);
   }
 }
 
-function tallyTrophyBonus(replay) {
+function tallyTrophyBonus() {
   if (player.trophiesAwarded <= 0) {
     updateFinalScore();
     return;
   }
 
   const trophySymbol = Grid.symbolFor("maze-trophy");
+  const gameOverAchievementsHtml = gameScreen.gameOverAchievements.innerHTML;
+
   let trophies = 0;
   let bonusPoints = 0;
 
   function updateFinalScore() {
     player.score += settings.pointsPerTrophy * player.trophiesAwarded;
     updateGameUI();
-    gameScreen.gameOverTrophyBonus.innerHTML += `<div>${MESSAGES.finalScore}</div><div class="shadowGlow pulse">${player.score}</div>`;
+    gameScreen.gameOverAchievements.innerHTML += `<div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
 
     saveHighScore(settings.highScore);
     gameState.onGameFinished();
@@ -1057,7 +1079,7 @@ function tallyTrophyBonus(replay) {
       // Tally each trophy
       Sound.ding();
       bonusPoints = settings.pointsPerTrophy * (++trophies);
-      gameScreen.gameOverTrophyBonus.innerHTML = `<div>${trophySymbol.repeat(trophies)} &equals; ${bonusPoints}</div>`;
+      gameScreen.gameOverAchievements.innerHTML = gameOverAchievementsHtml + `<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${trophySymbol.repeat(trophies)} &equals; ${bonusPoints}</div>`;
       gameWindow.setTimeout(nextTrophy, TIMEOUTS.gameOverTrophyTallyInterval);    
     }
   }
@@ -1268,7 +1290,7 @@ gameScreen.replayBarHandler = {
       player.state = recording.playerState;
 
       GameRecorder.selectMaze(-1);
-      
+
       if (recording.outcome === "finished") {
         playerGameOver(true);
       } else {

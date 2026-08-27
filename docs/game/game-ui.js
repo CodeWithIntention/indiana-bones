@@ -90,7 +90,7 @@ function hideGameOver(hideGameUI = false) {
 function showGameOver(replay = false) {
   if (gameScreen.gameOverPanel.style.display === 'flex') return;
   
-  gameScreen.gameOverTrophyBonus.innerHTML = "";
+  gameScreen.gameOverAchievements.innerHTML = "";
 
   if (replay === true) {
     gameScreen.gameOverLinks.replayGameLink.hidden = true;
@@ -160,7 +160,7 @@ const trophyStatusLine = gameWindow.document.getElementById("trophyStatusLine");
 const scoreboard = gameWindow.document.getElementById("scoreboard"); 
 const scorecard = gameWindow.document.getElementById("scorecard");
 const gameOverPanel = gameWindow.document.getElementById("gameOverPanel"); 
-const gameOverTrophyBonus = gameWindow.document.getElementById("gameOverTrophyBonus");
+const gameOverAchievements = gameWindow.document.getElementById("gameOverAchievements");
 const gameMessagePanel = gameWindow.document.getElementById("gameMessagePanel"); 
 const gameReplayBarPanel = gameWindow.document.getElementById("gameReplayBarPanel"); 
 const instructionsPanel = gameWindow.document.getElementById("instructionsPanel"); 
@@ -196,7 +196,7 @@ gameScreen.trophyStatusLine = trophyStatusLine;
 gameScreen.scoreboardLinks = scoreboardLinks;
 gameScreen.gameOverLinks = gameOverLinks;
 gameScreen.dismissInstructionsLink = dismissInstructionsLink;
-gameScreen.gameOverTrophyBonus = gameOverTrophyBonus;
+gameScreen.gameOverAchievements = gameOverAchievements;
 gameScreen.gameReplayBarPanel = gameReplayBarPanel;
 
 gameScreen.showGameUI = showGameUI;

@@ -4,7 +4,7 @@
 @import "items.css";
 
 .banner {
-    font-size: var(--large-font-size);
+    font-size: var(--large-font-size) !important;
 }
 
 .shadowGlow {

@@ -1,5 +1,5 @@
 import { Direction, Timer } from "./util.js";
-import { OBJECTS } from "./config.js";
+import { OBJECTS, CHARACTERS } from "./config.js";
 import { Character } from "./character.js";
 
 export { Player }
@@ -128,20 +128,42 @@ class Player extends Character {
   }
 
   get state() {
+    const baggedObjects = {};
+
+    [...Object.values(OBJECTS), ...Object.values(CHARACTERS)].forEach(object => {
+      const items = this.findInBag(object);
+
+      if (items.length > 0) {
+        baggedObjects[object.kind] = items.length;
+      }
+    });
+
     return {
       score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, 
+      alive: this.#alive, exitMaze: this.#exitMaze,
       lives: this.lives, tnts: this.tnts, trophiesAwarded: this.trophiesAwarded, 
-      level: this.level, mazes: this.mazes};
+      level: this.level, mazes: this.mazes, baggedObjects: baggedObjects};
   }
 
   set state(value) {
     this.#score = value.score;
     this.#lastFreeLifeScore = value.lastFreeLifeScore;
+    this.#alive = value.alive;
+    this.#exitMaze = value.exitMaze;
+
     this.lives = value.lives;
     this.tnts = value.tnts;
     this.trophiesAwarded = value.trophiesAwarded;
     this.level = value.level;
     this.mazes = value.mazes;
+
+    this.#bag = [];
+
+    Object.entries(value.baggedObjects).forEach(([key, value]) => {
+      while (value-- > 0) {
+        this.#bag.push(key);
+      }
+    });
   }
 
   countInBag(obj) {
@@ -156,7 +178,7 @@ class Player extends Character {
   }
 
   findInBag(obj) {
-    return this.#bag.filter(item => item === obj);
+    return this.#bag.filter(item => item === obj || item === obj.kind);
   }
 
   grab(obj) {

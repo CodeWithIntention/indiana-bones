@@ -23,6 +23,7 @@ export class Dialog {
   static initWith(gameScreen) {
     gameScreen.addEventListener(gameScreen.DialogEvents.show.name, (event) => {
         const dialog = event.detail?.dialog;
+        Keyboard.clear();
         Dialog.bind(dialog);
     });
 

@@ -165,7 +165,16 @@ body {
     overscroll-behavior: none;
 }
 
-#game #playerStatusLine {
+#game #grid {
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+  height: max-content;
+  max-height: 100%;
+  margin-inline: auto;
+}
+
+#grid #playerStatusLine {
     position: absolute;
     top: 0px;
     left: 0px;
@@ -173,7 +182,7 @@ body {
     z-index: 2;
 }
 
-#game #scoreStatusLine {
+#grid #scoreStatusLine {
     position: absolute;
     top: 0px;
     right: 0px;
@@ -181,18 +190,7 @@ body {
     z-index: 2;
 }
 
-#game #bagStatusLine {
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-    padding: 0px;
-    z-index: 2;
-    display: none;
-    flex-direction: row;
-    gap: 8px;
-}
-
-#game #relicStatusLine {
+#grid #relicStatusLine {
     position: absolute;
     top: 0px;
     right: 0px;
@@ -203,7 +201,7 @@ body {
     margin-top: var(--cell-size);  
 }
 
-#game #trophyStatusLine {
+#grid #trophyStatusLine {
     position: absolute;
     top: var(--cell-size);
     left: 0px;
@@ -215,18 +213,29 @@ body {
     margin-top: var(--cell-size);  
 }
 
-#mazeStatusLine b,
-#bagStatusLine b,
-#playerStatusLine b {
-    font-size: var(--message-font-size);
+#grid #bagStatusLine {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    padding: 0px;
+    z-index: 2;
+    display: none;
+    flex-direction: row;
+    gap: 8px;
 }
 
-#game #mazeStatusLine {
+#grid #mazeStatusLine {
     position: absolute;
     bottom: 0px;
     right: 0px;
     padding: 0px;
     z-index: 2;
+}
+
+#mazeStatusLine b,
+#bagStatusLine b,
+#playerStatusLine b {
+    font-size: var(--message-font-size);
 }
 
 #maze {
@@ -331,15 +340,9 @@ body {
 }
 
 #gameReplayBarPanel {
+    margin-top: 8px;
     width: 100%;
-    height: max-content;
-}
-
-/** 
- * Hidden for now. Will implement later
- */
-#gameOverLinks #replayGameLink {
-    display: none;
+    max-width: none;
 }
 
 #gameMessagePanel {

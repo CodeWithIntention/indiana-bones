@@ -1,0 +1,423 @@
+/*
+ * ReplayBar
+ *
+ * Load this stylesheet after the game's global stylesheet.
+ */
+
+.replay-bar {
+  --replay-track-height: 5px;
+
+  --replay-progress-color: #f39a3c;
+  --replay-remaining-color: #716b62;
+
+  --replay-marker-color: #f39a3c;
+  --replay-marker-pending-color: #211e1b;
+  --replay-marker-border-color: #f6a14a;
+
+  --replay-button-background: rgb(32 27 24 / 94%);
+  --replay-button-hover-background: #4b2c1c;
+  --replay-button-border-color: #d56827;
+  --replay-button-color: #ffc070;
+
+  display: block;
+  position: relative;
+  isolation: isolate;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+  padding: 4px;
+
+  border: 1px solid rgb(213 104 39 / 55%);
+  border-radius: 5px;
+
+  background: rgb(20 18 16 / 82%);
+  box-shadow: 0 0 10px rgb(255 133 50 / 22%);
+
+  color: #ffc070;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ensure every ReplayBar element uses predictable sizing. */
+
+.replay-bar,
+.replay-bar *,
+.replay-bar *::before,
+.replay-bar *::after {
+  box-sizing: border-box;
+}
+
+/* Prevent global button pseudo-elements from appearing. */
+
+.replay-bar button::before,
+.replay-bar button::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* =========================================================
+   Timeline
+   ========================================================= */
+
+.replay-bar__timeline {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+  padding: 9px 10px;
+}
+
+.replay-bar__track {
+  position: relative;
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  height: 20px;
+
+  padding: 0;
+  margin: 0;
+}
+
+.replay-bar__remaining,
+.replay-bar__progress {
+  position: absolute;
+  top: 50%;
+  left: 0;
+
+  display: block;
+
+  height: var(--replay-track-height);
+  padding: 0;
+  margin: 0;
+
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 999px;
+
+  pointer-events: none;
+}
+
+.replay-bar__remaining {
+  z-index: 0;
+
+  width: 100%;
+
+  background: var(--replay-remaining-color);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 70%);
+}
+
+.replay-bar__progress {
+  z-index: 1;
+
+  width: 0;
+
+  background: var(--replay-progress-color);
+  box-shadow: 0 0 5px rgb(243 154 60 / 70%);
+
+  transition: width 60ms linear;
+}
+
+.replay-bar__markers {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 0;
+  margin: 0;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   Timeline markers
+   ========================================================= */
+
+/*
+ * all: unset removes the game's global button formatting.
+ * The important dimensions protect markers from global rules
+ * that also use !important.
+ */
+
+.replay-bar .replay-bar__marker {
+  all: unset;
+
+  position: absolute;
+  top: 50%;
+
+  display: block;
+
+  width: 10px !important;
+  min-width: 10px !important;
+  max-width: 10px !important;
+
+  height: 10px !important;
+  min-height: 10px !important;
+  max-height: 10px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  transform: translate(-50%, -50%);
+
+  border: 2px solid
+    var(--replay-marker-border-color) !important;
+  border-radius: 50% !important;
+
+  background: var(--replay-marker-pending-color);
+
+  color: transparent;
+  font-family: inherit;
+  font-size: 0;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  box-shadow: none;
+
+  cursor: pointer;
+  pointer-events: auto;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.replay-bar .replay-bar__marker--large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 20px !important;
+  min-width: 20px !important;
+  max-width: 20px !important;
+
+  height: 20px !important;
+  min-height: 20px !important;
+  max-height: 20px !important;
+
+  border-width: 2px !important;
+
+  color: #ffffff !important;
+  font-size: 10px !important;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.replay-bar .replay-bar__marker--passed {
+  background: var(--replay-marker-color);
+}
+
+.replay-bar .replay-bar__marker--active {
+  box-shadow:
+    0 0 0 3px rgb(243 154 60 / 25%),
+    0 0 7px rgb(243 154 60 / 85%);
+}
+
+.replay-bar .replay-bar__marker:hover:not(:disabled) {
+  transform: translate(-50%, -50%) scale(1.18);
+}
+
+.replay-bar .replay-bar__marker:focus-visible {
+  outline: 2px solid #fff3d7;
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   Controls
+   ========================================================= */
+
+.replay-bar__controls {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+  gap: 7px;
+  padding: 2px 3px 3px;
+  margin: 0;
+}
+
+.replay-bar__transport {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  flex: 1 1 auto;
+
+  min-width: 0;
+  gap: 5px;
+  padding: 0;
+  margin: 0;
+}
+
+/*
+ * Reset all global game-button styles and then rebuild only
+ * the styling needed by ReplayBar controls.
+ */
+
+.replay-bar .replay-bar__button {
+  all: unset;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+
+  height: 31px !important;
+  min-height: 31px !important;
+  max-height: 31px !important;
+
+  box-sizing: border-box !important;
+
+  padding: 0 8px !important;
+  margin: 0 !important;
+
+  border: 1px solid
+    var(--replay-button-border-color) !important;
+  border-radius: 4px !important;
+
+  background: var(--replay-button-background);
+  color: var(--replay-button-color);
+
+  box-shadow:
+    inset 0 0 8px rgb(213 104 39 / 13%),
+    0 1px 2px rgb(0 0 0 / 65%);
+
+  font-family: inherit;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+
+  text-align: center;
+  text-decoration: none;
+  text-shadow: none;
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.replay-bar .replay-bar__button:hover:not(:disabled) {
+  background: var(--replay-button-hover-background);
+  color: #ffd39a;
+}
+
+.replay-bar .replay-bar__button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.replay-bar .replay-bar__button:focus-visible {
+  outline: 2px solid var(--replay-progress-color);
+  outline-offset: 2px;
+}
+
+/* Play/Pause can be slightly more prominent. */
+
+.replay-bar .replay-bar__play {
+  font-size: 16px;
+}
+
+/* Keep the speed button a predictable size. */
+
+.replay-bar .replay-bar__speed {
+  flex: 0 0 58px;
+
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+
+  font-size: 14px;
+}
+
+/* =========================================================
+   Disabled state
+   ========================================================= */
+
+.replay-bar .replay-bar__button:disabled,
+.replay-bar .replay-bar__marker:disabled,
+.replay-bar--disabled .replay-bar__marker {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* =========================================================
+   Narrow maze/mobile layout
+   ========================================================= */
+
+@media (max-width: 420px) {
+  .replay-bar {
+    padding: 3px;
+  }
+
+  .replay-bar__controls {
+    gap: 4px;
+    padding-inline: 2px;
+  }
+
+  .replay-bar__transport {
+    gap: 3px;
+  }
+
+  .replay-bar .replay-bar__button {
+    height: 29px !important;
+    min-height: 29px !important;
+    max-height: 29px !important;
+
+    padding: 0 5px !important;
+
+    font-size: 13px;
+  }
+
+  .replay-bar .replay-bar__play {
+    font-size: 15px;
+  }
+
+  .replay-bar .replay-bar__speed {
+    flex-basis: 44px;
+
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+  }
+}
+
+/* =========================================================
+   Accessibility
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .replay-bar__progress {
+    transition: none;
+  }
+
+  .replay-bar .replay-bar__marker:hover {
+    transform: translate(-50%, -50%);
+  }
+}

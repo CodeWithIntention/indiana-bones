@@ -41,7 +41,7 @@ export const Keyboard = {
       this.enumerateInputs(key => this[key] = false);
     },
 
-    mask() {
+    getMask() {
         let mask = 0;
         let bit = 0;
 

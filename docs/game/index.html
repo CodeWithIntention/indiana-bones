@@ -10,6 +10,7 @@
     <title>Indiana Bones & A-Maze-In Spider Caves</title>
     <link rel="stylesheet" href="assets/game-ib.css"/>
     <link rel="stylesheet" href="assets/game-ui.css"/>
+    <link rel="stylesheet" href="assets/replaybar.css"/>
     
     <script type="module" src="./util.js"></script>
     <script type="module" src="./config.js"></script>
@@ -49,24 +50,26 @@
             <div id="highScoreStatusLine" class="score"></div>
         </div>
         <div id="game" hidden>
-            <div id="playerStatusLine" hidden></div>
-            <div id="scoreStatusLine" class="score" hidden></div>
-            <div id="mazeStatusLine" hidden></div>
-            <div id="bagStatusLine"></div>
-            <div id="relicStatusLine"></div>
-            <div id="trophyStatusLine"></div>
-            <div id="maze"></div>
-            <div id="overlay"></div>
+            <div id="grid">
+                <div id="maze"></div>
+                <div id="overlay"></div>
+                <div id="playerStatusLine" hidden></div>
+                <div id="scoreStatusLine" class="score" hidden></div>
+                <div id="mazeStatusLine" hidden></div>
+                <div id="bagStatusLine"></div>
+                <div id="relicStatusLine"></div>
+                <div id="trophyStatusLine"></div>
+            </div>
+            <div id="gameReplayBarPanel" hidden></div>
             <div id="gameOverPanel" class="shadowGlow">
                 <div class="banner">G A M E&nbsp;&nbsp;O V E R</div>
                 <div id="gameOverTrophyBonus" class="banner"></div>
-                <div id="gameOverLinks" class="linkRow">
-                    <button type="button" id="replayGameLink">Replay</button>
-                    <button type="button" id="replayFinalMazeLink">Replay Final Maze</button>
-                    <button type="button" id="playAgainLink">Play Again</button>
-                </div>
                 <div class="linkRow">
                     <button type="button" id="newGameLink" data-default>New Game</button>
+                </div>
+                <div id="gameOverLinks" class="linkRow">
+                    <button type="button" id="replayGameLink">Replay</button>
+                    <button type="button" id="playAgainLink">Play Again</button>
                 </div>
             </div>
             <div id="gameMessagePanel" class="shadowGlow"></div>
@@ -77,8 +80,8 @@
                     <button type="button" id="nextMazeLink" data-default>Go Deeper</button>
                 </div>
             </div>
-            <div id="gameReplayBarPanel" class="shadowGlow" hidden></div>
         </div>
+
         <div id="instructionsPanel" class="shadowGlow">
             <div>Use Arrow keys or swipe on maze to move.</div>
             <div>

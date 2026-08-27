@@ -87,6 +87,10 @@ class Relic extends Character {
     super(config, position.row, position.col);
   }
 
+  get state() {
+    return {level: this.level, points: this.points, symbol: this.symbol, description: this.description};
+  }
+
   setSymbolDescription(level, value) {
     const parts = Relic.parse(value)
 

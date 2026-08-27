@@ -4,6 +4,7 @@ import { Keyboard } from "./keyboard.js";
 import { Touch } from "./touch.js";
 import { Controller } from "./controller.js";
 import { Dialog } from "./dialog.js";
+import { ReplayBar } from "./replaybar.js";
 
 export { gameWindow, gameScreen }
 
@@ -60,39 +61,57 @@ function enterSpiderCave(source) {
 }
 
 function replayGame() {
-  hideGameOver();
+  hideGameOver(true);
   gameScreen.replayGame();
 }
 
-function replayFinalMaze() {
-  hideGameOver();
-  gameScreen.replayFinalMaze();
-}
-
 function playAgain() {
-  hideGameOver();
+  hideGameOver(true);
   gameScreen.playAgain()
 }
 
 function newGame() {
-  hideGameOver();
+  hideGameOver(true);
+  gameScreen.hideReplayBar();
   gameWindow.requestAnimationFrame(zoomStartGame);
 }
 
-function hideGameOver() {
+function hideGameOver(hideGameUI = false) {
   if (gameScreen.gameOverPanel.style.display === 'none') return;
   
   gameScreen.dismissDialog(gameOverPanel);
-  mazeGrid.innerHTML = "";
-  showGameUI(false);
+
+  if (hideGameUI === true) {
+    mazeGrid.innerHTML = "";
+    showGameUI(false);
+  }
 }
 
-function showGameOver(gameState) {
+function showGameOver(replay = false) {
   if (gameScreen.gameOverPanel.style.display === 'flex') return;
   
   gameScreen.gameOverTrophyBonus.innerHTML = "";
+
+  if (replay === true) {
+    gameScreen.gameOverLinks.replayGameLink.hidden = true;
+  } else {
+    gameScreen.gameOverLinks.replayGameLink.hidden = false;
+    gameScreen.hideReplayBar();
+  }
   gameScreen.showDialog(gameOverPanel);
   showInstructions(false);
+}
+
+function showScoreboard(replay = false) {
+  gameScreen.scorecard.innerHTML = "";
+  gameScreen.scoreboardLinks.style.display = "none";
+  gameScreen.scoreboardLinks.replayMazeLink.hidden = replay;
+  
+  gameScreen.showDialog(gameScreen.scoreboard);
+}
+
+function hideScoreboard() {
+  gameScreen.dismissDialog(gameScreen.scoreboard);
 }
 
 function showGameMessage(text, duration = 0) {
@@ -143,6 +162,7 @@ const scorecard = gameWindow.document.getElementById("scorecard");
 const gameOverPanel = gameWindow.document.getElementById("gameOverPanel"); 
 const gameOverTrophyBonus = gameWindow.document.getElementById("gameOverTrophyBonus");
 const gameMessagePanel = gameWindow.document.getElementById("gameMessagePanel"); 
+const gameReplayBarPanel = gameWindow.document.getElementById("gameReplayBarPanel"); 
 const instructionsPanel = gameWindow.document.getElementById("instructionsPanel"); 
 
 const enterLink = gameWindow.document.getElementById("enterLink");
@@ -150,7 +170,6 @@ const gameOverLinks = gameWindow.document.getElementById("gameOverLinks");
 const scoreboardLinks = gameWindow.document.getElementById("scoreboardLinks");
 const dismissInstructionsLink = gameWindow.document.getElementById("dismissInstructionsLink");
 
-gameOverLinks.replayFinalMazeLink = gameWindow.document.getElementById("replayFinalMazeLink");
 gameOverLinks.replayGameLink = gameWindow.document.getElementById("replayGameLink");
 gameOverLinks.playAgainLink = gameWindow.document.getElementById("playAgainLink");
 gameOverLinks.newGameLink = gameWindow.document.getElementById("newGameLink");
@@ -158,7 +177,6 @@ gameOverLinks.newGameLink = gameWindow.document.getElementById("newGameLink");
 scoreboardLinks.nextMazeLink = gameWindow.document.getElementById("nextMazeLink");
 scoreboardLinks.replayMazeLink = gameWindow.document.getElementById("replayMazeLink");
 
-gameOverLinks.replayFinalMazeLink.addEventListener("click", replayFinalMaze);
 gameOverLinks.replayGameLink.addEventListener("click", replayGame);
 gameOverLinks.playAgainLink.addEventListener("click", playAgain);
 gameOverLinks.newGameLink.addEventListener("click", newGame);
@@ -179,13 +197,17 @@ gameScreen.scoreboardLinks = scoreboardLinks;
 gameScreen.gameOverLinks = gameOverLinks;
 gameScreen.dismissInstructionsLink = dismissInstructionsLink;
 gameScreen.gameOverTrophyBonus = gameOverTrophyBonus;
+gameScreen.gameReplayBarPanel = gameReplayBarPanel;
 
 gameScreen.showGameUI = showGameUI;
 gameScreen.showGameMessage = showGameMessage;
 gameScreen.hideGameMessage = hideGameMessage;
 gameScreen.newGame = newGame;
 gameScreen.showGameOver = showGameOver;
+gameScreen.hideGameOver = hideGameOver;
 gameScreen.showInstructions = showInstructions;
+gameScreen.showScoreboard = showScoreboard;
+gameScreen.hideScoreboard = hideScoreboard;
 
 gameScreen.dismissInstructionsLink.addEventListener("click", () => showInstructions(false));
 
@@ -225,6 +247,45 @@ Keyboard.initWith(gameWindow);
 Controller.initWith(gameWindow);
 Touch.initWith(gameScreen);
 Dialog.initWith(gameScreen);
+
+/*
+ * Initialize ReplayBar
+ */
+
+gameScreen.replayBar = new ReplayBar(
+  "#gameReplayBarPanel",
+  {
+    onSelectMaze(index) {
+      gameScreen.replayBarHandler?.onSelectMaze(index);
+    },
+
+    onSelectEnd() {
+      gameScreen.replayBarHandler?.onSelectEnd();
+    },
+
+    onPlayPause(playing) {
+      gameScreen.replayBarHandler?.onPlayPause(playing);
+    },
+
+    onStop() {
+      gameScreen.replayBarHandler?.onStop();
+    },
+
+    onSpeedChange(speed) {
+      gameScreen.replayBarHandler?.onSpeedChange(speed);
+    }
+  }
+);
+
+gameScreen.setReplayRecording = function (timeline) {
+  this.replayBar.setRecording(timeline);
+  this.replayBar.setPlaying(true);
+  this.gameReplayBarPanel.hidden = false;
+}
+
+gameScreen.hideReplayBar = function () {
+  this.gameReplayBarPanel.hidden = true;
+}
 
 // Display IB Bio on initial load
 gameScreen.showDialog(document.getElementById("bio"));

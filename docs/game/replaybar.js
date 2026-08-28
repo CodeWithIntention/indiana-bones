@@ -35,7 +35,7 @@ export class ReplayBar {
     this.#host = host;
 
     this.#options = {
-      speeds: [1, 2, 3],
+      speeds: [1, 2, 3, 4, 5],
 
       onSelectMaze: null,
       onSelectEnd: null,

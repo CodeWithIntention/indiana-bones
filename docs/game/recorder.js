@@ -1,4 +1,4 @@
-const PLAYBACK_SPEEDS = [1, 2, 3];
+const PLAYBACK_SPEEDS = [1, 2, 3, 4, 5];
 
 export const GameRecorder = {
   recording: null,

@@ -91,6 +91,7 @@ function showGameOver() {
   if (gameScreen.gameOverPanel.style.display === 'flex') return;
   
   gameScreen.gameOverAchievements.innerHTML = "";
+
   gameScreen.hideReplayBar();
   gameScreen.showDialog(gameOverPanel);
   showInstructions(false);

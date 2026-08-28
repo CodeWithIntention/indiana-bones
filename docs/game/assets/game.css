@@ -53,7 +53,8 @@
 .linkRow {
     display: flex;
     flex-direction: row;
-    gap: 24px;
+    gap: 8px;
+    padding: 8px;
 }
 
 .linkRow a {

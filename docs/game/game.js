@@ -1179,7 +1179,6 @@ const gameState = {
       playerState: player.state,
       outcome: "finished"
     });
-    Keyboard.clear();
   },
 
   onNextMaze() {

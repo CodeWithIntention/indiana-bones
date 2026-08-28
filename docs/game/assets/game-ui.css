@@ -312,6 +312,7 @@ body {
     display: none;
     width: max-content;
     overflow: hidden;
+    font-size: var(--message-font-size);
 }
 
 #gameMessagePanel,
@@ -319,7 +320,6 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: var(--message-font-size);
     background-color: var(--maze-bg);
     gap: 8px;
     padding: 8px 8px 8px 8px;
@@ -336,7 +336,6 @@ body {
 
 #gameOverAchievements .label {
     color: var(--shadow-glow-color); 
-    font-size: var(--medium-font-size);
 }
 
 #gameOverAchievements div {
@@ -347,7 +346,6 @@ body {
     justify-self: center;
     font-weight: bold;
     gap: 8px;
-    font-size: var(--medium-font-size);
 }
 
 #gameOverAchievements div div {

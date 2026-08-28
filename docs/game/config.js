@@ -30,7 +30,8 @@ const TIMEOUTS = {
   guardianDelay: 3000,
   guardianDelayLevelReduction: 200,
   relicLabelDuration: 3000,
-  gameOverTrophyTallyInterval: 500
+  gameOverTrophyTallyInterval: 500,
+  gameOverDelay: 1500
 }
 
 // Maze architecture objects

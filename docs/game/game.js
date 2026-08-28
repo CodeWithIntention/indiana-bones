@@ -1011,25 +1011,29 @@ function playerExitMaze() {
 function playerGameOver() {
   Sound.gameover();
   gameState.onGameOver();
-  gameScreen.showGameOver();
 
-  if (player.level <= 1) {
-    gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`;
-  } else {
-    const list = [];
-    for (let i = 1; i <  player.level; i++) {
-      const relicKind = Relic.kindForLevel(i);
-      const parts = Relic.parse(Grid.symbolFor(relicKind));
-      list.push(`<div><div class='icon'>${parts[0]}</div><div>${parts[1]}</div></div>`);
+    function gameOver() {
+      gameScreen.showGameOver();
+
+      if (player.level <= 1) {
+        gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`;
+      } else {
+        const list = [];
+        for (let i = 1; i <  player.level; i++) {
+          const relicKind = Relic.kindForLevel(i);
+          const parts = Relic.parse(Grid.symbolFor(relicKind));
+          list.push(`<div><div class='icon'>${parts[0]}</div><div>${parts[1]}</div></div>`);
+        }
+        gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${list.join("")}</div>`;
+      }
+
+      if (player.trophiesAwarded <= 0) {
+        gameScreen.gameOverAchievements.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`;
+      }
+
+      tallyTrophyBonus();
     }
-    gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${list.join("")}</div>`;
-  }
-
-  if (player.trophiesAwarded <= 0) {
-    gameScreen.gameOverAchievements.innerHTML += `<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`;
-  }
-
-  gameWindow.requestAnimationFrame(tallyTrophyBonus);
+    setTimeout(gameOver, TIMEOUTS.gameOverDelay);
 }
 
 function tallyTrophyBonus() {
@@ -1047,7 +1051,7 @@ function tallyTrophyBonus() {
   function updateFinalScore() {
     player.score = player.exitMazeScore + settings.pointsPerTrophy * player.trophiesAwarded;
     updateGameUI();
-    gameScreen.gameOverAchievements.innerHTML += `<div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
+    gameScreen.gameOverAchievements.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
 
     saveHighScore(settings.highScore);
     gameState.onGameFinished();
@@ -1068,7 +1072,7 @@ function tallyTrophyBonus() {
       // Tally each trophy
       Sound.ding();
       bonusPoints = settings.pointsPerTrophy * (++trophies);
-      gameScreen.gameOverAchievements.innerHTML = gameOverAchievementsHtml + `<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${trophySymbol.repeat(trophies)} &equals; ${bonusPoints}</div>`;
+      gameScreen.gameOverAchievements.innerHTML = gameOverAchievementsHtml + `<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div class='icon'>${trophySymbol.repeat(trophies)}</div><div class='score'>${bonusPoints}</div>`;
       
       gameWindow.setTimeout(nextTrophy, TIMEOUTS.gameOverTrophyTallyInterval);    
     }

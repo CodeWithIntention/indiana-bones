@@ -171,6 +171,10 @@ class Grid {
     return true;
   }
 
+  get mazeBonus() {
+    return (this.pathCount - this.visitedPathCount);
+  }
+
   get cellCount() {
     return (this.rows-2) * (this.cols-2);
   }

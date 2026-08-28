@@ -12,12 +12,15 @@ class Player extends Character {
   tnts;
   bonusAwarded;
   trophiesAwarded;
+  isMazeCleared;
+  mazeBonus;
 
   #settings;
   #alive;
   #powerUpTime;
   #bag;
   #exitMaze;
+  #exitMazeScore;
   #score;
   #lastFreeLifeScore;
 
@@ -123,8 +126,13 @@ class Player extends Character {
   }
 
   set exitMaze(bool) {
-    this.exitMazeTime = bool ? Date.now() : 0
-    this.#exitMaze = bool;
+    this.#exitMaze = bool === true;
+    this.exitMazeTime = this.#exitMaze ? Date.now() : 0
+    this.#exitMazeScore = this.#exitMaze ? this.#score : 0;
+  }
+
+  get exitMazeScore() {
+    return this.#exitMazeScore;
   }
 
   get state() {
@@ -140,8 +148,9 @@ class Player extends Character {
 
     return {
       score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, 
-      alive: this.#alive, exitMaze: this.#exitMaze,
+      alive: this.#alive, exitMaze: this.#exitMaze, exitMazeScore: this.#exitMazeScore,
       lives: this.lives, tnts: this.tnts, trophiesAwarded: this.trophiesAwarded, 
+      isMazeCleared: this.isMazeCleared, mazeBonus: this.mazeBonus,
       level: this.level, mazes: this.mazes, baggedObjects: baggedObjects};
   }
 
@@ -150,10 +159,13 @@ class Player extends Character {
     this.#lastFreeLifeScore = value.lastFreeLifeScore;
     this.#alive = value.alive;
     this.#exitMaze = value.exitMaze;
+    this.#exitMazeScore = value.exitMazeScore;
 
     this.lives = value.lives;
     this.tnts = value.tnts;
     this.trophiesAwarded = value.trophiesAwarded;
+    this.isMazeCleared = value.isMazeCleared,
+    this.mazeBonus = value.mazeBonus;
     this.level = value.level;
     this.mazes = value.mazes;
 
@@ -220,9 +232,12 @@ class Player extends Character {
     this.row = 1;
     this.col = 0;
     this.moves = 0;
-    this.exitMaze = false;
     this.direction = Direction.NONE;
     this.speed = this.config.speed;
+
+    this.exitMaze = false;
+    this.isMazeCleared = false;
+    this.mazeBonus = false;
 
     this.#alive = true;
     this.#powerUpTime = 0;
@@ -244,6 +259,10 @@ class Player extends Character {
     this.#alive = false;
     this.powerUp = false;
     this.#bag = [];
+
+    if (this.lives === 0) {
+      this.#exitMazeScore = this.score;
+    }
   }
 }
 

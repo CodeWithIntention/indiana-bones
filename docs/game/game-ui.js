@@ -87,26 +87,18 @@ function hideGameOver(hideGameUI = false) {
   }
 }
 
-function showGameOver(replay = false) {
+function showGameOver() {
   if (gameScreen.gameOverPanel.style.display === 'flex') return;
   
   gameScreen.gameOverAchievements.innerHTML = "";
-
-  if (replay === true) {
-    gameScreen.gameOverLinks.replayGameLink.hidden = true;
-  } else {
-    gameScreen.gameOverLinks.replayGameLink.hidden = false;
-    gameScreen.hideReplayBar();
-  }
+  gameScreen.hideReplayBar();
   gameScreen.showDialog(gameOverPanel);
   showInstructions(false);
 }
 
-function showScoreboard(replay = false) {
+function showScoreboard() {
   gameScreen.scorecard.innerHTML = "";
   gameScreen.scoreboardLinks.style.display = "none";
-  gameScreen.scoreboardLinks.replayMazeLink.hidden = replay;
-  
   gameScreen.showDialog(gameScreen.scoreboard);
 }
 

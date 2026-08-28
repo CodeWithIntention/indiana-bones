@@ -46,6 +46,8 @@ function updateGameState(reason) {
         if (grid.objectAt(reason) === OBJECTS.exit) {
           if (!player.exitMaze) {
             player.exitMaze = true;
+            player.isMazeCleared = grid.isMazeCleared && characters.killables().length === 0;
+            player.mazeBonus = grid.mazeBonus;
             attributes.spin = true;
           }
         } else if (grid.isCharacterAtEntrance(reason)) {
@@ -71,10 +73,6 @@ function updateGameState(reason) {
   } 
   grid.setCharacterAttributes(reason, attributes);
   updateGameUI();
-}
-
-function mazeBonus() {
-  return (grid.pathCount - grid.visitedPathCount);
 }
 
 function updateGameUI() {
@@ -124,7 +122,7 @@ function updateGameUI() {
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
     mazeStatusLine.innerHTML = `<b>LEVEL ${gameState.currentLevel}.${gameState.currentMaze}</b> 
-      <span>${Grid.symbolFor("maze-bonus")}</span><b>${mazeBonus()}</b>`;
+      <span>${Grid.symbolFor("maze-bonus")}</span><b>${grid.mazeBonus}</b>`;
 }
 
 function playerTNT(character) {
@@ -525,7 +523,7 @@ function moveCharacter(character, delta) {
   }
 }
 
-function tallyScore(replay = false) {
+function tallyScore() {
   const list = [];
   const scores = [];
 
@@ -554,13 +552,13 @@ function tallyScore(replay = false) {
     }
   });
 
-  const mazeBonusPoints = mazeBonus() * settings.pointsPerPath;
+  const mazeBonusPoints = player.mazeBonus * settings.pointsPerPath;
   if (mazeBonusPoints !== 0) {
     scores.push(mazeBonusPoints);
-    list.push(`<div>${Grid.symbolFor("maze-bonus")} &times; ${mazeBonus()} &times; ${settings.pointsPerPath}</div><div class='score'>${mazeBonusPoints}</div>`);
+    list.push(`<div>${Grid.symbolFor("maze-bonus")} &times; ${player.mazeBonus} &times; ${settings.pointsPerPath}</div><div class='score'>${mazeBonusPoints}</div>`);
   }
 
-  if (grid.isMazeCleared && characters.killables().length === 0) {
+  if (player.isMazeCleared) {
     const points = settings.mazeClearedBonusPoints * player.level;
     scores.push(points);
     list.push(`<div>${MESSAGES.mazeClearedMessage} ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
@@ -575,7 +573,7 @@ function tallyScore(replay = false) {
     list.push(`<div>${relic.description} ${relic.symbol} &times; ${relic.level} &times; ${relic.points}</div><div class='score'>${points}</div>`);
   }
 
-  gameScreen.showScoreboard(replay);
+  gameScreen.showScoreboard();
 
   let totalScore = 0;
   let scoreIndex = 0;
@@ -624,11 +622,11 @@ function tallyScore(replay = false) {
             list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForNextTrophy}</div><div>${trophySymbol}</div>`);
           }
           gameScreen.scorecard.innerHTML = list.join("");
-          player.score += totalScore;
+          player.score = player.exitMazeScore + totalScore;
           Sound.ding();
 
           gameState.onMazeExited();
-          gameWindow.setTimeout(updateGameUI, TIMEOUTS.updateScoreCardInterval);
+          updateGameUI();
         }
     }
   }
@@ -995,22 +993,25 @@ function getHighScore() {
   return Number(localStorage.getItem("indiana-bones-high-score")) || 0;
 }
 
-function playerExitMaze(replay = false) {
-  if (replay === true) {
-    tallyScore(replay);
-  } else if (gameState.isReplay) {
+function playerExitMaze() {
+  if (gameState.isReplay) {
     gameState.onMazeExited();
   } else {
+    // Set score to when player exited the maze so tallyScore
+    // can add to it to get to the final maze score.
+    player.score = player.exitMazeScore;
+
     Sound.yeah();
+    updateGameUI();
     gameScreen.hideReplayBar();
     gameWindow.setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
   }
 }
 
-function playerGameOver(replay = false) {
+function playerGameOver() {
   Sound.gameover();
   gameState.onGameOver();
-  gameScreen.showGameOver(replay);
+  gameScreen.showGameOver();
 
   if (player.level <= 1) {
     gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`;
@@ -1028,19 +1029,7 @@ function playerGameOver(replay = false) {
     gameScreen.gameOverAchievements.innerHTML += `<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`;
   }
 
-  if (replay === true) {
-    let list = [];
-    
-    if (player.trophiesAwarded > 0) {
-      const trophySymbol = Grid.symbolFor("maze-trophy");
-      const bonusPoints = settings.pointsPerTrophy * player.trophiesAwarded;
-      list.push(`<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${trophySymbol.repeat(player.trophiesAwarded)} &equals; ${bonusPoints}</div>`);
-    }
-    list.push(`<div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`);
-    gameScreen.gameOverAchievements.innerHTML += list.join("");
-  } else {
-    gameWindow.requestAnimationFrame(tallyTrophyBonus);
-  }
+  gameWindow.requestAnimationFrame(tallyTrophyBonus);
 }
 
 function tallyTrophyBonus() {
@@ -1056,7 +1045,7 @@ function tallyTrophyBonus() {
   let bonusPoints = 0;
 
   function updateFinalScore() {
-    player.score += settings.pointsPerTrophy * player.trophiesAwarded;
+    player.score = player.exitMazeScore + settings.pointsPerTrophy * player.trophiesAwarded;
     updateGameUI();
     gameScreen.gameOverAchievements.innerHTML += `<div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
 
@@ -1080,6 +1069,7 @@ function tallyTrophyBonus() {
       Sound.ding();
       bonusPoints = settings.pointsPerTrophy * (++trophies);
       gameScreen.gameOverAchievements.innerHTML = gameOverAchievementsHtml + `<div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${trophySymbol.repeat(trophies)} &equals; ${bonusPoints}</div>`;
+      
       gameWindow.setTimeout(nextTrophy, TIMEOUTS.gameOverTrophyTallyInterval);    
     }
   }
@@ -1189,6 +1179,7 @@ const gameState = {
       playerState: player.state,
       outcome: "finished"
     });
+    Keyboard.clear();
   },
 
   onNextMaze() {
@@ -1288,13 +1279,13 @@ gameScreen.replayBarHandler = {
       gameState.levelRelic = recording.levelRelic;
       gameState.ticks = recording.ticks;
       player.state = recording.playerState;
-
+    
       GameRecorder.selectMaze(-1);
 
       if (recording.outcome === "finished") {
-        playerGameOver(true);
+        playerGameOver();
       } else {
-        playerExitMaze(true);
+        playerExitMaze();
       }
     },
 

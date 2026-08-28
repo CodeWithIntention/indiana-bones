@@ -240,15 +240,15 @@ function playerRespawn() {
 
 function playerChomp(character, object) {
   if (object instanceof Character) {
-    if (!(character instanceof Rock || object.isChompable && !object.disabled)) return;
-    
-    addScoreForCharacter(object, object.canKill(player) ? 1 : settings.chompPointsFactor);
-    characters.remove(object);
+      if (!(character instanceof Rock || object.isChompable || object.disabled)) return;
 
-    const chompSound = object.chompSound;
-    if (chompSound) {
-        Sound[chompSound]();
-    }
+      addScoreForCharacter(object, object.canKill(player) ? 1 : settings.chompPointsFactor);
+      characters.remove(object);
+
+      const chompSound = object.chompSound;
+      if (chompSound) {
+          Sound[chompSound]();
+      }
   } else if (character instanceof Player) {
     addScoreForCharacter(object, settings.chompPointsFactor);
   }

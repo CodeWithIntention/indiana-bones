@@ -584,6 +584,7 @@ function tallyScore() {
         totalScore += scores[scoreIndex++];
       }
       player.score += totalScore;
+      gameState.onMazeExited();
       return;
     }
 
@@ -1127,6 +1128,8 @@ const gameState = {
     this.currentMaze = 0;
     this.levelRelic = null;
     this.relicChamberFormation = null;
+    this.playbackSpeed = 1;
+    this.gameResult = null;
   },
 
   get isReplay() {
@@ -1147,7 +1150,7 @@ const gameState = {
   },
 
   get gameSpeed() {
-    return GameRecorder.isReplaying ? (GameRecorder.playbackSpeed || 1): 1;
+    return GameRecorder.isReplaying ? this.playbackSpeed : 1;
   },
 
   onStartGame(seed) {
@@ -1162,19 +1165,10 @@ const gameState = {
 
   onGameOver() {
     this.gameOver = true;
-
-    GameRecorder.addRecord({
-      tick: this.ticks,
-      currentLevel: this.currentLevel,
-      currentMaze: this.currentMaze,
-      levelRelic: this.levelRelic?.state,
-      playerState: player.state,
-      outcome: "game-over"
-    });
   },
     
   onGameFinished() {
-    GameRecorder.addRecord({
+    this.gameResult = GameRecorder.addRecord({
       tick: this.ticks,
       currentLevel: this.currentLevel,
       currentMaze: this.currentMaze,
@@ -1182,7 +1176,7 @@ const gameState = {
       playerState: player.state,
       outcome: "finished"
     });
-  },
+},
 
   onNextMaze() {
     this.reset();
@@ -1223,7 +1217,7 @@ const gameState = {
       currentMaze: this.currentMaze,
       levelRelic: this.levelRelic?.state,
       playerState: player.state,
-      outcome: "exited"
+      outcome: "checkpoint"
     });
 
     if (this.isReplay) {
@@ -1307,6 +1301,7 @@ gameScreen.replayBarHandler = {
     },
 
     onSpeedChange(speed) {
+      gameState.playbackSpeed = speed;
       return speed;
     }
 };

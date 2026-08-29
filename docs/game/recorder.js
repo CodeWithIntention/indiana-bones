@@ -84,8 +84,8 @@ export const GameRecorder = {
         this.recording.playerState = playerState;
         this.recording.outcome = outcome;
     }
-
-    if (outcome !== 'finished' && this.mazeRecording) {
+   
+    if (this.mazeRecording) {
         this.mazeRecording.endTick = tick;
         this.mazeRecording.outcome = outcome;
         this.mazeRecording.gameSteps = this.gameSteps;
@@ -95,6 +95,7 @@ export const GameRecorder = {
         this.mazeRecording = null;
         this.gameSteps = [];
     }
+    return this.save();
   },
 
   selectMaze(index) {
@@ -222,5 +223,98 @@ export const GameRecorder = {
     timeline.markers.push({index: mazeRecordings.length, tick: totalTicks, level: this.recording.currentLevel, maze: this.recording.currentMaze, type: "finish"});
 
     return timeline;
-  }
+  },
+
+  storageKey(gameVersion, seed, outcome = "finished") {
+    return `indiana-bones-game:${gameVersion}:${seed}:${outcome}`;
+  },
+
+  save() {
+    const recording = this.recording;
+    if (!recording) return null;
+
+    const { version, seed } = recording;
+    const score = recording.playerState.score;
+    const key = this.storageKey(version, seed, recording.outcome);
+
+    if (recording.outcome === "finished") {
+      let savedGame = null;
+
+      try {
+        savedGame = JSON.parse(localStorage.getItem(key));
+      } catch {
+        savedGame = null;
+      }
+
+      const isHighScore =
+        !savedGame || score > savedGame.highScore;
+
+        if (isHighScore) {
+          savedGame = {
+            version,
+            seed,
+            highScore: score,
+            recording
+          };
+
+          localStorage.setItem(
+            key,
+            JSON.stringify(savedGame)
+          );
+        }
+
+      return {
+        score,
+        highScore: savedGame.highScore,
+        isHighScore
+      };
+    }
+    
+    const savedGame = {
+      version,
+      seed,
+      score,
+      recording
+    };
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(savedGame)
+    );
+
+    return {
+      score,
+      isCheckpoint: true
+    };
+  },
+
+  load(version, seed, outcome = "finished") {
+    if (!Number.isSafeInteger(seed)) {
+      return null;
+    }
+
+    const json = localStorage.getItem(
+      this.storageKey(version, seed, outome)
+    );
+
+    if (!json) {
+      return null;
+    }
+
+    try {
+      const recording = JSON.parse(json);
+
+      if (recording.version !== version ||
+          recording.seed !== seed) {
+        return null;
+      }
+
+      this.recording = recording;
+      this.resetReplay();
+
+      return recording;
+    } catch {
+      return null;
+    }
+  },
 };

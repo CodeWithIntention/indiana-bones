@@ -28,7 +28,7 @@ function zoomStartGame(seed) {
   if (startingGame) return;
 
   if (!Number.isFinite(seed)) {
-    seed = Math.random() * 1_000_000 + 1;
+    seed = Math.floor(Math.random() * 1_000_000 + 1);
   }
   startingGame = true;
 

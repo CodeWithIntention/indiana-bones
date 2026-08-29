@@ -8,6 +8,8 @@ export const GameRecorder = {
   replayMazeIndex: -1,
   replayStepIndex: 0,
   replayStep: null,
+  
+  autoSave: false,
 
   startGame(version, seed, msPerTick) {
     this.resetReplay();
@@ -95,7 +97,8 @@ export const GameRecorder = {
         this.mazeRecording = null;
         this.gameSteps = [];
     }
-    return this.save();
+
+    if (this.autoSave) return this.save();
   },
 
   selectMaze(index) {

@@ -636,7 +636,6 @@ function tallyScore() {
 function replayMaze(index = -1) {
   gameScreen.setReplayRecording(GameRecorder.timeline);
   gameState.replayPaused = false;
-  gameState.replaySpeed = gameScreen.replayBar.speed;
   gameState.onReplayMaze(index);
 }
 
@@ -1014,23 +1013,7 @@ function playerGameOver() {
 
     function gameOver() {
       gameScreen.showGameOver();
-
-      if (player.level <= 1) {
-        gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`;
-      } else {
-        const list = [];
-        for (let i = 1; i <  player.level; i++) {
-          const relicKind = Relic.kindForLevel(i);
-          const parts = Relic.parse(Grid.symbolFor(relicKind));
-          list.push(`<div><div class='icon'>${parts[0]}</div><div>${parts[1]}</div></div>`);
-        }
-        gameScreen.gameOverAchievements.innerHTML = `<div class='label'>${MESSAGES.relicsFound}</div><div>${list.join("")}</div>`;
-      }
-
-      if (player.trophiesAwarded <= 0) {
-        gameScreen.gameOverAchievements.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`;
-      }
-
+      gameScreen.gameOverAchievements.innerHTML = getPlayerAcheivements();
       tallyTrophyBonus();
     }
     setTimeout(gameOver, TIMEOUTS.gameOverDelay);
@@ -1078,6 +1061,30 @@ function tallyTrophyBonus() {
     }
   }
   nextTrophy();
+}
+
+function getPlayerAcheivements(gameInfo = false) {
+  const list = [];
+
+  if (player.level <= 1) {
+    list.push(`<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`);
+  } else {
+    const relics = [];
+    for (let i = 1; i <  player.level; i++) {
+      const relicKind = Relic.kindForLevel(i);
+      const parts = Relic.parse(Grid.symbolFor(relicKind));
+      relics.push(`<div><div class='icon'>${parts[0]}</div><div>${parts[1]}</div></div>`);
+    }
+    list.push(`<div class='label'>${MESSAGES.relicsFound}</div><div>${relics.join("")}</div>`);
+  }
+
+  if (player.trophiesAwarded <= 0) {
+    list.push(`<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`);
+  } else if (gameInfo) {
+      const bonusPoints = settings.pointsPerTrophy * (player.trophiesAwarded);
+      list.push(`<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div class='icon'>${trophySymbol.repeat(trophies)}</div><div class='score'>${bonusPoints}</div>`);
+  }
+  return list.join("");
 }
 
 function startGame(seed = 0) {
@@ -1141,14 +1148,6 @@ const gameState = {
 
   get gameSpeed() {
     return GameRecorder.isReplaying ? (GameRecorder.playbackSpeed || 1): 1;
-  },
-
-  get replaySpeed() {
-    return GameRecorder.playbackSpeed;
-  },
-
-  set replaySpeed(value) {
-    GameRecorder.setPlaybackSpeed(value);
   },
 
   onStartGame(seed) {
@@ -1308,7 +1307,6 @@ gameScreen.replayBarHandler = {
     },
 
     onSpeedChange(speed) {
-      gameState.replaySpeed = speed;
       return speed;
     }
 };

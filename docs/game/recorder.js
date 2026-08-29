@@ -1,12 +1,9 @@
-const PLAYBACK_SPEEDS = [1, 2, 3, 4, 5];
-
 export const GameRecorder = {
   recording: null,
   mazeRecording: null,
   gameSteps: [],
 
   isReplaying: false,
-  playbackSpeed: 1,
 
   replayMazeIndex: -1,
   replayStepIndex: 0,
@@ -157,30 +154,9 @@ export const GameRecorder = {
 
   resetReplay() {
     this.isReplaying = false;
-    this.playbackSpeed = 1;
     this.replayMazeIndex = -1;
     this.replayStepIndex = 0;
     this.replayStep = null;
-  },
-
-  setPlaybackSpeed(speed) {
-    if (!PLAYBACK_SPEEDS.includes(speed)) {
-      return this.playbackSpeed;
-    }
-
-    this.playbackSpeed = speed;
-    return this.playbackSpeed;
-  },
-
-  cyclePlaybackSpeed() {
-    const currentIndex =
-      PLAYBACK_SPEEDS.indexOf(this.playbackSpeed);
-
-    const nextIndex =
-      (currentIndex + 1) % PLAYBACK_SPEEDS.length;
-
-    this.playbackSpeed = PLAYBACK_SPEEDS[nextIndex];
-    return this.playbackSpeed;
   },
 
   isCurrentMazeFinished(tick) {

@@ -105,12 +105,12 @@ function updatePrimaryButton(gamepad) {
 
   // Generate one Space press when the primary button is initially pressed.
   // The game handles clearing Keyboard.Space after consuming the action.
-  if (isPressed && !primaryButtonPressed) {
-    if (Keyboard.onSpacePressed()) return;
-    Keyboard.Space = true;
-  }
+  if (isPressed && primaryButtonPressed) return;
 
   primaryButtonPressed = isPressed;
+
+  if (isPressed && Keyboard.onSpacePressed()) return;
+  Keyboard.Space = isPressed;
 }
 
 function getActiveGamepad() {

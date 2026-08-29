@@ -41,7 +41,7 @@ export class Dialog {
     }
 
     if (Dialog.#container) {
-      Dialog.dismiss(Dialog.#container, {
+      Dialog.unbind(Dialog.#container, {
         restoreFocus: false
       });
     }

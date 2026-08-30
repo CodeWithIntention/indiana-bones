@@ -1084,13 +1084,22 @@ function getPlayerAcheivements() {
   if (player.level <= 1) {
     list.push(`<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`);
   } else {
-    const relics = [];
+    list.push(`<div class='label'>${MESSAGES.relicsFound}</div>`);
+
+    let relics = [];
     for (let i = 1; i <  player.level; i++) {
       const relicKind = Relic.kindForLevel(i);
       const parts = Relic.parse(Grid.symbolFor(relicKind));
       relics.push(`<div><div class='icon'>${parts[0]}</div><div>${parts[1]}</div></div>`);
+
+      if (relics.length === 5) {
+        list.push(`<div>${relics.join("")}</div>`);
+        relics = [];
+      }
     }
-    list.push(`<div class='label'>${MESSAGES.relicsFound}</div><div>${relics.join("")}</div>`);
+    if (relics.length > 0) {
+      list.push(`<div>${relics.join("")}</div>`);
+    }
   }
 
   if (player.trophiesAwarded <= 0) {

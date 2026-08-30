@@ -73,6 +73,7 @@ export const GameRecorder = {
     currentLevel,
     currentMaze,
     levelRelic,
+    randomizerState,
     playerState,
     outcome,
   }) {
@@ -83,6 +84,7 @@ export const GameRecorder = {
         this.recording.currentLevel = currentLevel;
         this.recording.currentMaze = currentMaze;
         this.recording.levelRelic = levelRelic;
+        this.randomizerState = randomizerState;
         this.recording.playerState = playerState;
         this.recording.outcome = outcome;
     }
@@ -250,19 +252,14 @@ export const GameRecorder = {
       }
 
       const isHighScore =
-        !savedGame || score > savedGame.highScore;
+        !(savedGame && Number.isFinite(savedGame.highScore)) || score > savedGame.highScore;
 
         if (isHighScore) {
-          savedGame = {
-            version,
-            seed,
-            highScore: score,
-            recording
-          };
+          recording.highScore = score
 
           localStorage.setItem(
             key,
-            JSON.stringify(savedGame)
+            JSON.stringify(recording)
           );
         }
 
@@ -273,16 +270,9 @@ export const GameRecorder = {
       };
     }
     
-    const savedGame = {
-      version,
-      seed,
-      score,
-      recording
-    };
-
     localStorage.setItem(
       key,
-      JSON.stringify(savedGame)
+      JSON.stringify(recording)
     );
 
     return {
@@ -297,7 +287,7 @@ export const GameRecorder = {
     }
 
     const json = localStorage.getItem(
-      this.storageKey(version, seed, outome)
+      this.storageKey(version, seed, outcome)
     );
 
     if (!json) {
@@ -305,17 +295,17 @@ export const GameRecorder = {
     }
 
     try {
-      const recording = JSON.parse(json);
+      const savedGame = JSON.parse(json);
 
-      if (recording.version !== version ||
-          recording.seed !== seed) {
+      if (savedGame.version !== version ||
+          savedGame.seed !== seed) {
         return null;
       }
 
-      this.recording = recording;
+      this.recording = savedGame;
       this.resetReplay();
 
-      return recording;
+      return savedGame;
     } catch {
       return null;
     }

@@ -1,5 +1,5 @@
 import { Direction, RNG, Timer } from "./util.js";
-import { GAME_VERSION, CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES } from "./config.js";
+import { GAME_VERSION, GAME_RNG, CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES } from "./config.js";
 import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
@@ -122,7 +122,7 @@ function updateGameUI() {
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
     mazeStatusLine.innerHTML = `<b>LEVEL ${gameState.currentLevel}.${gameState.currentMaze}</b> 
-      <span>${Grid.symbolFor("maze-bonus")}</span><b>${grid.mazeBonus}</b>`;
+      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus}</b>`;
 }
 
 function playerTNT(character) {
@@ -573,7 +573,7 @@ function tallyScore() {
     list.push(`<div>${relic.description} ${relic.symbol} &times; ${relic.level} &times; ${relic.points}</div><div class='score'>${points}</div>`);
   }
 
-  gameScreen.showScoreboard();
+  gameScreen.showScoreboard(MESSAGES.levelCompleted(gameState.currentLevel, gameState.currentMaze));
 
   let totalScore = 0;
   let scoreIndex = 0;
@@ -641,15 +641,22 @@ function replayMaze(index = -1) {
 }
 
 function goDeeper() {
-  player.row = grid.rows-1;
-  player.col = grid.cols-1;
-  
-  grid.setCharacterAttributes(player, {down: true, flatten: true});
-  grid.placeCharacter(player);
-  Sound.deeper();
-
   GameRecorder.resetReplay();
-  gameWindow.setTimeout(nextMaze, TIMEOUTS.nextMazeDelay);
+  gameScreen.hideScoreboard();
+
+  if (grid) {
+    player.row = grid.rows-1;
+    player.col = grid.cols-1;
+    
+    grid.setCharacterAttributes(player, {down: true, flatten: true});
+    grid.placeCharacter(player);
+
+    Sound.deeper();
+    gameWindow.setTimeout(nextMaze, TIMEOUTS.nextMazeDelay);
+  } else {
+    nextMaze();
+  }
+
 }
 
 function nextMaze() {
@@ -666,7 +673,7 @@ function nextMaze() {
 
 function startMaze() {
   gameScreen.hideScoreboard();
-  gameScreen.hideGameOver();
+  gameScreen.hideGameInfo();
 
   const levelDelta = 2 * (gameState.currentLevel-1);
   let rows = Math.min(settings.rows + levelDelta, settings.maxRows);
@@ -721,6 +728,8 @@ function play() {
     let lastTime = performance.now();
     let timeSlice = 0;
 
+    Timer.reset();
+
     function gameLoop(time) {
       function canContinue() {
         return sequence === gameState.sequence && lastTicks <= gameState.ticks && gameState.replayPaused !== true
@@ -741,9 +750,10 @@ function play() {
       timeSlice += Math.min(settings.maxTimeSlice, time-lastTime) * gameState.gameSpeed;
       lastTime = time;
 
-      while (timeSlice >= settings.gameStepInterval && canContinue()) {
-        timeSlice -= settings.gameStepInterval;
-        const delta = settings.gameStepInterval/1000;
+      const stepInterval = Timer.stepInterval || settings.gameStepInterval
+      while (timeSlice >= stepInterval && canContinue()) {
+        timeSlice -= stepInterval;
+        const delta = stepInterval/1000;
         playGameStep(delta);
       }
 
@@ -1013,8 +1023,12 @@ function playerGameOver() {
   gameState.onGameOver();
 
     function gameOver() {
-      gameScreen.showGameOver();
-      gameScreen.gameOverAchievements.innerHTML = getPlayerAcheivements();
+      const isGameNumber = Number.isFinite(gameState.gameNumber);
+      const title = isGameNumber ? MESSAGES.gameInfoTitle+gameState.gameNumber : MESSAGES.gameOverTitle;
+
+      gameScreen.showGameInfo(title);
+      gameScreen.gameInfoContent.innerHTML = getPlayerAcheivements();
+      
       tallyTrophyBonus();
     }
     setTimeout(gameOver, TIMEOUTS.gameOverDelay);
@@ -1027,7 +1041,7 @@ function tallyTrophyBonus() {
   }
 
   const trophySymbol = Grid.symbolFor("maze-trophy");
-  const gameOverAchievementsHtml = gameScreen.gameOverAchievements.innerHTML;
+  const gameOverAchievementsHtml = gameScreen.gameInfoContent.innerHTML;
 
   let trophies = 0;
   let bonusPoints = 0;
@@ -1035,14 +1049,14 @@ function tallyTrophyBonus() {
   function updateFinalScore() {
     player.score = player.exitMazeScore + settings.pointsPerTrophy * player.trophiesAwarded;
     updateGameUI();
-    gameScreen.gameOverAchievements.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
+    gameScreen.gameInfoContent.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
 
     saveHighScore(settings.highScore);
     gameState.onGameFinished();
   }
 
   function nextTrophy() {
-    if (gameScreen.gameOverPanel.style.display === 'none') {
+    if (gameScreen.gameInfoPanel.style.display === 'none') {
       // Game over screen was dismissed
       updateFinalScore();
       return;
@@ -1056,7 +1070,7 @@ function tallyTrophyBonus() {
       // Tally each trophy
       Sound.ding();
       bonusPoints = settings.pointsPerTrophy * (++trophies);
-      gameScreen.gameOverAchievements.innerHTML = gameOverAchievementsHtml + `<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div class='icon'>${trophySymbol.repeat(trophies)}</div><div class='score'>${bonusPoints}</div>`;
+      gameScreen.gameInfoContent.innerHTML = gameOverAchievementsHtml + `<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div class='icon'>${trophySymbol.repeat(trophies)}</div><div class='score'>${bonusPoints}</div>`;
       
       gameWindow.setTimeout(nextTrophy, TIMEOUTS.gameOverTrophyTallyInterval);    
     }
@@ -1064,7 +1078,7 @@ function tallyTrophyBonus() {
   nextTrophy();
 }
 
-function getPlayerAcheivements(gameInfo = false) {
+function getPlayerAcheivements() {
   const list = [];
 
   if (player.level <= 1) {
@@ -1081,9 +1095,6 @@ function getPlayerAcheivements(gameInfo = false) {
 
   if (player.trophiesAwarded <= 0) {
     list.push(`<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`);
-  } else if (gameInfo) {
-      const bonusPoints = settings.pointsPerTrophy * (player.trophiesAwarded);
-      list.push(`<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div class='icon'>${trophySymbol.repeat(trophies)}</div><div class='score'>${bonusPoints}</div>`);
   }
   return list.join("");
 }
@@ -1091,11 +1102,13 @@ function getPlayerAcheivements(gameInfo = false) {
 function startGame(seed = 0) {
   gameState.onStartGame(seed);
 
+  if (gameState.gameNumber && seed != gameState.gameNumber) {
+    gameState.gameNumber = null;
+    deleteGameNumberFromURL();
+  }
+
   settings.setDefaults();
   player.reset();
-
-  Timer.reset();
-  Timer.setStepInterval(settings.gameStepInterval);
 
   gameScreen.showGameUI();
   nextMaze();
@@ -1120,6 +1133,7 @@ let grid = null;
 let characters = [];
 
 const gameState = {
+
   reset() {
     this.gameOver = false; 
     this.caveInStarted = false;
@@ -1153,12 +1167,31 @@ const gameState = {
     return GameRecorder.isReplaying ? this.playbackSpeed : 1;
   },
 
+  get gameNumber() {
+    return this._gameNumber;
+  },
+
+  set gameNumber(value) {
+    this._gameNumber = value;
+
+    if (GAME_RNG.isValidGameNumber(value)) {
+      this._gameNumber = value;
+      this.seed = value;
+      GameRecorder.autoSave = true;
+    } else {
+      this._gameNumber = null;
+      GameRecorder.autoSave = false;
+    }
+  },
+
   onStartGame(seed) {
     this.reset();
 
     this.seed = seed;
     this.randomizer = RNG.randomizer(seed);
     this.ticks = 0;
+
+    Timer.setStepInterval(settings.gameStepInterval);
 
     GameRecorder.startGame(GAME_VERSION, seed, settings.gameStepInterval);
   },
@@ -1173,6 +1206,7 @@ const gameState = {
       currentLevel: this.currentLevel,
       currentMaze: this.currentMaze,
       levelRelic: this.levelRelic?.state,
+      randomizerState: this.randomizer.getState(),
       playerState: player.state,
       outcome: "finished"
     });
@@ -1216,6 +1250,7 @@ const gameState = {
       currentLevel: this.currentLevel,
       currentMaze: this.currentMaze,
       levelRelic: this.levelRelic?.state,
+      randomizerState: this.randomizer.getState(),
       playerState: player.state,
       outcome: "checkpoint"
     });
@@ -1238,10 +1273,9 @@ const gameState = {
     this.currentLevel = mazeRecording.level;
     this.currentMaze = mazeRecording.maze;
     this.ticks = mazeRecording.startTick;
-    this.levelRelic = mazeRecording.levelRelic
-    this.randomizer = RNG.randomizer(
-      mazeRecording.randomizerState
-    );
+    this.levelRelic = mazeRecording.levelRelic;
+    this.playbackSpeed = gameScreen.replayBar.speed;
+    this.randomizer = RNG.randomizer(mazeRecording.randomizerState);
 
     player.state = mazeRecording.playerState;
     startMaze();
@@ -1254,6 +1288,19 @@ const gameState = {
       const inputMask = GameRecorder.replayInputMask(this.ticks);
       Keyboard.applyMask(inputMask);
     }
+  },
+
+  initWithRecording(recording) {
+    this.reset();
+
+    this.seed = recording.seed;
+    this.currentLevel = recording.currentLevel;
+    this.currentMaze = recording.currentMaze;
+    this.levelRelic = recording.levelRelic;
+    this.ticks = recording.ticks;
+    this.randomizer = RNG.randomizer(recording.randomizerState);
+
+    player.state = recording.playerState;
   },
 };
 
@@ -1270,12 +1317,7 @@ gameScreen.replayBarHandler = {
       const recording = GameRecorder.recording;
       if (!recording) return;
 
-      gameState.currentLevel = recording.currentLevel;
-      gameState.currentMaze = recording.currentMaze;
-      gameState.levelRelic = recording.levelRelic;
-      gameState.ticks = recording.ticks;
-      player.state = recording.playerState;
-    
+      gameState.initWithRecording(recording);
       GameRecorder.selectMaze(-1);
 
       if (recording.outcome === "finished") {
@@ -1305,3 +1347,74 @@ gameScreen.replayBarHandler = {
       return speed;
     }
 };
+
+const GAME_NUMBER_PARAM = "game";
+
+function deleteGameNumberFromURL() {
+  const url = new URL(gameWindow.location.href);
+  const value = url.searchParams.get("game");
+
+  if (value) {
+    url.searchParams.delete("game");
+    gameWindow.history.replaceState(null, "", url);    
+  }
+}
+
+function getGameNumberFromURL() {
+  const params = new URLSearchParams(gameWindow.location.search);
+  const value = params.get("game");
+
+  // Game numbers must be positive whole numbers.
+  const gameNumber = Number(value);
+
+  if (!GAME_RNG.isValidGameNumber(gameNumber)) {
+    deleteGameNumberFromURL();
+    return null;
+  }
+
+  return gameNumber;
+}
+
+function initGame(gameNumber) {
+  if (gameNumber === null) {
+    gameScreen.newGame();
+    return;
+  }
+
+  const savedGame = GameRecorder.load(GAME_VERSION, gameNumber)
+    || GameRecorder.load(GAME_VERSION, gameNumber, "checkpoint");
+
+  gameState.gameNumber = gameNumber;
+
+  if (savedGame) {
+    Timer.setStepInterval(savedGame.msPerTick);
+
+    gameScreen.replayBarHandler.onSelectEnd();
+    gameScreen.showGameMessage(MESSAGES.loading);
+
+    gameWindow.setTimeout(() => {
+      gameScreen.hideGameMessage();
+      gameScreen.showGameUI(true);
+    }, TIMEOUTS.tallyScoreDelay);
+  } else if (GAME_RNG.isValidGameNumber(gameNumber)) {
+    gameScreen.showGameUI(true);
+    gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);
+
+    gameScreen.gameInfoContent.textContent = MESSAGES.gameNotYetPlayed;
+    gameScreen.gameInfoLinks.replayGameLink.hidden = true;
+    gameScreen.gameInfoLinks.playAgainLink.textContent = MESSAGES.playGame;
+  }
+}
+
+// Select the initial screen from the URL.
+(() => {
+  const gameNumber =
+    getGameNumberFromURL();
+
+  if (gameNumber === null) {
+    gameScreen.showBio();
+  } else {
+    initGame(gameNumber);
+  }
+})();
+

@@ -2,9 +2,28 @@ import { Direction } from "./util.js";
 
 const GAME_VERSION = 1.0;
 
-export { GAME_VERSION, OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES }
+const GAME_RNG = {
+    min: 1_000,
+    max: 1_000_000,
+
+    isRandom(value) {
+        return value >= this.min && value <= this.max;
+    },
+
+    isValidGameNumber(value) {
+        return value >= 1 && value < this.min;
+    },
+
+    random() {
+        return Math.floor(Math.random() * (this.max-this.min) + this.min);
+    }
+};
+
+export { GAME_VERSION, GAME_RNG, OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES }
 
 const MESSAGES = {
+  gameOverTitle: "GAME OVER",
+  gameInfoTitle: "GAME #",
   mazeClearedMessage: "Cave Bonus",
   mazeNotClearedMessage: "Cave NOT emptied!",
   nextMazeLinkText: "Go Deeper",
@@ -15,6 +34,11 @@ const MESSAGES = {
   trophyAwarded: ["Trophy Awarded", "Trophies Awarded"],
   relicsFound: "Relics Found",
   finalScore: "Final Score",
+  playAgain: "Play Again",
+  playGame: "Play Game",
+  loading:  "Loading...",
+  gameNotYetPlayed: "This game has not yet been played.",
+  levelCompleted: (level, maze) => `LEVEL ${level}.${maze} COMPLETED`,
   none: "NONE!"
 }
 

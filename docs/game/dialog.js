@@ -224,7 +224,12 @@ export class Dialog {
         return;
     }
 
-    const refreshedIndex = Dialog.#controls.indexOf(selectedControl);
+    const focusedElement = Dialog.#container.ownerDocument.activeElement;
+    let refreshedIndex = Dialog.#controls.indexOf(focusedElement);
+
+    if (refreshedIndex === -1) {
+      refreshedIndex = Dialog.#controls.indexOf(selectedControl);
+    }
 
     if (refreshedIndex !== -1) {
         /*

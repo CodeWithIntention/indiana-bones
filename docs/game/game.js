@@ -1403,6 +1403,7 @@ function initGame(gameNumber) {
     gameScreen.gameInfoContent.textContent = MESSAGES.gameNotYetPlayed;
     gameScreen.gameInfoLinks.replayGameLink.hidden = true;
     gameScreen.gameInfoLinks.playAgainLink.textContent = MESSAGES.playGame;
+    gameScreen.gameInfoLinks.playAgainLink.focus();
   }
 }
 

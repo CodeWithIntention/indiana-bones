@@ -122,7 +122,7 @@ function updateGameUI() {
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
     mazeStatusLine.innerHTML = `<b>LEVEL ${gameState.currentLevel}.${gameState.currentMaze}</b> 
-      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus}</b>`;
+      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus || grid.mazeBonus}</b>`;
 }
 
 function playerTNT(character) {
@@ -574,7 +574,7 @@ function tallyScore() {
   }
 
   gameScreen.showScoreboard(MESSAGES.levelCompleted(gameState.currentLevel, gameState.currentMaze));
-
+  
   let totalScore = 0;
   let scoreIndex = 0;
 
@@ -597,7 +597,7 @@ function tallyScore() {
 
       gameWindow.setTimeout(updateScore, TIMEOUTS.updateScoreCardInterval);
     } else {
-        gameScreen.scoreboardLinks.style.display = "flex";
+        if (!gameState.isReplay) gameScreen.scoreboardLinks.style.display = "flex";
         
         if (gameState.currentMaze === settings.mazesPerLevel) {
           gameScreen.scoreboardLinks.nextMazeLink.textContent = MESSAGES.nextLevelLinkText;
@@ -626,8 +626,12 @@ function tallyScore() {
           player.score = player.exitMazeScore + totalScore;
           Sound.ding();
 
-          gameState.onMazeExited();
           updateGameUI();
+          if (gameState.isReplay) {
+            setTimeout(() => gameState.onMazeExited(), TIMEOUTS.nextMazeReplayDelay);
+          } else {
+            gameState.onMazeExited()
+          }
         }
     }
   }
@@ -1004,18 +1008,15 @@ function getHighScore() {
 }
 
 function playerExitMaze() {
-  if (gameState.isReplay) {
-    gameState.onMazeExited();
-  } else {
-    // Set score to when player exited the maze so tallyScore
-    // can add to it to get to the final maze score.
-    player.score = player.exitMazeScore;
+  // Set score to when player exited the maze so tallyScore
+  // can add to it to get to the final maze score.
+  player.score = player.exitMazeScore;
 
-    Sound.yeah();
-    updateGameUI();
-    gameScreen.hideReplayBar();
-    gameWindow.setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
-  }
+  Sound.yeah();
+  updateGameUI();
+
+  if (!gameState.isReplay) gameScreen.hideReplayBar();
+  gameWindow.setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
 }
 
 function playerGameOver() {

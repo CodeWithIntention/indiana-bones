@@ -237,7 +237,7 @@ class Player extends Character {
 
     this.exitMaze = false;
     this.isMazeCleared = false;
-    this.mazeBonus = false;
+    this.mazeBonus = 0;
 
     this.#alive = true;
     this.#powerUpTime = 0;

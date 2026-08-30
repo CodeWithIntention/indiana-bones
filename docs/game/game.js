@@ -122,7 +122,7 @@ function updateGameUI() {
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
     mazeStatusLine.innerHTML = `<b>LEVEL ${gameState.currentLevel}.${gameState.currentMaze}</b> 
-      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus || grid.mazeBonus}</b>`;
+      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus || grid?.mazeBonus || 0}</b>`;
 }
 
 function playerTNT(character) {

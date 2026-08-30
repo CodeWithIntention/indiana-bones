@@ -1022,16 +1022,16 @@ function playerGameOver() {
   Sound.gameover();
   gameState.onGameOver();
 
-    function gameOver() {
-      const isGameNumber = Number.isFinite(gameState.gameNumber);
-      const title = isGameNumber ? MESSAGES.gameInfoTitle+gameState.gameNumber : MESSAGES.gameOverTitle;
+  function gameOver() {
+    const isGameNumber = Number.isFinite(gameState.gameNumber);
+    const title = isGameNumber ? MESSAGES.gameInfoTitle+gameState.gameNumber : MESSAGES.gameOverTitle;
 
-      gameScreen.showGameInfo(title);
-      gameScreen.gameInfoContent.innerHTML = getPlayerAcheivements();
-      
-      tallyTrophyBonus();
-    }
-    setTimeout(gameOver, TIMEOUTS.gameOverDelay);
+    gameScreen.showGameInfo(title);
+    gameScreen.gameInfoContent.innerHTML = getPlayerAcheivements();
+
+    tallyTrophyBonus();
+  }
+  setTimeout(gameOver, TIMEOUTS.gameOverDelay);
 }
 
 function tallyTrophyBonus() {
@@ -1403,7 +1403,6 @@ function initGame(gameNumber) {
     gameScreen.gameInfoContent.textContent = MESSAGES.gameNotYetPlayed;
     gameScreen.gameInfoLinks.replayGameLink.hidden = true;
     gameScreen.gameInfoLinks.playAgainLink.textContent = MESSAGES.playGame;
-    gameScreen.gameInfoLinks.playAgainLink.focus();
   }
 }
 

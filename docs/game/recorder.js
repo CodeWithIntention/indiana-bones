@@ -256,7 +256,8 @@ export const GameRecorder = {
 
         if (isHighScore) {
           recording.highScore = score
-
+          savedGame = recording;
+          
           localStorage.setItem(
             key,
             JSON.stringify(recording)

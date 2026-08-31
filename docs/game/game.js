@@ -1022,7 +1022,8 @@ function playerExitMaze() {
 function playerGameOver() {
   Sound.gameover();
   gameState.onGameOver();
-
+  gameScreen.showInstructions(false);
+  
   function gameOver() {
     const isGameNumber = Number.isFinite(gameState.gameNumber);
     const title = isGameNumber ? MESSAGES.gameInfoTitle+gameState.gameNumber : MESSAGES.gameOverTitle;
@@ -1410,8 +1411,10 @@ function initGame(gameNumber) {
     gameScreen.showGameUI(true);
     gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);
 
+    gameScreen.gameInfoContent.gameNumber = gameNumber;
     gameScreen.gameInfoContent.textContent = MESSAGES.gameNotYetPlayed;
     gameScreen.gameInfoLinks.replayGameLink.hidden = true;
+    gameScreen.gameInfoLinks.newGameLink.hidden = true;
     gameScreen.gameInfoLinks.playAgainLink.textContent = MESSAGES.playGame;
   }
 }

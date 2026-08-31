@@ -54,10 +54,11 @@ function zoomStartGame(seed) {
   });
 }
 
-function enterSpiderCave(source) {
+function enterSpiderCave(gameNumber) {
   // Switch screens
   gameScreen.dismissDialog(document.getElementById("bio"));
-  zoomStartGame();
+  
+  zoomStartGame(gameNumber);
 }
 
 function replayGame() {
@@ -67,12 +68,16 @@ function replayGame() {
 
 function playAgain() {
   hideGameInfo(true);
-  gameScreen.playAgain();
+
+  if (GAME_RNG.isValidGameNumber(gameScreen.gameInfoContent.gameNumber)) {
+    gameScreen.showBio(gameScreen.gameInfoContent.gameNumber);
+  } else {
+    gameScreen.playAgain();
+  }
 }
 
 function newGame() {
   hideGameInfo(true);
-  gameScreen.hideReplayBar();
   gameWindow.requestAnimationFrame(zoomStartGame);
 }
 
@@ -91,13 +96,14 @@ function showGameInfo(title) {
   if (gameScreen.gameInfoPanel.style.display === 'flex') return;
   
   gameScreen.hideReplayBar();
+
+  gameScreen.gameInfoContent.gameNumber = null;
   gameScreen.gameInfoTitle.innerHTML = title;
   gameScreen.gameInfoLinks.playAgainLink.textContent = MESSAGES.playAgain;
   gameScreen.gameInfoLinks.replayGameLink.hidden = false;
   gameScreen.gameInfoLinks.newGameLink.hidden = false;
   
   gameScreen.showDialog(gameScreen.gameInfoPanel);
-  showInstructions(false);
 }
 
 function showScoreboard(title) {
@@ -212,8 +218,6 @@ gameScreen.hideScoreboard = hideScoreboard;
 
 gameScreen.dismissInstructionsLink.addEventListener("click", () => showInstructions(false));
 
-enterLink.addEventListener("click", enterSpiderCave);
-
 gameScreen.DialogEvents = {
   show: {name: "showdialog"},
   dismiss: {name: "dismissdialog"}
@@ -290,10 +294,9 @@ gameScreen.hideReplayBar = function () {
   this.gameReplayBarPanel.hidden = true;
 }
 
-gameScreen.showBio = function () {
-  this.showDialog(
-    document.getElementById("bio")
-  );
+gameScreen.showBio = function (gameNumber) {
+  enterLink.addEventListener("click", () => enterSpiderCave(gameNumber), { once: true });
+  this.showDialog(document.getElementById("bio"));
 
   gameWindow.requestAnimationFrame(() => {
     document

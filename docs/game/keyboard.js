@@ -26,6 +26,7 @@ export const Keyboard = {
     ArrowRight: false,
     Space: false,
     NextMaze: false,
+    Special: false,
   // END
 
     initWith(gameWindow) {
@@ -78,6 +79,8 @@ export const Keyboard = {
 function onKeyEvent(event, pressed) {
     const keyCode = KEY_MAPPINGS.mappedKey(event.code);
 
+    Keyboard.Special = event.shiftKey && event.ctrlKey;
+
     if (pressed && keyCode === "Space") {
       if (Keyboard.onSpacePressed()) {
         event.preventDefault();
@@ -102,7 +105,7 @@ function onKeyEvent(event, pressed) {
 
     // DEBUG: Hidden keystroke for advancing to next maze immediately.
     if (!pressed && keyCode === "ArrowLeft") {
-      Keyboard.NextMaze = event.shiftKey && event.ctrlKey;
+      Keyboard.NextMaze = Keyboard.Special;
     } else {
       Keyboard.NextMaze = false;
     }

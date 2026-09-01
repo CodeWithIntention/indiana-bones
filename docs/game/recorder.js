@@ -72,7 +72,6 @@ export const GameRecorder = {
     tick,
     currentLevel,
     currentMaze,
-    levelRelic,
     randomizerState,
     playerState,
     outcome,
@@ -83,7 +82,6 @@ export const GameRecorder = {
         this.recording.ticks = tick;
         this.recording.currentLevel = currentLevel;
         this.recording.currentMaze = currentMaze;
-        this.recording.levelRelic = levelRelic;
         this.randomizerState = randomizerState;
         this.recording.playerState = playerState;
         this.recording.outcome = outcome;

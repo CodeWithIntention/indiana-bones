@@ -106,8 +106,8 @@ function updateGameUI() {
       }
     });
     
-    if (gameState.levelRelic) {
-      list.push(`<div class='pulse'>${gameState.levelRelic.symbol}</div>`);
+    if (gameState.levelRelicFound) {
+      list.push(`<div class='pulse'>${gameState.levelRelic?.symbol}</div>`);
     }
 
     if (player.score > settings.highScore) {
@@ -258,8 +258,8 @@ function playerChomp(character, object) {
 function playerGrab(object) {
   if (object instanceof Character && object.isGrabable) {
     if (object.isRelic) {
-      gameState.levelRelic = object;
       Sound.portal();
+      gameState.levelRelicFound = true;
       grid.addHtmlCharacterFor(object, `<span class='relic'>${object.description}</span>`, TIMEOUTS.relicLabelDuration);
       grid.ensureExit(true, {row: player.row, col: player.col});
       Timer.setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
@@ -566,11 +566,12 @@ function tallyScore() {
     list.push(`<div>${MESSAGES.mazeNotClearedMessage}</div><div class='score'>0</div>`);
   }
 
-  if (gameState.levelRelic) {
-    const relic = gameState.levelRelic;
-    const points = relic.points * relic.level;
-    scores.push(points);
-    list.push(`<div>${relic.description} ${relic.symbol} &times; ${relic.level} &times; ${relic.points}</div><div class='score'>${points}</div>`);
+  const levelRelic = gameState.levelRelic;
+  if (levelRelic) {
+    const score = levelRelic.points * levelRelic.level;
+
+    scores.push(score);
+    list.push(`<div>${levelRelic.description} ${levelRelic.symbol} &times; ${levelRelic.level} &times; ${levelRelic.points}</div><div class='score'>${score}</div>`);
   }
 
   gameScreen.showScoreboard(MESSAGES.levelCompleted(gameState.currentLevel, gameState.currentMaze));
@@ -906,7 +907,7 @@ function showRelicChamber() {
   // astute will see where the Guardian originated from and dig there.
   const guardian = createCharacter(CHARACTERS.ghost, {row: position.row, col: position.col});
   const relic = createCharacter(CHARACTERS.relic, position);
-  relic.setSymbolDescription(gameState.currentLevel, Grid.symbolFor(Relic.kindForLevel(gameState.currentLevel)));
+  relic.setRelic(gameState.levelRelic);
   disableCharacter(guardian, TIMEOUTS.guardianDelay-player.level*TIMEOUTS.guardianDelayLevelReduction);
 }
 
@@ -1151,12 +1152,12 @@ const gameState = {
     this.keysNeeded = 0;
     this.currentLevel = 0;
     this.currentMaze = 0;
-    this.levelRelic = null;
     this.relicChamberFormation = null;
     this.playbackSpeed = 1;
     this.gameResult = null;
+    this.levelRelicFound = false;
   },
-
+  
   get isReplay() {
     return GameRecorder.isReplaying && GameRecorder.hasNextMaze;
   },
@@ -1168,6 +1169,15 @@ const gameState = {
   get isCaveInThreshold() { 
     const pathCount = this.caveInStarted ? grid.pathCount + gameState.random() * 10 : grid.pathCount;
     return pathCount / grid.cellCount > settings.caveInThreshold;
+  },
+
+  get levelRelic() {
+    if (!this.isLastMaze) return null;
+
+    const relicKind = Relic.kindForLevel(this.currentLevel);
+    const relicSymbolDescription = Relic.parse(Grid.symbolFor(relicKind));
+
+    return {kind: relicKind, level: this.currentLevel, points: CHARACTERS.relic.points, symbol: relicSymbolDescription[0], description: relicSymbolDescription[1]};
   },
 
   get sequence() {
@@ -1216,7 +1226,6 @@ const gameState = {
       tick: this.ticks,
       currentLevel: this.currentLevel,
       currentMaze: this.currentMaze,
-      levelRelic: this.levelRelic?.state,
       randomizerState: this.randomizer.getState(),
       playerState: player.state,
       outcome: "finished"
@@ -1260,7 +1269,6 @@ const gameState = {
       tick: this.ticks,
       currentLevel: this.currentLevel,
       currentMaze: this.currentMaze,
-      levelRelic: this.levelRelic?.state,
       randomizerState: this.randomizer.getState(),
       playerState: player.state,
       outcome: "checkpoint"
@@ -1284,7 +1292,6 @@ const gameState = {
     this.currentLevel = mazeRecording.level;
     this.currentMaze = mazeRecording.maze;
     this.ticks = mazeRecording.startTick;
-    this.levelRelic = mazeRecording.levelRelic;
     this.playbackSpeed = gameScreen.replayBar.speed;
     this.randomizer = RNG.randomizer(mazeRecording.randomizerState);
 
@@ -1307,7 +1314,6 @@ const gameState = {
     this.seed = recording.seed;
     this.currentLevel = recording.currentLevel;
     this.currentMaze = recording.currentMaze;
-    this.levelRelic = recording.levelRelic;
     this.ticks = recording.ticks;
     this.randomizer = RNG.randomizer(recording.randomizerState);
 
@@ -1392,9 +1398,9 @@ function initGame(gameNumber) {
     return;
   }
 
-  const savedGame = GameRecorder.load(GAME_VERSION, gameNumber)
-    || GameRecorder.load(GAME_VERSION, gameNumber, "checkpoint");
-
+  const savedGame = GameRecorder.load(GAME_VERSION, gameNumber, "checkpoint")
+    || GameRecorder.load(GAME_VERSION, gameNumber, "finished");
+    
   gameState.gameNumber = gameNumber;
 
   if (savedGame) {

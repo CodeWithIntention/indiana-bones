@@ -89,18 +89,11 @@ class Relic extends Character {
     super(config, position.row, position.col);
   }
 
-  get state() {
-    return {level: this.level, points: this.points, symbol: this.symbol, description: this.description};
-  }
-
-  setSymbolDescription(level, value) {
-    const parts = Relic.parse(value)
-
-    this.level = level;
-    this.symbol = parts[0];
-    this.description = parts[1];
-
-    this.config.kind = Relic.kindForLevel(this.level);
+  setRelic(relic) {
+    this.config.kind = relic.kind;
+    this.level = relic.level;
+    this.symbol = relic.symbol;
+    this.description = relic.description;
 
     if (this.gridCell) {
       this.gridCell.textContent = this.symbol;

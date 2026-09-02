@@ -1222,7 +1222,7 @@ const gameState = {
   },
     
   onGameFinished() {
-    this.gameResult = GameRecorder.addRecord({
+    this.gameResult = GameRecorder.tagRecording({
       tick: this.ticks,
       currentLevel: this.currentLevel,
       currentMaze: this.currentMaze,
@@ -1230,7 +1230,30 @@ const gameState = {
       playerState: player.state,
       outcome: "finished"
     });
-},
+  },
+  
+  onMazeExited() {
+    const saveCheckpoint = gameState.isReplay && Keyboard.Special;
+    const checkpoint = {
+      tick: this.ticks,
+      currentLevel: this.currentLevel,
+      currentMaze: this.currentMaze,
+      randomizerState: this.randomizer.getState(),
+      playerState: player.state,
+      outcome: "checkpoint"
+    };
+
+    if (saveCheckpoint) {
+      GameRecorder.saveRecording(checkpoint);
+    } else {
+      GameRecorder.tagRecording(checkpoint);
+    }
+    
+    if (this.isReplay) {
+      const nextRecording = GameRecorder.selectNextMaze();
+      this.replayMazeRecording(nextRecording);
+    }
+  },
 
   onNextMaze() {
     this.reset();
@@ -1262,22 +1285,6 @@ const gameState = {
     );
     gameScreen.replayBar.setCurrentTick(this.ticks);
     this.ticks++;
-  },
-  
-  onMazeExited() {
-    GameRecorder.addRecord({
-      tick: this.ticks,
-      currentLevel: this.currentLevel,
-      currentMaze: this.currentMaze,
-      randomizerState: this.randomizer.getState(),
-      playerState: player.state,
-      outcome: "checkpoint"
-    });
-
-    if (this.isReplay) {
-      const nextRecording = GameRecorder.selectNextMaze();
-      this.replayMazeRecording(nextRecording);
-    }
   },
 
   onReplayMaze(index) {
@@ -1412,7 +1419,7 @@ function initGame(gameNumber) {
     gameWindow.setTimeout(() => {
       gameScreen.hideGameMessage();
       gameScreen.showGameUI(true);
-    }, TIMEOUTS.tallyScoreDelay);
+    }, TIMEOUTS.loadingMessageDelay);
   } else if (GAME_RNG.isValidGameNumber(gameNumber)) {
     gameScreen.showGameUI(true);
     gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);

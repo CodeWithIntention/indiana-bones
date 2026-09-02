@@ -68,13 +68,13 @@ export const GameRecorder = {
     }
   },
 
-  addRecord({
+  tagRecording({
     tick,
     currentLevel,
     currentMaze,
     randomizerState,
     playerState,
-    outcome,
+    outcome
   }) {
     if (this.isReplaying) return;
 
@@ -82,7 +82,7 @@ export const GameRecorder = {
         this.recording.ticks = tick;
         this.recording.currentLevel = currentLevel;
         this.recording.currentMaze = currentMaze;
-        this.randomizerState = randomizerState;
+        this.recording.randomizerState = randomizerState;
         this.recording.playerState = playerState;
         this.recording.outcome = outcome;
     }
@@ -232,6 +232,36 @@ export const GameRecorder = {
     return `indiana-bones-game:${gameVersion}:${seed}:${outcome}`;
   },
 
+  saveRecording({
+    tick,
+    currentLevel,
+    currentMaze,
+    randomizerState,
+    playerState,
+    outcome,
+  }) {
+    const recording = this.recording;
+    if (!recording) return;
+
+    const checkpoint = {
+      ...this.recording,
+
+      ticks: tick,
+      currentLevel,
+      currentMaze,
+      randomizerState,
+      playerState,
+      outcome,
+      mazeRecordings: this.recording.mazeRecordings.slice(0, this.replayMazeIndex + 1),
+    };
+
+    const { version, seed } = checkpoint;
+    localStorage.setItem(
+      this.storageKey(version, seed, outcome),
+      JSON.stringify(checkpoint)
+    );
+  },
+
   save() {
     const recording = this.recording;
     if (!recording) return null;
@@ -271,7 +301,7 @@ export const GameRecorder = {
         isHighScore
       };
     }
-    
+  
     localStorage.setItem(
       key,
       JSON.stringify(recording)

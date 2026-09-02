@@ -252,15 +252,18 @@ export const GameRecorder = {
       const isHighScore =
         !(savedGame && Number.isFinite(savedGame.highScore)) || score > savedGame.highScore;
 
-        if (isHighScore) {
-          recording.highScore = score
-          savedGame = recording;
-          
-          localStorage.setItem(
-            key,
-            JSON.stringify(recording)
-          );
-        }
+      if (isHighScore) {
+        recording.highScore = score
+        savedGame = recording;
+        
+        localStorage.setItem(
+          key,
+          JSON.stringify(recording)
+        );
+      }
+
+      const checkpointKey = this.storageKey(version, seed, "checkpoint");
+      localStorage.removeItem(checkpointKey);
 
       return {
         score,

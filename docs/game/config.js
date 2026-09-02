@@ -56,7 +56,8 @@ const TIMEOUTS = {
   relicLabelDuration: 3000,
   gameOverTrophyTallyInterval: 500,
   gameOverDelay: 1500,
-  nextMazeReplayDelay: 3500
+  nextMazeReplayDelay: 3500,
+  loadingMessageDelay: 2000,
 }
 
 // Maze architecture objects

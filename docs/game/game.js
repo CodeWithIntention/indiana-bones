@@ -1047,7 +1047,6 @@ function tallyTrophyBonus() {
   const gameOverAchievementsHtml = gameScreen.gameInfoContent.innerHTML;
 
   let trophies = 0;
-  let bonusPoints = 0;
 
   function updateFinalScore() {
     player.score = player.exitMazeScore + settings.pointsPerTrophy * player.trophiesAwarded;
@@ -1070,11 +1069,26 @@ function tallyTrophyBonus() {
       Sound.dingDing();
       updateFinalScore();
     } else {
-      // Tally each trophy
-      Sound.ding();
-      bonusPoints = settings.pointsPerTrophy * (++trophies);
-      gameScreen.gameInfoContent.innerHTML = gameOverAchievementsHtml + `<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div class='icon'>${trophySymbol.repeat(trophies)}</div><div class='score'>${bonusPoints}</div>`;
+      const list = [gameOverAchievementsHtml, `<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div>`];
       
+      // Tally each trophy
+      const bonusPoints = settings.pointsPerTrophy * (++trophies);
+      for (let i = Math.floor(trophies/10); i > 0; i--) {
+        // Break up into rows of 10 trophies for display
+        list.push(`<div class='icon'>${trophySymbol.repeat(10)}</div>`);
+      }
+
+      // Remaining trophies for display 
+      const remainingTrophies = trophies % 10;
+      if (remainingTrophies > 0) {
+        list.push(`<div class='icon'>${trophySymbol.repeat(remainingTrophies)}</div>`);
+      }
+
+      // Bonus points for tallied trophies
+      list.push(`<div class='score'>${bonusPoints}</div>`);
+      
+      Sound.ding();
+      gameScreen.gameInfoContent.innerHTML = list.join("");
       gameWindow.setTimeout(nextTrophy, TIMEOUTS.gameOverTrophyTallyInterval);    
     }
   }

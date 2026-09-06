@@ -85,19 +85,6 @@ export class GameModel {
   gameOver() {
     this.isGameOver = true;
   }
-    
-  endGame() {
-    const record = {
-      tick: this.ticks,
-      currentLevel: this.currentLevel,
-      currentMaze: this.currentMaze,
-      randomizerState: this.randomizer.getState(),
-      playerState: this.player.state,
-      outcome: "finished"
-    };
-
-    return record;
-  }
 
   startMaze(rows, cols) {
     this.player.restart();
@@ -127,18 +114,18 @@ export class GameModel {
     this.player.isMazeCleared = this.grid.isMazeCleared && this.characters.killables(this.player).length === 0;
     this.player.mazeBonus = this.grid.mazeBonus;
   }
-
-  endMaze() {
-    const checkpoint = {
+    
+  createTagRecord(outcome) {
+    const record = {
       tick: this.ticks,
       currentLevel: this.currentLevel,
       currentMaze: this.currentMaze,
       randomizerState: this.randomizer.getState(),
       playerState: this.player.state,
-      outcome: "checkpoint"
+      outcome: outcome
     };
 
-    return checkpoint;
+    return record;
   }
 
   initWithRecording(recording) {

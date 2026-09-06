@@ -644,23 +644,28 @@ function replayMaze(index = -1) {
   replayMazeRecording(index);
 }
 
+function playerDescend() {
+  if (!(gameModel.grid && gameModel.player.isAlive)) return false;
+
+  gameModel.player.row = gameModel.grid.rows-1;
+  gameModel.player.col = gameModel.grid.cols-1;
+
+  gameModel.grid.setCharacterAttributes(gameModel.player, {down: true, flatten: true});
+  gameModel.grid.placeCharacter(gameModel.player);
+
+  return true;
+}
+
 function goDeeper() {
   GameRecorder.resetReplay();
   gameScreen.hideScoreboard();
 
-  if (grid) {
-    gameModel.player.row = gameModel.grid.rows-1;
-    gameModel.player.col = gameModel.grid.cols-1;
-    
-    gameModel.grid.setCharacterAttributes(gameModel.player, {down: true, flatten: true});
-    gameModel.grid.placeCharacter(gameModel.player);
-
+  if (playerDescend()) {
     Sound.deeper();
     gameWindow.setTimeout(nextMaze, TIMEOUTS.nextMazeDelay);
   } else {
     nextMaze();
   }
-
 }
 
 function nextMaze() {
@@ -716,10 +721,10 @@ function startMaze() {
     gameModel.grid.placeObjectFormation(gameModel.relicChamberFormation, OBJECTS.rock, {});
   }
 
-  [gameModel.actors].forEach(character => {
+  gameModel.actors.forEach(character => {
       // Negative speed is not sped up. 
       if (character.speed > 0) {
-        character.speed += gameModel.player.level * settings.speedUpRatePerLevel * character.speed;
+        character.speed += gameModel.currentLevel * settings.speedUpRatePerLevel * character.speed;
       }
   });
 
@@ -730,12 +735,12 @@ function startMaze() {
 }
 
 function endMaze(saveCheckpoint = false) {
-  const checkpoint = gameModel.endMaze();
+  const record = gameModel.createTagRecord("checkpoint");
 
   if (saveCheckpoint) {
-    GameRecorder.saveRecording(checkpoint);
+    GameRecorder.saveRecording(record);
   } else {
-    GameRecorder.tagRecording(checkpoint);
+    GameRecorder.tagRecording(record);
   }
 }
 
@@ -1040,7 +1045,7 @@ function tallyTrophyBonus() {
 
     saveHighScore(settings.highScore);
 
-    const record = gameModel.endGame();
+    const record = gameModel.createTagRecord("finished");
     GameRecorder.tagRecording(record);
   }
 
@@ -1114,14 +1119,20 @@ function getPlayerAcheivements() {
 
 function startGame(seed = 0) {
   Timer.setStepInterval(settings.gameStepInterval);
-  GameRecorder.startGame(GAME_VERSION, seed, settings.gameStepInterval);
 
   gameModel.startGame(seed);
 
-  if (gameModel.gameNumber && seed != gameModel.gameNumber) {
+  if (gameModel.gameNumber && seed !== gameModel.gameNumber) {
     gameModel.gameNumber = null;
     deleteGameNumberFromURL();
   }
+
+  GameRecorder.startGame(
+    GAME_VERSION,
+    seed,
+    settings.gameStepInterval,
+    GAME_RNG.isValidGameNumber(gameModel.gameNumber)
+  );
 
   settings.setDefaults();
   gameModel.player.reset();

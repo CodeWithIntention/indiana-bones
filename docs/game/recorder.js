@@ -11,7 +11,7 @@ export const GameRecorder = {
   
   autoSave: false,
 
-  startGame(version, seed, msPerTick) {
+  startGame(version, seed, msPerTick, autoSave) {
     this.resetReplay();
 
     this.recording = {
@@ -28,6 +28,7 @@ export const GameRecorder = {
 
     this.mazeRecording = null;
     this.gameSteps = [];
+    this.autoSave = autoSave === true;
   },
 
   startMaze({
@@ -188,7 +189,7 @@ export const GameRecorder = {
 
   get hasNextMaze() {
     if (!this.isReplaying) return false;
-    
+
     const count =
       this.recording?.mazeRecordings.length ?? 0;
 

@@ -4,7 +4,7 @@ import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
-import { Rock, Relic } from "./characters.js";
+import { Characters, Rock, Relic } from "./characters.js";
 import { Grid } from "./grid.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
@@ -67,7 +67,7 @@ function updateGameState(reason) {
         if (grid.objectAt(reason) === OBJECTS.exit) {
           if (!player.exitMaze) {
             player.exitMaze = true;
-            player.isMazeCleared = grid.isMazeCleared && characters.killables().length === 0;
+            player.isMazeCleared = grid.isMazeCleared && characters.killables(player).length === 0;
             player.mazeBonus = grid.mazeBonus;
             attributes.spin = true;
           }
@@ -150,7 +150,7 @@ function playerTNT(character) {
   if (character === player) {
     if (player.powerUp || !(player.isAlive && player.removeTNT())) return false;
   } else if (character instanceof Rock) {
-    characters.remove(character);
+    removeCharacter(character);
   } else if (character && character.isTNT && grid.objectAt(character.row, character.col) === OBJECTS.tnt) {
     grid.placeObjectAt(character.row, character.col, OBJECTS.path)
   } else {
@@ -236,7 +236,7 @@ function onCharacterBlownUp(character) {
   } else {
     addScoreForCharacter(character, -1);
   }
-  characters.remove(character);
+  removeCharacter(character);
 }
 
 function addScoreForCharacter(character, factor) {
@@ -264,7 +264,7 @@ function playerChomp(character, object) {
       if (!(character instanceof Rock || object.isChompable || object.disabled)) return;
 
       addScoreForCharacter(object, object.canKill(player) ? 1 : settings.chompPointsFactor);
-      characters.remove(object);
+      removeCharacter(object);
 
       const chompSound = object.chompSound;
       if (chompSound) {
@@ -287,7 +287,7 @@ function playerGrab(object) {
     } else {
       player.grab(object.config);
     }
-    characters.remove(object);
+    removeCharacter(object);
   } else if (Number.isFinite(object.points)) {
     if (object.isBaggable === false) {
       addScoreForCharacter(object, 1);
@@ -465,8 +465,6 @@ function moveCharacter(character, delta) {
   }
 
   const dirs = getDirections(character.direction);
-  const currentRow = character.row;
-  const currentCol = character.col;
   let direction = Direction.NONE;
 
   while (dirs.length > 0) {
@@ -496,7 +494,7 @@ function moveCharacter(character, delta) {
   });
 
   if (character.kind === CHARACTERS.rock.kind && Direction.isNone(direction)) {
-    characters.remove(character);
+    removeCharacter(character);
 
     // When a rock stops moving, it can become a wall if position is
     // not occupied by a fixed object. Otherwise try the row above.
@@ -704,7 +702,7 @@ function startMaze() {
     grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.rock, {});
   }
 
-  [player, ...characters].forEach(character => {
+  [player, ...characters.all()].forEach(character => {
       // Negative speed is not sped up. 
       if (character.speed > 0) {
         character.speed += player.level * settings.speedUpRatePerLevel * character.speed;
@@ -791,52 +789,7 @@ function handleInput() {
 }
 
 function setupCharacters() {
-    characters = [];
-
-    characters.characterIndex = (character) => {
-        return characters.findIndex((element) => character === element);
-    }
-
-    characters.contains = (character) => {
-        return characters.characterIndex(character) >= 0;
-    }
-
-    characters.remove = (character) => {
-        const index = characters.characterIndex(character);
-        if (index >= 0) {
-            const character = characters.splice(index, 1)[0];
-            grid.removeCharacter(character);
-        }
-    }
-
-    characters.add = (character) => {
-        const index = characters.characterIndex(character);
-        if (index === -1) {
-            characters.push(character);
-            grid.addCharacter(character);
-        }
-    }
-
-    characters.atRowCol = (row, col) => {
-        return characters.find((character) => character.isAtRowCol(row, col));
-    }
-
-    characters.allAtRowCol = (row, col) => {
-        return characters.filter((character) => character.isAtRowCol(row, col));
-    }
-
-    characters.all = (characterType) => {
-        return characters.filter(item => item instanceof characterType);
-    }
-
-    characters.killers = (victim) => {
-        return characters.filter(item => item.canKill(victim));
-    }
-
-    characters.killables = (character) => {
-        const hunter = character || player;
-        return characters.filter(prey => prey !== hunter && prey.priority <= hunter.priority);
-    }
+    characters = new Characters();
 
     Object.values(CHARACTERS).forEach(createCharacters);
     Object.values(MAZE_DROPABLES).forEach(dropItems);
@@ -858,9 +811,21 @@ function createCharacter(config, position) {
 
     const characterType = config.class;
     const character = new characterType(position);
-    characters.add(character);
+    addCharacter(character);
 
     return character;
+}
+
+function removeCharacter(character) {
+  if (characters.remove(character)) {
+    grid.removeCharacter(character);
+  }
+}
+
+function addCharacter(character) {
+  if (characters.add(character)) {  
+    grid.addCharacter(character);
+  }
 }
 
 function dropItems(config) {
@@ -916,7 +881,7 @@ function dropRandomRocks() {
 
   positions.forEach(position => {
     const rock = new Rock(position);
-    characters.add(rock);
+    addCharacter(rock);
   });
 }
 

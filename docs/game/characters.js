@@ -2,7 +2,7 @@ import { CHARACTERS } from "./config.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
 
-export { Ghost, Relic, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label }
+export { Characters, Ghost, Relic, Spider, Scorpion, Cat, Monkey, Mouse, Rock, Label }
 
 class Killer extends Character {
     constructor(config, position) {
@@ -116,3 +116,66 @@ CHARACTERS.monkey.class = Monkey;
 CHARACTERS.rock.class = Rock;
 CHARACTERS.ghost.class = Ghost;
 CHARACTERS.relic.class = Relic;
+
+class Characters {
+  #characters = [];
+
+  characterIndex(character) {
+    return this.#characters.findIndex((element) => character === element);
+  }
+
+  contains(character) {
+    return this.characterIndex(character) >= 0;
+  }
+
+  remove(character) {
+    const index = this.characterIndex(character);
+    if (index >= 0) {
+      this.#characters.splice(index, 1)[0];
+      return true;
+    }
+    return false;
+  }
+
+  add(character) {
+    const index = this.characterIndex(character);
+    if (index === -1) {
+      this.#characters.push(character);
+      return true;
+    }
+    return false;
+  }
+
+  atRowCol(row, col) {
+    return this.#characters.find((character) => character.isAtRowCol(row, col));
+  }
+
+  allAtRowCol(row, col) {
+    return this.#characters.filter((character) =>
+      character.isAtRowCol(row, col),
+    );
+  }
+
+  all(row, col) {
+    if (row === undefined && col === undefined) {
+      return this.#characters;
+    }
+    return this.#characters.filter((character) =>
+      character.isAtRowCol(row, col),
+    );
+  }
+
+  killers(victim) {
+    return this.#characters.filter((item) => item.canKill(victim));
+  }
+
+  killables(character) {
+    return this.#characters.filter(
+      (prey) => prey !== character && prey.priority <= character.priority,
+    );
+  }
+
+  forEach(callback) {
+    this.#characters.forEach(callback);
+  }
+}

@@ -1,21 +1,25 @@
 import { RNG } from "./util.js";
 import { Relic } from "./characters.js";
 import { Grid } from "./grid.js";
+import { Characters } from "./characters.js";
+import { Player } from "./player.js";
 import { GAME_RNG, CHARACTERS} from "./config.js";
 
 export class GameModel {
   #gameNumber = null;
 
-  constructor(settings, player) {
+  constructor(settings) {
     this.settings = settings;
-    this.player = player;
     this.randomizer = null;
+    this.player = new Player(CHARACTERS.player, settings);
+    this.characters = new Characters();
 
     this.reset();
   }
 
   reset() {
     this.grid?.destroy();
+    this.characters.removeAll();
 
     this.isGameOver = false; 
     this.caveInStarted = false;
@@ -66,6 +70,10 @@ export class GameModel {
     }
   }
 
+  get actors() {
+    return [this.player, ...this.characters.all()];
+  }
+
   startGame(seed) {
     this.reset();
 
@@ -105,11 +113,21 @@ export class GameModel {
     this.random = RNG.randomizer(
       RNG.deriveSeed(this.randomizer.getState())
     );
+
     this.grid = new Grid(rows, cols, this.settings.cellSize, {grid: this.randomizer, game: this.random});
+    this.grid.addCharacter(this.player);
 
     return record;
   }
   
+  exitMaze() {
+    if (this.player.exitMaze) return;
+    
+    this.player.exitMaze = true;
+    this.player.isMazeCleared = this.grid.isMazeCleared && this.characters.killables(this.player).length === 0;
+    this.player.mazeBonus = this.grid.mazeBonus;
+  }
+
   endMaze() {
     const checkpoint = {
       tick: this.ticks,

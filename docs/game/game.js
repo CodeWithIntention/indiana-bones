@@ -4,7 +4,7 @@ import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
-import { Characters, Rock, Relic } from "./characters.js";
+import { Rock, Relic } from "./characters.js";
 import { Grid } from "./grid.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
@@ -52,7 +52,16 @@ Player.prototype.onMoved = function(object) {
 };
 
 function updateGameState(reason) {
-  const attributes = {entrance: false, spin: false, powerup: false, dead: false, buried: false, webbed: false, pooped: false, shake: false};
+  const attributes = {
+    entrance: false,
+    spin: false,
+    powerup: false,
+    dead: false,
+    buried: false,
+    webbed: false,
+    pooped: false,
+    shake: false,
+  };
 
   if (reason.speedReductionReason) {
     attributes[reason.speedReductionReason] = reason.isReducedSpeed;
@@ -63,36 +72,32 @@ function updateGameState(reason) {
 
   if (reason instanceof Player) {
     if (reason.isAlive) {
-        attributes.powerup = reason.powerUp;
+      attributes.powerup = reason.powerUp;
 
-        if (gameModel.grid.objectAt(reason) === OBJECTS.exit) {
-          if (!player.exitMaze) {
-            player.exitMaze = true;
-            player.isMazeCleared = gameModel.grid.isMazeCleared && characters.killables(player).length === 0;
-            player.mazeBonus = gameModel.grid.mazeBonus;
-            attributes.spin = true;
-          }
-        } else if (gameModel.grid.isCharacterAtEntrance(reason)) {
-            attributes.entrance = true;
-        } else if (gameModel.keysNeeded === 0) {
-          --gameModel.keysNeeded;
-          Sound.portal();
+      if (gameModel.grid.objectAt(reason) === OBJECTS.exit) {
+        gameModel.exitMaze();
+        attributes.spin = gameModel.player.exitMaze;
+      } else if (gameModel.grid.isCharacterAtEntrance(reason)) {
+        attributes.entrance = true;
+      } else if (gameModel.keysNeeded === 0) {
+        --gameModel.keysNeeded;
+        Sound.portal();
 
-          if (gameModel.isLastMaze) {
-              Timer.setTimeout(showRelicChamber, TIMEOUTS.caveInInterval);
-          } else {
-            gameModel.grid.ensureExit();
-          }
+        if (gameModel.isLastMaze) {
+          Timer.setTimeout(showRelicChamber, TIMEOUTS.caveInInterval);
+        } else {
+          gameModel.grid.ensureExit();
         }
+      }
     } else if (reason.canRespawn) {
-        attributes.dead = true;
+      attributes.dead = true;
     } else {
-        attributes.buried = true;
+      attributes.buried = true;
     }
     if (gameModel.isCaveInThreshold) {
       startCaveIn();
     }
-  } 
+  }
   gameModel.grid.setCharacterAttributes(reason, attributes);
   updateGameUI();
 }
@@ -100,29 +105,29 @@ function updateGameState(reason) {
 function updateGameUI() {
     let list = [];
 
-    if (player.bonusAwarded) {
+    if (gameModel.player.bonusAwarded) {
       Sound.dingDing();
-      player.bonusAwarded = false;
+      gameModel.player.bonusAwarded = false;
     }
 
-    const lives = Math.min(player.isAlive ? player.lives-1 : player.lives, settings.maxLives);
+    const lives = Math.min(gameModel.player.isAlive ? gameModel.player.lives-1 : gameModel.player.lives, settings.maxLives);
     if (lives > 0) {
-      list.push(`${Grid.symbolFor(player.kind)}`.repeat(lives));
+      list.push(`${Grid.symbolFor(gameModel.player.kind)}`.repeat(lives));
     }
-    if (player.tnts > 0) {
-      list.push(`${Grid.symbolFor(OBJECTS.tnt.kind)}<b>${player.tnts}</b>`);
+    if (gameModel.player.tnts > 0) {
+      list.push(`${Grid.symbolFor(OBJECTS.tnt.kind)}<b>${gameModel.player.tnts}</b>`);
     }
     gameScreen.playerStatusLine.innerHTML = list.join("&nbsp;");
 
     list = [];
     Object.entries(OBJECTS).forEach(([kind, object]) => {
-      const count = player.countInBag(object);
+      const count = gameModel.player.countInBag(object);
       if (count > 0) {
         list.push(`<div>${Grid.symbolFor(kind)}<b>${count}</b></div>`);
       }
     });
     Object.entries(CHARACTERS).forEach(([kind, object]) => {
-      const count = player.countInBag(object);
+      const count = gameModel.player.countInBag(object);
       if (count > 0) {
         list.push(`<div>${Grid.symbolFor(kind)}<b>${count}</b></div>`);
       }
@@ -132,24 +137,24 @@ function updateGameUI() {
       list.push(`<div class='pulse'>${gameModel.levelRelic?.symbol}</div>`);
     }
 
-    if (player.score > settings.highScore) {
-      settings.highScore = player.score;
+    if (gameModel.player.score > settings.highScore) {
+      settings.highScore = gameModel.player.score;
     }
     gameScreen.bagStatusLine.innerHTML = list.join('');
 
-    gameScreen.scoreStatusLine.classList.toggle("minus", player.score < 0);
-    gameScreen.scoreStatusLine.textContent = `${Math.abs(player.score)}`
+    gameScreen.scoreStatusLine.classList.toggle("minus", gameModel.player.score < 0);
+    gameScreen.scoreStatusLine.textContent = `${Math.abs(gameModel.player.score)}`
 
     gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
     mazeStatusLine.innerHTML = `<b>LEVEL ${gameModel.currentLevel}.${gameModel.currentMaze}</b> 
-      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus || gameModel.grid?.mazeBonus || 0}</b>`;
+      <span>${Grid.symbolFor("maze-bonus")}</span><b>${gameModel.player.mazeBonus || gameModel.grid?.mazeBonus || 0}</b>`;
 }
 
 function playerTNT(character) {
-  if (character === player) {
-    if (player.powerUp || !(player.isAlive && player.removeTNT())) return false;
+  if (character === gameModel.player) {
+    if (gameModel.player.powerUp || !(gameModel.player.isAlive && gameModel.player.removeTNT())) return false;
   } else if (character instanceof Rock) {
     removeCharacter(character);
   } else if (character && character.isTNT && gameModel.grid.objectAt(character.row, character.col) === OBJECTS.tnt) {
@@ -166,7 +171,7 @@ function playerTNT(character) {
   const rectBottomRight = gameModel.grid.cellRectAtRowCol(character.row+1, character.col+1) || playerRect;
   const blastRect = {top: rectTopLeft.top, left: rectTopLeft.left, bottom: rectBottomRight.bottom, right: rectBottomRight.right};
 
-  characters.forEach((target) => {
+  gameModel.characters.forEach((target) => {
     if ((target.priority - OBJECTS.tnt.priority) <= 2 
       && gameModel.grid.hasCharacterCollidedWithRect(target, blastRect)) {
       onCharacterBlownUp(target);
@@ -192,13 +197,13 @@ function playerTNT(character) {
   // The Player can be hurt if TNT was set off by 
   // chain reaction or by a 3rd party, and the 
   // Player is not powered-up.
-  if (player !== character && !player.powerUp 
-    && gameModel.grid.hasCharacterCollidedWithRect(player, blastRect)) {
-    // Beware! If the player is waiting to respawn and
+  if (gameModel.player !== character && !gameModel.player.powerUp 
+    && gameModel.grid.hasCharacterCollidedWithRect(gameModel.player, blastRect)) {
+    // Beware! If the gameModel.player is waiting to respawn and
     // is blown up, then its game over!
-    gameModel.grid.addAnimationCharacterFor(player, {blast: true});
-    playerKilled(!player.isAlive);
-    updateGameState(player);
+    gameModel.grid.addAnimationCharacterFor(gameModel.player, {blast: true});
+    playerKilled(!gameModel.player.isAlive);
+    updateGameState(gameModel.player);
   } else {
     updateGameUI();
   }
@@ -225,7 +230,7 @@ function onCharacterBlownUp(character) {
 
   gameModel.grid.addAnimationCharacterFor(character, {blast: true});
 
-  if (character.canKill(player)) {
+  if (character.canKill(gameModel.player)) {
     if (character.lives === 0) {
       addScoreForCharacter(character, settings.blownUpPointsFactor);
     } else {
@@ -241,22 +246,22 @@ function onCharacterBlownUp(character) {
 }
 
 function addScoreForCharacter(character, factor) {
-  if (Number.isFinite(character.points) && player.isAlive) {
+  if (Number.isFinite(character.points) && gameModel.player.isAlive) {
     // Only half the value is given for chomping
     const points = character.points * factor;
-    player.score += points;
-    const target = character instanceof Character ? character : player;
+    gameModel.player.score += points;
+    const target = character instanceof Character ? character : gameModel.player;
     gameModel.grid.addScoreCharacterFor(target, points, TIMEOUTS.characterPointsLabel);
   }
 }
 
 function playerRespawn() {
-  if (!player.canRespawn) return false;
+  if (!gameModel.player.canRespawn) return false;
 
-  player.respawn();
+  gameModel.player.respawn();
   Sound.respawn();
 
-  updateGameState(player);
+  updateGameState(gameModel.player);
   return true;
 }
 
@@ -264,7 +269,7 @@ function playerChomp(character, object) {
   if (object instanceof Character) {
       if (!(character instanceof Rock || object.isChompable || object.disabled)) return;
 
-      addScoreForCharacter(object, object.canKill(player) ? 1 : settings.chompPointsFactor);
+      addScoreForCharacter(object, object.canKill(gameModel.player) ? 1 : settings.chompPointsFactor);
       removeCharacter(object);
 
       const chompSound = object.chompSound;
@@ -283,22 +288,22 @@ function playerGrab(object) {
       Sound.portal();
       gameModel.levelRelicFound = true;
       gameModel.grid.addHtmlCharacterFor(object, `<span class='relic'>${object.description}</span>`, TIMEOUTS.relicLabelDuration);
-      gameModel.grid.ensureExit(true, {row: player.row, col: player.col});
+      gameModel.grid.ensureExit(true, {row: gameModel.player.row, col: gameModel.player.col});
       Timer.setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
     } else {
-      player.grab(object.config);
+      gameModel.player.grab(object.config);
     }
     removeCharacter(object);
   } else if (Number.isFinite(object.points)) {
     if (object.isBaggable === false) {
       addScoreForCharacter(object, 1);
     } else {
-      player.grab(object);
+      gameModel.player.grab(object);
     }
   }
 
   if (object.speedReduction) {
-      player.reduceSpeedBy(object);
+      gameModel.player.reduceSpeedBy(object);
   }
 
   const grabSound = object.grabSound;
@@ -307,24 +312,24 @@ function playerGrab(object) {
   }
 
   if (object === OBJECTS.fountain) {
-      player.powerUp = true;
-      const powerUpTime = player.powerUpTime;
+      gameModel.player.powerUp = true;
+      const powerUpTime = gameModel.player.powerUpTime;
 
       Timer.setTimeout(() => {
-        if (powerUpTime === player.powerUpTime) {
-          player.powerUp = false;
-          updateGameState(player);
+        if (powerUpTime === gameModel.player.powerUpTime) {
+          gameModel.player.powerUp = false;
+          updateGameState(gameModel.player);
         }
-      }, player.powerUpDuration);
+      }, gameModel.player.powerUpDuration);
   }
 }
 
 function playerKilled(buried = false) {
-    player.die(buried);
-    player.direction = Direction.NONE;
-    gameModel.grid.placeCharacter(player);
+    gameModel.player.die(buried);
+    gameModel.player.direction = Direction.NONE;
+    gameModel.grid.placeCharacter(gameModel.player);
     
-    if (player.lives === 0) {
+    if (gameModel.player.lives === 0) {
       playerGameOver();
     } else {
       Sound.dead();
@@ -332,17 +337,17 @@ function playerKilled(buried = false) {
 }
 
 function onPlayerCollide(character) {
-  if (!(character instanceof Character && player.isAlive)) return;
+  if (!(character instanceof Character && gameModel.player.isAlive)) return;
 
-  if (player.powerUp) {
-    playerChomp(player, character);
-  } else if (character.canKill(player)) {
+  if (gameModel.player.powerUp) {
+    playerChomp(gameModel.player, character);
+  } else if (character.canKill(gameModel.player)) {
     if (character.disabled === true) return;
     playerKilled();
   } else {
     playerGrab(character);
   }
-  updateGameState(player);
+  updateGameState(gameModel.player);
 }
 
 function onCharacterCollide(character, other) {
@@ -360,7 +365,7 @@ function buildMaze() {
   });
   
   let list = [];
-  for (let i = 1; i <  player.level; i++) {
+  for (let i = 1; i <  gameModel.player.level; i++) {
     const relicKind = Relic.kindForLevel(i);
     const parts = Relic.parse(Grid.symbolFor(relicKind));
     list.push(`<div>${parts[0]}</div>`);
@@ -369,50 +374,50 @@ function buildMaze() {
 
   list = [];
   const trophySymbol = Grid.symbolFor("maze-trophy");
-  for (let i = 0; i < player.trophiesAwarded; i++) {
+  for (let i = 0; i < gameModel.player.trophiesAwarded; i++) {
     list.push(`<div>${trophySymbol}</div>`);
   }
   gameScreen.trophyStatusLine.innerHTML = list.join("");
 }
 
 function movePlayer(direction, delta) {
-  if (player.isBuried || player.exitMaze) return;
+  if (gameModel.player.isBuried || gameModel.player.exitMaze) return;
 
-  // This is where player is at
-  const currentRow = player.row;
-  const currentCol = player.col;
+  // This is where gameModel.player is at
+  const currentRow = gameModel.player.row;
+  const currentCol = gameModel.player.col;
 
-  // This is where player is going
+  // This is where gameModel.player is going
   const nextRow = currentRow + direction[0];
   const nextCol = currentCol + direction[1];
 
-  // Special case for initial player movement
-  if (Direction.isNone(player.direction) && currentRow === 1 && currentCol === 0 
-    && gameModel.grid.canCharacterMoveTo(player, nextRow, nextCol)) {
-    player.row = nextRow;
-    player.col = nextCol;
-    gameModel.grid.placeCharacter(player);
-    player.onMoved(gameModel.grid.objectAt(player));
+  // Special case for initial gameModel.player movement
+  if (Direction.isNone(gameModel.player.direction) && currentRow === 1 && currentCol === 0 
+    && gameModel.grid.canCharacterMoveTo(gameModel.player, nextRow, nextCol)) {
+    gameModel.player.row = nextRow;
+    gameModel.player.col = nextCol;
+    gameModel.grid.placeCharacter(gameModel.player);
+    gameModel.player.onMoved(gameModel.grid.objectAt(gameModel.player));
   } else {
-    // If player is trapped, then end the game.
+    // If gameModel.player is trapped, then end the game.
     const playerTrapped = gameModel.grid.objectAt(currentRow, currentCol) === OBJECTS.wall;
     
     if (playerTrapped) {
       playerKilled(true);
-      updateGameState(player);
-    } else if (player.isAlive) {
-      gameModel.grid.moveCharacter(player, direction, delta, nextRow, nextCol);
+      updateGameState(gameModel.player);
+    } else if (gameModel.player.isAlive) {
+      gameModel.grid.moveCharacter(gameModel.player, direction, delta, nextRow, nextCol);
     }
   }
 }
 
 function moveCharacters(delta) {
-  characters.forEach(character => moveCharacter(character, delta));
+  gameModel.characters.forEach(character => moveCharacter(character, delta));
 }
 
 function moveCharacter(character, delta) {
   if (character.disabled === true || gameModel.grid.isCharacterEnroute(character, delta)) {
-    if (gameModel.grid.haveCollided(player, character)) {
+    if (gameModel.grid.haveCollided(gameModel.player, character)) {
       onPlayerCollide(character);
     }
     return;
@@ -427,16 +432,16 @@ function moveCharacter(character, delta) {
     // If the character is already moving in a direction, then favor
     // that before the randomized ones.
     if (Direction.isGood(direction)) {
-        const canSeePlayer = gameModel.grid.canCharacterSeeTheOther(character, player);
+        const canSeePlayer = gameModel.grid.canCharacterSeeTheOther(character, gameModel.player);
 
-        // When the character can see the player, don't favor the same
-        // direction if its a prey or the player is powered up.
-        if (player.powerUp ? false : !(canSeePlayer && character.priority < 1)) {
+        // When the character can see the gameModel.player, don't favor the same
+        // direction if its a prey or the gameModel.player is powered up.
+        if (gameModel.player.powerUp ? false : !(canSeePlayer && character.priority < 1)) {
             dirs.push(direction);
         }
 
-        // Don't introduce a random turn if a hunter sees the player
-        if (!(character.priority >= player.priority && canSeePlayer)) {
+        // Don't introduce a random turn if a hunter sees the gameModel.player
+        if (!(character.priority >= gameModel.player.priority && canSeePlayer)) {
             // Add a random turn before the perferred direction.
             const turns = Direction.turnsFor(direction);
             const randomTurnIndex = Math.floor(gameModel.random()*10);
@@ -445,16 +450,16 @@ function moveCharacter(character, delta) {
             }
         }
 
-        // Hunt down the player by favoring the player's location.
-        // The vision distance is random up to on the player's level.
-        if (character.canKill(player) && player.isAlive && 
-          gameModel.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
-          const huntDistance = gameModel.random() * character.manhattanDistanceTo(player) 
-            + gameModel.random() * player.level;
-          if (huntDistance < player.level) {
-            const huntUD = player.row < character.row ? Direction.UP : Direction.DOWN;
-            const huntLR = player.col < character.col ? Direction.LEFT : Direction.RIGHT;
-            const huntDir = Math.abs(character.row - player.row) > Math.abs(character.col - player.col) ? huntUD : huntLR;
+        // Hunt down the gameModel.player by favoring the gameModel.player's location.
+        // The vision distance is random up to on the gameModel.player's level.
+        if (character.canKill(gameModel.player) && gameModel.player.isAlive && 
+          gameModel.random() * (settings.oddsOfBeingHunted + gameModel.characters.killers(gameModel.player).length) < 1) {
+          const huntDistance = gameModel.random() * character.manhattanDistanceTo(gameModel.player) 
+            + gameModel.random() * gameModel.player.level;
+          if (huntDistance < gameModel.player.level) {
+            const huntUD = gameModel.player.row < character.row ? Direction.UP : Direction.DOWN;
+            const huntLR = gameModel.player.col < character.col ? Direction.LEFT : Direction.RIGHT;
+            const huntDir = Math.abs(character.row - gameModel.player.row) > Math.abs(character.col - gameModel.player.col) ? huntUD : huntLR;
 
             if (huntDir !== direction) {
               dirs.push(huntDir);
@@ -482,13 +487,14 @@ function moveCharacter(character, delta) {
     }
   }
 
-  if (!characters.contains(character)) return;
+  // Guard against a character already removed from the maze by now.
+  if (!gameModel.characters.contains(character)) return;
 
-  if (gameModel.grid.haveCollided(player, character)) {
+  if (gameModel.grid.haveCollided(gameModel.player, character)) {
     onPlayerCollide(character);
   } 
 
-  characters.killables(character).forEach(other => {
+  gameModel.characters.killables(character).forEach(other => {
     if (character.canKill(other) && gameModel.grid.haveCollided(character, other)) {
       onCharacterCollide(character, other);
     }
@@ -526,7 +532,7 @@ function tallyScore() {
   };
 
   Object.values(OBJECTS).forEach(object => {
-    const items = player.findInBag(object);
+    const items = gameModel.player.findInBag(object);
 
     if (items.length > 0) {
       tally(object.kind, object, items.length);
@@ -534,23 +540,23 @@ function tallyScore() {
   });
 
   Object.values(CHARACTERS).forEach(object => {
-    const items = player.findInBag(object);
+    const items = gameModel.player.findInBag(object);
 
     if (items.length > 0) {
       tally(object.kind, object, items.length);
     }
   });
 
-  const mazeBonusPoints = player.mazeBonus * settings.pointsPerPath;
+  const mazeBonusPoints = gameModel.player.mazeBonus * settings.pointsPerPath;
   if (mazeBonusPoints !== 0) {
     scores.push(mazeBonusPoints);
-    list.push(`<div>${Grid.symbolFor("maze-bonus")} &times; ${player.mazeBonus} &times; ${settings.pointsPerPath}</div><div class='score'>${mazeBonusPoints}</div>`);
+    list.push(`<div>${Grid.symbolFor("maze-bonus")} &times; ${gameModel.player.mazeBonus} &times; ${settings.pointsPerPath}</div><div class='score'>${mazeBonusPoints}</div>`);
   }
 
-  if (player.isMazeCleared) {
-    const points = settings.mazeClearedBonusPoints * player.level;
+  if (gameModel.player.isMazeCleared) {
+    const points = settings.mazeClearedBonusPoints * gameModel.player.level;
     scores.push(points);
-    list.push(`<div>${MESSAGES.mazeClearedMessage} ${player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
+    list.push(`<div>${MESSAGES.mazeClearedMessage} ${gameModel.player.level} &times; ${settings.mazeClearedBonusPoints}</div><div class='score'>${points}</div>`);
   } else {
     list.push(`<div>${MESSAGES.mazeNotClearedMessage}</div><div class='score'>0</div>`);
   }
@@ -573,7 +579,7 @@ function tallyScore() {
       while (scoreIndex < scores.length) {
         totalScore += scores[scoreIndex++];
       }
-      player.score += totalScore;
+      gameModel.player.score += totalScore;
       endMaze();
       return;
     }
@@ -608,12 +614,12 @@ function tallyScore() {
           if (trophiesAwarded === 0) {
             list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForTrophy}</div><div>${trophySymbol}</div>`);
           } else {
-            player.trophiesAwarded += trophiesAwarded;
+            gameModel.player.trophiesAwarded += trophiesAwarded;
             list.push(`<div style='justify-self: right'>${MESSAGES.trophyAwarded[trophiesAwarded > 1 ? 1 : 0]}:</div><div class='score'>${trophySymbol.repeat(trophiesAwarded)}</div>`);
             list.push(`<div><span class='score'>${pointsNeeded}</span> ${MESSAGES.pointNeedForNextTrophy}</div><div>${trophySymbol}</div>`);
           }
           gameScreen.scorecard.innerHTML = list.join("");
-          player.score = player.exitMazeScore + totalScore;
+          gameModel.player.score = gameModel.player.exitMazeScore + totalScore;
           Sound.ding();
 
           updateGameUI();
@@ -643,11 +649,11 @@ function goDeeper() {
   gameScreen.hideScoreboard();
 
   if (grid) {
-    player.row = gameModel.grid.rows-1;
-    player.col = gameModel.grid.cols-1;
+    gameModel.player.row = gameModel.grid.rows-1;
+    gameModel.player.col = gameModel.grid.cols-1;
     
-    gameModel.grid.setCharacterAttributes(player, {down: true, flatten: true});
-    gameModel.grid.placeCharacter(player);
+    gameModel.grid.setCharacterAttributes(gameModel.player, {down: true, flatten: true});
+    gameModel.grid.placeCharacter(gameModel.player);
 
     Sound.deeper();
     gameWindow.setTimeout(nextMaze, TIMEOUTS.nextMazeDelay);
@@ -661,12 +667,12 @@ function nextMaze() {
   gameScreen.hideReplayBar();
   
   gameModel.reset();
-  gameModel.currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
-  gameModel.currentMaze = (player.mazes % settings.mazesPerLevel)+1;
+  gameModel.currentLevel = Math.floor(gameModel.player.mazes / settings.mazesPerLevel)+1;
+  gameModel.currentMaze = (gameModel.player.mazes % settings.mazesPerLevel)+1;
 
-  player.mazes++;
+  gameModel.player.mazes++;
   
-  gameScreen.showInstructions(player.mazes === 1);
+  gameScreen.showInstructions(gameModel.player.mazes === 1);
   startMaze();
 }
 
@@ -679,7 +685,7 @@ function startMaze() {
   let cols = Math.min(settings.cols + levelDelta, settings.maxCols);
 
   if (gameModel.currentMaze === 1) {
-    player.level = gameModel.currentLevel;
+    gameModel.player.level = gameModel.currentLevel;
     Sound.level();
   } else {
     if (gameModel.currentMaze & 1) {
@@ -700,27 +706,26 @@ function startMaze() {
   gameScreen.replayBar.setCurrentTick(gameModel.ticks);
 
   if (gameModel.isLastMaze) {
-    gameModel.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
+    gameModel.relicChamberFormation = RELIC_CHAMBERS[Math.min(gameModel.player.level-1, RELIC_CHAMBERS.length-1)];
     gameModel.grid.placeObjectFormation(gameModel.relicChamberFormation, OBJECTS.edge, {});
   }
 
-  gameModel.grid.addCharacter(player);
   setupCharacters();
 
   if (gameModel.isLastMaze) {
     gameModel.grid.placeObjectFormation(gameModel.relicChamberFormation, OBJECTS.rock, {});
   }
 
-  [player, ...characters.all()].forEach(character => {
+  [gameModel.actors].forEach(character => {
       // Negative speed is not sped up. 
       if (character.speed > 0) {
-        character.speed += player.level * settings.speedUpRatePerLevel * character.speed;
+        character.speed += gameModel.player.level * settings.speedUpRatePerLevel * character.speed;
       }
   });
 
   gameWindow.focus();
   buildMaze();
-  updateGameState(player);
+  updateGameState(gameModel.player);
   play();
 }
 
@@ -749,7 +754,7 @@ function play() {
     function gameLoop(time) {
       function canContinue() {
         return sequence === gameModel.sequence && lastTicks <= gameModel.ticks && gameModel.replayPaused !== true
-          && !(gameModel.isGameOver || player.isBuried || player.exitMaze);
+          && !(gameModel.isGameOver || gameModel.player.isBuried || gameModel.player.exitMaze);
       }
 
       if (!canContinue()) return;
@@ -775,7 +780,7 @@ function play() {
 
       if (canContinue()) {
           gameWindow.requestAnimationFrame(gameLoop);
-      } else if (player.exitMaze) {
+      } else if (gameModel.player.exitMaze) {
         playerExitMaze();
       }
     }
@@ -789,7 +794,7 @@ function playGameStep(delta) {
   updateInputMask();
 
   const inputMask = handleInput(gameModel.ticks);
-  const moveDirection = Keyboard.getDirection() || player.direction || Direction.NONE;
+  const moveDirection = Keyboard.getDirection() || gameModel.player.direction || Direction.NONE;
   
   movePlayer(moveDirection, delta);
 
@@ -812,8 +817,8 @@ function handleInput() {
     const inputMask = Keyboard.getMask();
 
     if (Keyboard.Space) {
-        if (player.isAlive) {
-            playerTNT(player);
+        if (gameModel.player.isAlive) {
+            playerTNT(gameModel.player);
         } else {
             playerRespawn();
         }
@@ -824,8 +829,6 @@ function handleInput() {
 }
 
 function setupCharacters() {
-    characters.removeAll();
-
     Object.values(CHARACTERS).forEach(createCharacters);
     Object.values(MAZE_DROPABLES).forEach(dropItems);
 }
@@ -833,7 +836,7 @@ function setupCharacters() {
 function createCharacters(config) {
     if (!(config.class && config.qty)) return;
 
-    let count = config.qty(player.level);
+    let count = config.qty(gameModel.player.level);
 
     while (count-- > 0) {
       const position = findRandomPathCell(gameModel.randomizer, false);
@@ -852,13 +855,13 @@ function createCharacter(config, position) {
 }
 
 function removeCharacter(character) {
-  if (characters.remove(character)) {
+  if (gameModel.characters.remove(character)) {
     gameModel.grid.removeCharacter(character);
   }
 }
 
 function addCharacter(character) {
-  if (characters.add(character)) {  
+  if (gameModel.characters.add(character)) {  
     gameModel.grid.addCharacter(character);
   }
 }
@@ -866,7 +869,7 @@ function addCharacter(character) {
 function dropItems(config) {
     if (!config.qty) return;
 
-    let count = config.qty(player.level);
+    let count = config.qty(gameModel.player.level);
 
     if (config === OBJECTS.key) {
       gameModel.keysNeeded = count;
@@ -890,7 +893,7 @@ function showRelicChamber() {
   const guardian = createCharacter(CHARACTERS.ghost, {row: position.row, col: position.col});
   const relic = createCharacter(CHARACTERS.relic, position);
   relic.setRelic(gameModel.levelRelic);
-  disableCharacter(guardian, TIMEOUTS.guardianDelay-player.level*TIMEOUTS.guardianDelayLevelReduction);
+  disableCharacter(guardian, TIMEOUTS.guardianDelay-gameModel.player.level*TIMEOUTS.guardianDelayLevelReduction);
 }
 
 function startCaveIn() {
@@ -900,7 +903,7 @@ function startCaveIn() {
   Grid.mazeEl.classList.toggle("rumble", true);
 
   const caveInInterval = Timer.setInterval(() => {
-    if (!gameModel.caveInStarted || player.exitMaze || gameModel.isGameOver) {
+    if (!gameModel.caveInStarted || gameModel.player.exitMaze || gameModel.isGameOver) {
       gameModel.caveInStarted = false;
       Grid.mazeEl.classList.toggle("rumble", false);
       Timer.clear(caveInInterval);
@@ -911,7 +914,7 @@ function startCaveIn() {
 }
 
 function dropRandomRocks() {
-  const positions = findRandomRockPositions(player.level);
+  const positions = findRandomRockPositions(gameModel.player.level);
   if (positions.length === 0) return;
 
   positions.forEach(position => {
@@ -975,8 +978,8 @@ function findRandomPathCell(random, inWalls = false) {
     const obj = gameModel.grid.objectAt(row, col);
 
     if (inWalls ? !(obj === OBJECTS.wall || obj === OBJECTS.rock) : (obj !== OBJECTS.path)) continue;
-    if (row === player.row && col === player.col) continue;
-    if (characters.atRowCol(row, col)) continue;
+    if (row === gameModel.player.row && col === gameModel.player.col) continue;
+    if (gameModel.characters.atRowCol(row, col)) continue;
 
     return { row, col };
   }
@@ -991,9 +994,9 @@ function getHighScore() {
 }
 
 function playerExitMaze() {
-  // Set score to when player exited the maze so tallyScore
+  // Set score to when gameModel.player exited the maze so tallyScore
   // can add to it to get to the final maze score.
-  player.score = player.exitMazeScore;
+  gameModel.player.score = gameModel.player.exitMazeScore;
 
   Sound.yeah();
   updateGameUI();
@@ -1020,7 +1023,7 @@ function playerGameOver() {
 }
 
 function tallyTrophyBonus() {
-  if (player.trophiesAwarded <= 0) {
+  if (gameModel.player.trophiesAwarded <= 0) {
     updateFinalScore();
     return;
   }
@@ -1031,9 +1034,9 @@ function tallyTrophyBonus() {
   let trophies = 0;
 
   function updateFinalScore() {
-    player.score = player.exitMazeScore + settings.pointsPerTrophy * player.trophiesAwarded;
+    gameModel.player.score = gameModel.player.exitMazeScore + settings.pointsPerTrophy * gameModel.player.trophiesAwarded;
     updateGameUI();
-    gameScreen.gameInfoContent.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
+    gameScreen.gameInfoContent.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${gameModel.player.score}</div>`;
 
     saveHighScore(settings.highScore);
 
@@ -1048,7 +1051,7 @@ function tallyTrophyBonus() {
       return;
     };
 
-    if (trophies === player.trophiesAwarded) {
+    if (trophies === gameModel.player.trophiesAwarded) {
       // Display final score awarded
       Sound.dingDing();
       updateFinalScore();
@@ -1082,13 +1085,13 @@ function tallyTrophyBonus() {
 function getPlayerAcheivements() {
   const list = [];
 
-  if (player.level <= 1) {
+  if (gameModel.player.level <= 1) {
     list.push(`<div class='label'>${MESSAGES.relicsFound}</div><div>${MESSAGES.none}</div>`);
   } else {
     list.push(`<div class='label'>${MESSAGES.relicsFound}</div>`);
 
     let relics = [];
-    for (let i = 1; i <  player.level; i++) {
+    for (let i = 1; i <  gameModel.player.level; i++) {
       const relicKind = Relic.kindForLevel(i);
       const parts = Relic.parse(Grid.symbolFor(relicKind));
       relics.push(`<div><div class='icon'>${parts[0]}</div><div>${parts[1]}</div></div>`);
@@ -1103,7 +1106,7 @@ function getPlayerAcheivements() {
     }
   }
 
-  if (player.trophiesAwarded <= 0) {
+  if (gameModel.player.trophiesAwarded <= 0) {
     list.push(`<div>&nbsp;</div><div class='label'>${MESSAGES.trophyAwarded[1]}</div><div>${MESSAGES.none}</div>`);
   }
   return list.join("");
@@ -1121,7 +1124,7 @@ function startGame(seed = 0) {
   }
 
   settings.setDefaults();
-  player.reset();
+  gameModel.player.reset();
 
   gameScreen.showGameUI();
   nextMaze();
@@ -1150,9 +1153,7 @@ function replayMazeRecording(indexOrMazeRecording) {
 gameScreen.scoreboardLinks.nextMazeLink.addEventListener("click", goDeeper);
 gameScreen.scoreboardLinks.replayMazeLink.addEventListener("click", () => replayMaze(-1));
 
-const player = new Player(CHARACTERS.player, settings);
-const gameModel = new GameModel(settings, player);
-const characters = new Characters();
+const gameModel = new GameModel(settings);
 
 settings.highScore = getHighScore();
 

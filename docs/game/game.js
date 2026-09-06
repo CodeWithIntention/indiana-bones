@@ -4,19 +4,15 @@ import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
 import { Player } from "./player.js";
-import { Spider, Scorpion, Cat, Monkey, Mouse, Ghost, Rock, Relic } from "./characters.js";
+import { Rock, Relic } from "./characters.js";
 import { Grid } from "./grid.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
 import { GameRecorder } from "./recorder.js";
-import { ReplayBar } from "./replaybar.js";
 
 Character.prototype.onMoved = function(object) {
   if (object.priority > this.priority) {
     this.reduceSpeedBy(object);
-  }
-  if (this instanceof Rock) {
-    onRockMoved(this, object);
   }
   if (this.canDrop && grid.objectAt(this.row, this.col) === OBJECTS.path
     && gameState.random() < this.dropProbability) {
@@ -25,8 +21,33 @@ Character.prototype.onMoved = function(object) {
   updateGameState(this);
 };
 
+Rock.prototype.onMoved = function(object) {
+  if (object && object.fixed !== true) {
+    if (object === OBJECTS.tnt) {
+      playerTNT(this)
+    } else if (object !== OBJECTS.path) {
+      playerChomp(this, object);
+    }
+    grid.placeObjectAt(this.row, this.col, OBJECTS.path, {visited: true});
+  }
+  Character.prototype.onMoved.call(this, object);
+};
+
 Player.prototype.onMoved = function(object) {
-    onPlayerMoved(this);
+  if (object && object !== OBJECTS.exit) {
+    if (object !== OBJECTS.path) {
+      if (this.powerUp) {
+          playerChomp(this, object);
+      } else {
+          playerGrab(object);
+      }
+      if (object === OBJECTS.key) {
+        --gameState.keysNeeded;
+      }
+    }
+    grid.placeObjectAt(this.row, this.col, OBJECTS.path, {visited: !this.powerUp});
+  }
+  updateGameState(this);
 };
 
 function updateGameState(reason) {
@@ -309,37 +330,6 @@ function playerKilled(buried = false) {
     }
 }
 
-function onRockMoved(character, object) {
-  if (!object || object.fixed === true) return;
-
-  if (object === OBJECTS.tnt) {
-    playerTNT(character)
-  } else if (object !== OBJECTS.path) {
-    playerChomp(character, object);
-  }
-  grid.placeObjectAt(character.row, character.col, OBJECTS.path, {visited: true});
-  updateGameUI();
-}
-
-function onPlayerMoved(character) {
-    const object = grid.objectAt(character);
-    
-    if (object && object !== OBJECTS.exit) {
-      if (object !== OBJECTS.path) {
-        if (character.powerUp) {
-            playerChomp(character, object);
-        } else {
-            playerGrab(object);
-        }
-        if (object === OBJECTS.key) {
-          --gameState.keysNeeded;
-        }
-      }
-      grid.placeObjectAt(character.row, character.col, OBJECTS.path, {visited: !character.powerUp});
-    }
-    updateGameState(character);
-}
-
 function onPlayerCollide(character) {
   if (!(character instanceof Character && player.isAlive)) return;
 
@@ -401,7 +391,7 @@ function movePlayer(direction, delta) {
     player.row = nextRow;
     player.col = nextCol;
     grid.placeCharacter(player);
-    onPlayerMoved(player);
+    player.onMoved(grid.objectAt(player));
   } else {
     // If player is trapped, then end the game.
     const playerTrapped = grid.objectAt(currentRow, currentCol) === OBJECTS.wall;
@@ -1382,17 +1372,17 @@ const GAME_NUMBER_PARAM = "game";
 
 function deleteGameNumberFromURL() {
   const url = new URL(gameWindow.location.href);
-  const value = url.searchParams.get("game");
+  const value = url.searchParams.get(GAME_NUMBER_PARAM);
 
   if (value) {
-    url.searchParams.delete("game");
+    url.searchParams.delete(GAME_NUMBER_PARAM);
     gameWindow.history.replaceState(null, "", url);    
   }
 }
 
 function getGameNumberFromURL() {
   const params = new URLSearchParams(gameWindow.location.search);
-  const value = params.get("game");
+  const value = params.get(GAME_NUMBER_PARAM);
 
   // Game numbers must be positive whole numbers.
   const gameNumber = Number(value);

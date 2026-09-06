@@ -11,23 +11,23 @@ import { Keyboard } from "./keyboard.js";
 import { GameRecorder } from "./recorder.js";
 import { ReplayBar } from "./replaybar.js";
 
-Grid.onCharacterMoved = (character, object) => {
-  if (character === player) {
-    onPlayerMoved(character);
-  } else {
-    if (object.priority > character.priority) {
-      character.reduceSpeedBy(object);
-    }
-    if (character instanceof Rock) {
-      onRockMoved(character, object);
-    }
-    if (character.canDrop && grid.objectAt(character.row, character.col) === OBJECTS.path
-      && gameState.random() < character.dropProbability) {
-      grid.placeObjectAt(character.row, character.col, character.dropObject);
-    }
-    updateGameState(character);
+Character.prototype.onMoved = function(object) {
+  if (object.priority > this.priority) {
+    this.reduceSpeedBy(object);
   }
-}
+  if (this instanceof Rock) {
+    onRockMoved(this, object);
+  }
+  if (this.canDrop && grid.objectAt(this.row, this.col) === OBJECTS.path
+    && gameState.random() < this.dropProbability) {
+    grid.placeObjectAt(this.row, this.col, this.dropObject);
+  }
+  updateGameState(this);
+};
+
+Player.prototype.onMoved = function(object) {
+    onPlayerMoved(this);
+};
 
 function updateGameState(reason) {
   const attributes = {entrance: false, spin: false, powerup: false, dead: false, buried: false, webbed: false, pooped: false, shake: false};
@@ -778,8 +778,9 @@ function playGameStep(delta) {
   gameState.updateInputMask();
 
   const inputMask = handleInput(gameState.ticks);
-
-  movePlayer(getMoveDirection(), delta);
+  const moveDirection = Keyboard.getDirection() || player.direction || Direction.NONE;
+  
+  movePlayer(moveDirection, delta);
 
   gameState.onGameStepCompleted(inputMask);
 }
@@ -797,15 +798,6 @@ function handleInput() {
         Keyboard.Space = false;
     }
     return inputMask;
-}
-
-function getMoveDirection() {
-  if (Keyboard.ArrowLeft)  return Direction.LEFT;
-  if (Keyboard.ArrowRight) return Direction.RIGHT;
-  if (Keyboard.ArrowUp)    return Direction.UP;
-  if (Keyboard.ArrowDown)  return Direction.DOWN;
-
-  return player.direction;
 }
 
 function setupCharacters() {

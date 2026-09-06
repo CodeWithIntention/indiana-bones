@@ -1,3 +1,5 @@
+import { Direction } from "./util.js";
+
 const KEY_MAPPINGS = {
     ArrowUp: "ArrowUp",
     ArrowDown: "ArrowDown",
@@ -54,6 +56,15 @@ export const Keyboard = {
         });
 
         return mask;
+    },
+
+    getDirection() {
+      if (this.ArrowLeft)  return Direction.LEFT;
+      if (this.ArrowRight) return Direction.RIGHT;
+      if (this.ArrowUp)    return Direction.UP;
+      if (this.ArrowDown)  return Direction.DOWN;
+
+      return null;
     },
 
     applyMask(mask) {

@@ -687,7 +687,7 @@ class Grid {
         if (OBJECTS.exit === object) {
           this.placeCharacter(character);
         }
-        Grid.onCharacterMoved(character, object);
+        character.onMoved(object);
     }
   }
 

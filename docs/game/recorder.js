@@ -187,6 +187,8 @@ export const GameRecorder = {
   },
 
   get hasNextMaze() {
+    if (!this.isReplaying) return false;
+    
     const count =
       this.recording?.mazeRecordings.length ?? 0;
 

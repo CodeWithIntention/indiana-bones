@@ -1,5 +1,5 @@
-import { Direction, RNG, Timer } from "./util.js";
-import { GAME_VERSION, GAME_RNG, CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_ITEMS, MAZE_DROPABLES } from "./config.js";
+import { Direction, Timer } from "./util.js";
+import { GAME_VERSION, GAME_RNG, CHARACTERS, OBJECTS, MESSAGES, TIMEOUTS, RELIC_CHAMBERS, MAZE_DROPABLES } from "./config.js";
 import { settings } from "./settings.js";
 import { Sound } from "./sound.js";
 import { Character } from "./character.js";
@@ -9,14 +9,15 @@ import { Grid } from "./grid.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
 import { GameRecorder } from "./recorder.js";
+import { GameModel } from "./game-model.js";
 
 Character.prototype.onMoved = function(object) {
   if (object.priority > this.priority) {
     this.reduceSpeedBy(object);
   }
-  if (this.canDrop && grid.objectAt(this.row, this.col) === OBJECTS.path
-    && gameState.random() < this.dropProbability) {
-    grid.placeObjectAt(this.row, this.col, this.dropObject);
+  if (this.canDrop && gameModel.grid.objectAt(this.row, this.col) === OBJECTS.path
+    && gameModel.random() < this.dropProbability) {
+    gameModel.grid.placeObjectAt(this.row, this.col, this.dropObject);
   }
   updateGameState(this);
 };
@@ -28,7 +29,7 @@ Rock.prototype.onMoved = function(object) {
     } else if (object !== OBJECTS.path) {
       playerChomp(this, object);
     }
-    grid.placeObjectAt(this.row, this.col, OBJECTS.path, {visited: true});
+    gameModel.grid.placeObjectAt(this.row, this.col, OBJECTS.path, {visited: true});
   }
   Character.prototype.onMoved.call(this, object);
 };
@@ -42,10 +43,10 @@ Player.prototype.onMoved = function(object) {
           playerGrab(object);
       }
       if (object === OBJECTS.key) {
-        --gameState.keysNeeded;
+        --gameModel.keysNeeded;
       }
     }
-    grid.placeObjectAt(this.row, this.col, OBJECTS.path, {visited: !this.powerUp});
+    gameModel.grid.placeObjectAt(this.row, this.col, OBJECTS.path, {visited: !this.powerUp});
   }
   updateGameState(this);
 };
@@ -64,23 +65,23 @@ function updateGameState(reason) {
     if (reason.isAlive) {
         attributes.powerup = reason.powerUp;
 
-        if (grid.objectAt(reason) === OBJECTS.exit) {
+        if (gameModel.grid.objectAt(reason) === OBJECTS.exit) {
           if (!player.exitMaze) {
             player.exitMaze = true;
-            player.isMazeCleared = grid.isMazeCleared && characters.killables(player).length === 0;
-            player.mazeBonus = grid.mazeBonus;
+            player.isMazeCleared = gameModel.grid.isMazeCleared && characters.killables(player).length === 0;
+            player.mazeBonus = gameModel.grid.mazeBonus;
             attributes.spin = true;
           }
-        } else if (grid.isCharacterAtEntrance(reason)) {
+        } else if (gameModel.grid.isCharacterAtEntrance(reason)) {
             attributes.entrance = true;
-        } else if (gameState.keysNeeded === 0) {
-          --gameState.keysNeeded;
+        } else if (gameModel.keysNeeded === 0) {
+          --gameModel.keysNeeded;
           Sound.portal();
 
-          if (gameState.isLastMaze) {
+          if (gameModel.isLastMaze) {
               Timer.setTimeout(showRelicChamber, TIMEOUTS.caveInInterval);
           } else {
-            grid.ensureExit();
+            gameModel.grid.ensureExit();
           }
         }
     } else if (reason.canRespawn) {
@@ -88,11 +89,11 @@ function updateGameState(reason) {
     } else {
         attributes.buried = true;
     }
-    if (gameState.isCaveInThreshold) {
+    if (gameModel.isCaveInThreshold) {
       startCaveIn();
     }
   } 
-  grid.setCharacterAttributes(reason, attributes);
+  gameModel.grid.setCharacterAttributes(reason, attributes);
   updateGameUI();
 }
 
@@ -127,8 +128,8 @@ function updateGameUI() {
       }
     });
     
-    if (gameState.levelRelicFound) {
-      list.push(`<div class='pulse'>${gameState.levelRelic?.symbol}</div>`);
+    if (gameModel.levelRelicFound) {
+      list.push(`<div class='pulse'>${gameModel.levelRelic?.symbol}</div>`);
     }
 
     if (player.score > settings.highScore) {
@@ -142,8 +143,8 @@ function updateGameUI() {
     gameScreen.highScoreStatusLine.classList.toggle("minus", settings.highScore < 0);
     gameScreen.highScoreStatusLine.textContent = `${Math.abs(settings.highScore)}`;
 
-    mazeStatusLine.innerHTML = `<b>LEVEL ${gameState.currentLevel}.${gameState.currentMaze}</b> 
-      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus || grid?.mazeBonus || 0}</b>`;
+    mazeStatusLine.innerHTML = `<b>LEVEL ${gameModel.currentLevel}.${gameModel.currentMaze}</b> 
+      <span>${Grid.symbolFor("maze-bonus")}</span><b>${player.mazeBonus || gameModel.grid?.mazeBonus || 0}</b>`;
 }
 
 function playerTNT(character) {
@@ -151,23 +152,23 @@ function playerTNT(character) {
     if (player.powerUp || !(player.isAlive && player.removeTNT())) return false;
   } else if (character instanceof Rock) {
     removeCharacter(character);
-  } else if (character && character.isTNT && grid.objectAt(character.row, character.col) === OBJECTS.tnt) {
-    grid.placeObjectAt(character.row, character.col, OBJECTS.path)
+  } else if (character && character.isTNT && gameModel.grid.objectAt(character.row, character.col) === OBJECTS.tnt) {
+    gameModel.grid.placeObjectAt(character.row, character.col, OBJECTS.path)
   } else {
     return;
   }
 
   Sound.tnt();
-  grid.addAnimationCharacterFor(character, {explosion: true});
+  gameModel.grid.addAnimationCharacterFor(character, {explosion: true});
 
-  const playerRect = grid.cellRectAtRowCol(character.row, character.col);
-  const rectTopLeft = grid.cellRectAtRowCol(character.row-1, character.col-1) || playerRect;
-  const rectBottomRight = grid.cellRectAtRowCol(character.row+1, character.col+1) || playerRect;
+  const playerRect = gameModel.grid.cellRectAtRowCol(character.row, character.col);
+  const rectTopLeft = gameModel.grid.cellRectAtRowCol(character.row-1, character.col-1) || playerRect;
+  const rectBottomRight = gameModel.grid.cellRectAtRowCol(character.row+1, character.col+1) || playerRect;
   const blastRect = {top: rectTopLeft.top, left: rectTopLeft.left, bottom: rectBottomRight.bottom, right: rectBottomRight.right};
 
   characters.forEach((target) => {
     if ((target.priority - OBJECTS.tnt.priority) <= 2 
-      && grid.hasCharacterCollidedWithRect(target, blastRect)) {
+      && gameModel.grid.hasCharacterCollidedWithRect(target, blastRect)) {
       onCharacterBlownUp(target);
     }
   });
@@ -175,15 +176,15 @@ function playerTNT(character) {
   Grid.ALL_DIRECTIONS.forEach((rc) => {
     const row = character.row + rc[0];
     const col = character.col + rc[1];
-    const mazeObjAtRowCol = grid.objectAt(row, col);
+    const mazeObjAtRowCol = gameModel.grid.objectAt(row, col);
 
     if (mazeObjAtRowCol && mazeObjAtRowCol.fixed !== true) {
       if (mazeObjAtRowCol === OBJECTS.tnt) {
-        grid.updateCellAtRowCol(row, col, {strobe: true});
+        gameModel.grid.updateCellAtRowCol(row, col, {strobe: true});
         Timer.setTimeout(playerTNT, TIMEOUTS.tntDetonationDelay, {isTNT: true, row, col});
       } else {
         const blast = mazeObjAtRowCol !== OBJECTS.path;
-        grid.placeObjectAt(row, col, OBJECTS.path, {flash: true, blast: blast});
+        gameModel.grid.placeObjectAt(row, col, OBJECTS.path, {flash: true, blast: blast});
       }
     }
   });
@@ -192,10 +193,10 @@ function playerTNT(character) {
   // chain reaction or by a 3rd party, and the 
   // Player is not powered-up.
   if (player !== character && !player.powerUp 
-    && grid.hasCharacterCollidedWithRect(player, blastRect)) {
+    && gameModel.grid.hasCharacterCollidedWithRect(player, blastRect)) {
     // Beware! If the player is waiting to respawn and
     // is blown up, then its game over!
-    grid.addAnimationCharacterFor(player, {blast: true});
+    gameModel.grid.addAnimationCharacterFor(player, {blast: true});
     playerKilled(!player.isAlive);
     updateGameState(player);
   } else {
@@ -222,7 +223,7 @@ function disableCharacter(character, disabledDuration) {
 function onCharacterBlownUp(character) {
   if (character.disabled === true) return;
 
-  grid.addAnimationCharacterFor(character, {blast: true});
+  gameModel.grid.addAnimationCharacterFor(character, {blast: true});
 
   if (character.canKill(player)) {
     if (character.lives === 0) {
@@ -230,7 +231,7 @@ function onCharacterBlownUp(character) {
     } else {
       character.lives--;
       disableCharacter(character, settings.blowUpRecoveryDuration);
-      grid.applyAnimationFor(character, {blownup: true});
+      gameModel.grid.applyAnimationFor(character, {blownup: true});
       return;
     }
   } else {
@@ -245,7 +246,7 @@ function addScoreForCharacter(character, factor) {
     const points = character.points * factor;
     player.score += points;
     const target = character instanceof Character ? character : player;
-    grid.addScoreCharacterFor(target, points, TIMEOUTS.characterPointsLabel);
+    gameModel.grid.addScoreCharacterFor(target, points, TIMEOUTS.characterPointsLabel);
   }
 }
 
@@ -280,9 +281,9 @@ function playerGrab(object) {
   if (object instanceof Character && object.isGrabable) {
     if (object.isRelic) {
       Sound.portal();
-      gameState.levelRelicFound = true;
-      grid.addHtmlCharacterFor(object, `<span class='relic'>${object.description}</span>`, TIMEOUTS.relicLabelDuration);
-      grid.ensureExit(true, {row: player.row, col: player.col});
+      gameModel.levelRelicFound = true;
+      gameModel.grid.addHtmlCharacterFor(object, `<span class='relic'>${object.description}</span>`, TIMEOUTS.relicLabelDuration);
+      gameModel.grid.ensureExit(true, {row: player.row, col: player.col});
       Timer.setTimeout(startCaveIn, TIMEOUTS.caveInInterval);
     } else {
       player.grab(object.config);
@@ -321,7 +322,7 @@ function playerGrab(object) {
 function playerKilled(buried = false) {
     player.die(buried);
     player.direction = Direction.NONE;
-    grid.placeCharacter(player);
+    gameModel.grid.placeCharacter(player);
     
     if (player.lives === 0) {
       playerGameOver();
@@ -355,7 +356,7 @@ function onCharacterCollide(character, other) {
 }
 
 function buildMaze() {
-  grid.render((cell, row, col) => {
+  gameModel.grid.render((cell, row, col) => {
   });
   
   let list = [];
@@ -387,20 +388,20 @@ function movePlayer(direction, delta) {
 
   // Special case for initial player movement
   if (Direction.isNone(player.direction) && currentRow === 1 && currentCol === 0 
-    && grid.canCharacterMoveTo(player, nextRow, nextCol)) {
+    && gameModel.grid.canCharacterMoveTo(player, nextRow, nextCol)) {
     player.row = nextRow;
     player.col = nextCol;
-    grid.placeCharacter(player);
-    player.onMoved(grid.objectAt(player));
+    gameModel.grid.placeCharacter(player);
+    player.onMoved(gameModel.grid.objectAt(player));
   } else {
     // If player is trapped, then end the game.
-    const playerTrapped = grid.objectAt(currentRow, currentCol) === OBJECTS.wall;
+    const playerTrapped = gameModel.grid.objectAt(currentRow, currentCol) === OBJECTS.wall;
     
     if (playerTrapped) {
       playerKilled(true);
       updateGameState(player);
     } else if (player.isAlive) {
-      grid.moveCharacter(player, direction, delta, nextRow, nextCol);
+      gameModel.grid.moveCharacter(player, direction, delta, nextRow, nextCol);
     }
   }
 }
@@ -410,8 +411,8 @@ function moveCharacters(delta) {
 }
 
 function moveCharacter(character, delta) {
-  if (character.disabled === true || grid.isCharacterEnroute(character, delta)) {
-    if (grid.haveCollided(player, character)) {
+  if (character.disabled === true || gameModel.grid.isCharacterEnroute(character, delta)) {
+    if (gameModel.grid.haveCollided(player, character)) {
       onPlayerCollide(character);
     }
     return;
@@ -420,13 +421,13 @@ function moveCharacter(character, delta) {
   function getDirections(direction) {
     // The default is to pick a random direction
     const directions = [...Direction.ALL];
-    Direction.shuffle(directions, gameState.random);
+    Direction.shuffle(directions, gameModel.random);
     const dirs = [Direction.NONE, ...directions];
 
     // If the character is already moving in a direction, then favor
     // that before the randomized ones.
     if (Direction.isGood(direction)) {
-        const canSeePlayer = grid.canCharacterSeeTheOther(character, player);
+        const canSeePlayer = gameModel.grid.canCharacterSeeTheOther(character, player);
 
         // When the character can see the player, don't favor the same
         // direction if its a prey or the player is powered up.
@@ -438,7 +439,7 @@ function moveCharacter(character, delta) {
         if (!(character.priority >= player.priority && canSeePlayer)) {
             // Add a random turn before the perferred direction.
             const turns = Direction.turnsFor(direction);
-            const randomTurnIndex = Math.floor(gameState.random()*10);
+            const randomTurnIndex = Math.floor(gameModel.random()*10);
             if (randomTurnIndex < 5) {
                 dirs.push(turns[randomTurnIndex % turns.length]);
             }
@@ -447,9 +448,9 @@ function moveCharacter(character, delta) {
         // Hunt down the player by favoring the player's location.
         // The vision distance is random up to on the player's level.
         if (character.canKill(player) && player.isAlive && 
-          gameState.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
-          const huntDistance = gameState.random() * character.manhattanDistanceTo(player) 
-            + gameState.random() * player.level;
+          gameModel.random() * (settings.oddsOfBeingHunted + characters.killers(player).length) < 1) {
+          const huntDistance = gameModel.random() * character.manhattanDistanceTo(player) 
+            + gameModel.random() * player.level;
           if (huntDistance < player.level) {
             const huntUD = player.row < character.row ? Direction.UP : Direction.DOWN;
             const huntLR = player.col < character.col ? Direction.LEFT : Direction.RIGHT;
@@ -474,8 +475,8 @@ function moveCharacter(character, delta) {
       const nextRow = character.row + direction[0];
       const nextCol = character.col + direction[1];
 
-      if (grid.canCharacterMoveTo(character, nextRow, nextCol)) {
-          grid.moveCharacter(character, direction, delta, nextRow, nextCol);
+      if (gameModel.grid.canCharacterMoveTo(character, nextRow, nextCol)) {
+          gameModel.grid.moveCharacter(character, direction, delta, nextRow, nextCol);
           break;
       }
     }
@@ -483,12 +484,12 @@ function moveCharacter(character, delta) {
 
   if (!characters.contains(character)) return;
 
-  if (grid.haveCollided(player, character)) {
+  if (gameModel.grid.haveCollided(player, character)) {
     onPlayerCollide(character);
   } 
 
   characters.killables(character).forEach(other => {
-    if (character.canKill(other) && grid.haveCollided(character, other)) {
+    if (character.canKill(other) && gameModel.grid.haveCollided(character, other)) {
       onCharacterCollide(character, other);
     }
   });
@@ -498,14 +499,14 @@ function moveCharacter(character, delta) {
 
     // When a rock stops moving, it can become a wall if position is
     // not occupied by a fixed object. Otherwise try the row above.
-    let object = grid.objectAt(character.row, character.col);
+    let object = gameModel.grid.objectAt(character.row, character.col);
     let row = character.row;
 
     if (!object || object.fixed === true) {
-      object = grid.objectAt(--row, character.col);
+      object = gameModel.grid.objectAt(--row, character.col);
     }
     if (object && object.fixed !== true) {
-      grid.placeObjectAt(row, character.col, OBJECTS.wall, {rock: true});
+      gameModel.grid.placeObjectAt(row, character.col, OBJECTS.wall, {rock: true});
       updateGameUI();
     }
   }
@@ -554,7 +555,7 @@ function tallyScore() {
     list.push(`<div>${MESSAGES.mazeNotClearedMessage}</div><div class='score'>0</div>`);
   }
 
-  const levelRelic = gameState.levelRelic;
+  const levelRelic = gameModel.levelRelic;
   if (levelRelic) {
     const score = levelRelic.points * levelRelic.level;
 
@@ -562,7 +563,7 @@ function tallyScore() {
     list.push(`<div>${levelRelic.description} ${levelRelic.symbol} &times; ${levelRelic.level} &times; ${levelRelic.points}</div><div class='score'>${score}</div>`);
   }
 
-  gameScreen.showScoreboard(MESSAGES.levelCompleted(gameState.currentLevel, gameState.currentMaze));
+  gameScreen.showScoreboard(MESSAGES.levelCompleted(gameModel.currentLevel, gameModel.currentMaze));
   
   let totalScore = 0;
   let scoreIndex = 0;
@@ -573,7 +574,7 @@ function tallyScore() {
         totalScore += scores[scoreIndex++];
       }
       player.score += totalScore;
-      gameState.onMazeExited();
+      endMaze();
       return;
     }
 
@@ -586,9 +587,9 @@ function tallyScore() {
 
       gameWindow.setTimeout(updateScore, TIMEOUTS.updateScoreCardInterval);
     } else {
-        if (!gameState.isReplay) gameScreen.scoreboardLinks.style.display = "flex";
+        if (!GameRecorder.hasNextMaze) gameScreen.scoreboardLinks.style.display = "flex";
         
-        if (gameState.currentMaze === settings.mazesPerLevel) {
+        if (gameModel.currentMaze === settings.mazesPerLevel) {
           gameScreen.scoreboardLinks.nextMazeLink.textContent = MESSAGES.nextLevelLinkText;
         } else {
           gameScreen.scoreboardLinks.nextMazeLink.textContent = MESSAGES.nextMazeLinkText;
@@ -616,10 +617,14 @@ function tallyScore() {
           Sound.ding();
 
           updateGameUI();
-          if (gameState.isReplay) {
-            setTimeout(() => gameState.onMazeExited(), TIMEOUTS.nextMazeReplayDelay);
+
+          if (GameRecorder.hasNextMaze) {
+            setTimeout(() => {
+              endMaze();
+              replayMazeRecording(GameRecorder.selectNextMaze());
+            }, TIMEOUTS.nextMazeReplayDelay);
           } else {
-            gameState.onMazeExited()
+            endMaze();
           }
         }
     }
@@ -629,8 +634,8 @@ function tallyScore() {
 
 function replayMaze(index = -1) {
   gameScreen.setReplayRecording(GameRecorder.timeline);
-  gameState.replayPaused = false;
-  gameState.onReplayMaze(index);
+  gameModel.replayPaused = false;
+  replayMazeRecording(index);
 }
 
 function goDeeper() {
@@ -638,11 +643,11 @@ function goDeeper() {
   gameScreen.hideScoreboard();
 
   if (grid) {
-    player.row = grid.rows-1;
-    player.col = grid.cols-1;
+    player.row = gameModel.grid.rows-1;
+    player.col = gameModel.grid.cols-1;
     
-    grid.setCharacterAttributes(player, {down: true, flatten: true});
-    grid.placeCharacter(player);
+    gameModel.grid.setCharacterAttributes(player, {down: true, flatten: true});
+    gameModel.grid.placeCharacter(player);
 
     Sound.deeper();
     gameWindow.setTimeout(nextMaze, TIMEOUTS.nextMazeDelay);
@@ -654,10 +659,11 @@ function goDeeper() {
 
 function nextMaze() {
   gameScreen.hideReplayBar();
-  gameState.onNextMaze();
+  
+  gameModel.reset();
+  gameModel.currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
+  gameModel.currentMaze = (player.mazes % settings.mazesPerLevel)+1;
 
-  gameState.currentLevel = Math.floor(player.mazes / settings.mazesPerLevel)+1;
-  gameState.currentMaze = (player.mazes % settings.mazesPerLevel)+1;
   player.mazes++;
   
   gameScreen.showInstructions(player.mazes === 1);
@@ -668,15 +674,15 @@ function startMaze() {
   gameScreen.hideScoreboard();
   gameScreen.hideGameInfo();
 
-  const levelDelta = 2 * (gameState.currentLevel-1);
+  const levelDelta = 2 * (gameModel.currentLevel-1);
   let rows = Math.min(settings.rows + levelDelta, settings.maxRows);
   let cols = Math.min(settings.cols + levelDelta, settings.maxCols);
 
-  if (gameState.currentMaze === 1) {
-    player.level = gameState.currentLevel;
+  if (gameModel.currentMaze === 1) {
+    player.level = gameModel.currentLevel;
     Sound.level();
   } else {
-    if (gameState.currentMaze & 1) {
+    if (gameModel.currentMaze & 1) {
       cols = Math.min(cols+2, settings.maxCols);
     } else {
       rows = Math.min(rows+2, settings.maxRows);
@@ -684,22 +690,25 @@ function startMaze() {
     Sound.maze();
   }
 
-  player.restart();
-  gameState.onMazeStart();
+  Timer.clear();
+  Keyboard.clear();
 
-  Grid.mazeEl.classList.toggle("rumble", false);
-  grid = new Grid(rows, cols, settings.cellSize, {grid: gameState.randomizer, game: gameState.random});
+  const record = gameModel.startMaze(rows, cols);
+  GameRecorder.startMaze(record);
 
-  if (gameState.isLastMaze) {
-    gameState.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
-    grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.edge, {});
+  gameModel.playbackSpeed = gameScreen.replayBar.speed;
+  gameScreen.replayBar.setCurrentTick(gameModel.ticks);
+
+  if (gameModel.isLastMaze) {
+    gameModel.relicChamberFormation = RELIC_CHAMBERS[Math.min(player.level-1, RELIC_CHAMBERS.length-1)];
+    gameModel.grid.placeObjectFormation(gameModel.relicChamberFormation, OBJECTS.edge, {});
   }
 
-  grid.addCharacter(player);
+  gameModel.grid.addCharacter(player);
   setupCharacters();
 
-  if (gameState.isLastMaze) {
-    grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.rock, {});
+  if (gameModel.isLastMaze) {
+    gameModel.grid.placeObjectFormation(gameModel.relicChamberFormation, OBJECTS.rock, {});
   }
 
   [player, ...characters.all()].forEach(character => {
@@ -715,32 +724,46 @@ function startMaze() {
   play();
 }
 
+function endMaze(saveCheckpoint = false) {
+  const checkpoint = gameModel.endMaze();
+
+  if (saveCheckpoint) {
+    GameRecorder.saveRecording(checkpoint);
+  } else {
+    GameRecorder.tagRecording(checkpoint);
+  }
+}
+
 function play() {
-    const sequence = gameState.sequence;
-    let lastTicks = gameState.ticks;
+    const sequence = gameModel.sequence;
+    let lastTicks = gameModel.ticks;
     let lastTime = performance.now();
     let timeSlice = 0;
 
     Timer.reset();
 
+    function gameSpeed() {
+      return GameRecorder.isReplaying ? gameModel.playbackSpeed : 1;
+    }
+
     function gameLoop(time) {
       function canContinue() {
-        return sequence === gameState.sequence && lastTicks <= gameState.ticks && gameState.replayPaused !== true
-          && !(gameState.gameOver || player.isBuried || player.exitMaze);
+        return sequence === gameModel.sequence && lastTicks <= gameModel.ticks && gameModel.replayPaused !== true
+          && !(gameModel.isGameOver || player.isBuried || player.exitMaze);
       }
 
       if (!canContinue()) return;
 
-      lastTicks = gameState.ticks;
+      lastTicks = gameModel.ticks;
 
       if (Keyboard.NextMaze) {
         Keyboard.NextMaze = false;
-        gameState.onMazeExited();
+        endMaze();
         nextMaze();
         return;
       }
       
-      timeSlice += Math.min(settings.maxTimeSlice, time-lastTime) * gameState.gameSpeed;
+      timeSlice += Math.min(settings.maxTimeSlice, time-lastTime) * gameSpeed();
       lastTime = time;
 
       const stepInterval = Timer.stepInterval || settings.gameStepInterval
@@ -760,17 +783,29 @@ function play() {
 }
 
 function playGameStep(delta) {
-  Timer.update(gameState.ticks);
+  Timer.update(gameModel.ticks);
 
   moveCharacters(delta);
-  gameState.updateInputMask();
+  updateInputMask();
 
-  const inputMask = handleInput(gameState.ticks);
+  const inputMask = handleInput(gameModel.ticks);
   const moveDirection = Keyboard.getDirection() || player.direction || Direction.NONE;
   
   movePlayer(moveDirection, delta);
 
-  gameState.onGameStepCompleted(inputMask);
+  GameRecorder.recordGameStep(
+    gameModel.ticks,
+    inputMask
+  );
+  gameScreen.replayBar.setCurrentTick(gameModel.ticks);
+  gameModel.ticks++;
+}
+
+function updateInputMask() {
+  if (GameRecorder.isReplaying) {
+    const inputMask = GameRecorder.replayInputMask(gameModel.ticks);
+    Keyboard.applyMask(inputMask);
+  }
 }
 
 function handleInput() {
@@ -789,7 +824,7 @@ function handleInput() {
 }
 
 function setupCharacters() {
-    characters = new Characters();
+    characters.removeAll();
 
     Object.values(CHARACTERS).forEach(createCharacters);
     Object.values(MAZE_DROPABLES).forEach(dropItems);
@@ -801,7 +836,7 @@ function createCharacters(config) {
     let count = config.qty(player.level);
 
     while (count-- > 0) {
-      const position = findRandomPathCell(gameState.randomizer, false);
+      const position = findRandomPathCell(gameModel.randomizer, false);
       createCharacter(config, position);
     }
 }
@@ -818,13 +853,13 @@ function createCharacter(config, position) {
 
 function removeCharacter(character) {
   if (characters.remove(character)) {
-    grid.removeCharacter(character);
+    gameModel.grid.removeCharacter(character);
   }
 }
 
 function addCharacter(character) {
   if (characters.add(character)) {  
-    grid.addCharacter(character);
+    gameModel.grid.addCharacter(character);
   }
 }
 
@@ -834,39 +869,39 @@ function dropItems(config) {
     let count = config.qty(player.level);
 
     if (config === OBJECTS.key) {
-      gameState.keysNeeded = count;
+      gameModel.keysNeeded = count;
     }
 
     while (count-- > 0) {
-      const position = findRandomPathCell(gameState.randomizer, config.inWalls);
-      grid.placeObjectAt(position.row, position.col, config);
+      const position = findRandomPathCell(gameModel.randomizer, config.inWalls);
+      gameModel.grid.placeObjectAt(position.row, position.col, config);
     }
 }
 
 function showRelicChamber() {
-  const positions = grid.placeObjectFormation(gameState.relicChamberFormation, OBJECTS.wall, {pulse: true, rock: true});
+  const positions = gameModel.grid.placeObjectFormation(gameModel.relicChamberFormation, OBJECTS.wall, {pulse: true, rock: true});
 
   // Where the relic is buried is randomized
-  const positionIndex = Math.floor(gameState.random() * positions.length);
+  const positionIndex = Math.floor(gameModel.random() * positions.length);
   const position = positions[positionIndex];
 
   // The Guardian is hiding at the same location as the relic, so the
   // astute will see where the Guardian originated from and dig there.
   const guardian = createCharacter(CHARACTERS.ghost, {row: position.row, col: position.col});
   const relic = createCharacter(CHARACTERS.relic, position);
-  relic.setRelic(gameState.levelRelic);
+  relic.setRelic(gameModel.levelRelic);
   disableCharacter(guardian, TIMEOUTS.guardianDelay-player.level*TIMEOUTS.guardianDelayLevelReduction);
 }
 
 function startCaveIn() {
-  if (gameState.caveInStarted) return;
+  if (gameModel.caveInStarted) return;
 
-  gameState.caveInStarted = true;
+  gameModel.caveInStarted = true;
   Grid.mazeEl.classList.toggle("rumble", true);
 
   const caveInInterval = Timer.setInterval(() => {
-    if (!gameState.caveInStarted || player.exitMaze || gameState.gameOver) {
-      gameState.caveInStarted = false;
+    if (!gameModel.caveInStarted || player.exitMaze || gameModel.isGameOver) {
+      gameModel.caveInStarted = false;
       Grid.mazeEl.classList.toggle("rumble", false);
       Timer.clear(caveInInterval);
       return;
@@ -887,7 +922,7 @@ function dropRandomRocks() {
 
 function findRandomRockPositions(count) {
   function canPlaceRockAt(row, col) {
-    const object = grid.objectAt(row, col);
+    const object = gameModel.grid.objectAt(row, col);
     return object && object.fixed !== true && object.priority <= CHARACTERS.rock.priority;
   }
 
@@ -896,11 +931,11 @@ function findRandomRockPositions(count) {
     positions.some(item => item.row === position.row && item.col === position.col);
   };
 
-  let tries = gameState.random() * 10;
+  let tries = gameModel.random() * 10;
 
   // When there are enough walls in the maze, try to place rocks in the walls first.
-  while (--tries > 0 && (grid.pathCount / grid.cellCount) < settings.caveInThreshold) {
-    const position = findRandomPathCell(gameState.random, true);
+  while (--tries > 0 && (gameModel.grid.pathCount / gameModel.grid.cellCount) < settings.caveInThreshold) {
+    const position = findRandomPathCell(gameModel.random, true);
     // There must be a path cell below the wall to place a rock in the wall.
     if (canPlaceRockAt(position.row+1, position.col) && !positions.contains(position)) {
       positions.push(position);
@@ -909,9 +944,9 @@ function findRandomRockPositions(count) {
   }
 
   // If no wall was found, then try to place rocks at top
-  tries = grid.cols;
+  tries = gameModel.grid.cols;
   while (--tries > 0 && positions.length < count) {
-    const col = Math.floor(gameState.random() * grid.cols);
+    const col = Math.floor(gameModel.random() * gameModel.grid.cols);
     let row = 0;
     
     // Place rocks at the top if a path cell exists.
@@ -922,7 +957,7 @@ function findRandomRockPositions(count) {
     }
 
     // Otherwise place rocks at lowest possible row in the column if a path cell exists.
-    while (++row < grid.rows-1) {
+    while (++row < gameModel.grid.rows-1) {
       const position = { row: row-1, col }
       if (canPlaceRockAt(row, col) && !positions.contains(position)) {
         positions.push(position);
@@ -935,9 +970,9 @@ function findRandomRockPositions(count) {
 
 function findRandomPathCell(random, inWalls = false) {
   while (true) {
-    const row = Math.floor(random() * grid.rows);
-    const col = Math.floor(random() * grid.cols);
-    const obj = grid.objectAt(row, col);
+    const row = Math.floor(random() * gameModel.grid.rows);
+    const col = Math.floor(random() * gameModel.grid.cols);
+    const obj = gameModel.grid.objectAt(row, col);
 
     if (inWalls ? !(obj === OBJECTS.wall || obj === OBJECTS.rock) : (obj !== OBJECTS.path)) continue;
     if (row === player.row && col === player.col) continue;
@@ -963,18 +998,18 @@ function playerExitMaze() {
   Sound.yeah();
   updateGameUI();
 
-  if (!gameState.isReplay) gameScreen.hideReplayBar();
+  if (!GameRecorder.hasNextMaze) gameScreen.hideReplayBar();
   gameWindow.setTimeout(tallyScore, TIMEOUTS.tallyScoreDelay);
 }
 
 function playerGameOver() {
   Sound.gameover();
-  gameState.onGameOver();
+  gameModel.gameOver();
   gameScreen.showInstructions(false);
   
   function gameOver() {
-    const isGameNumber = Number.isFinite(gameState.gameNumber);
-    const title = isGameNumber ? MESSAGES.gameInfoTitle+gameState.gameNumber : MESSAGES.gameOverTitle;
+    const isGameNumber = Number.isFinite(gameModel.gameNumber);
+    const title = isGameNumber ? MESSAGES.gameInfoTitle+gameModel.gameNumber : MESSAGES.gameOverTitle;
 
     gameScreen.showGameInfo(title);
     gameScreen.gameInfoContent.innerHTML = getPlayerAcheivements();
@@ -1001,7 +1036,9 @@ function tallyTrophyBonus() {
     gameScreen.gameInfoContent.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${player.score}</div>`;
 
     saveHighScore(settings.highScore);
-    gameState.onGameFinished();
+
+    const record = gameModel.endGame();
+    GameRecorder.tagRecording(record);
   }
 
   function nextTrophy() {
@@ -1073,10 +1110,13 @@ function getPlayerAcheivements() {
 }
 
 function startGame(seed = 0) {
-  gameState.onStartGame(seed);
+  Timer.setStepInterval(settings.gameStepInterval);
+  GameRecorder.startGame(GAME_VERSION, seed, settings.gameStepInterval);
 
-  if (gameState.gameNumber && seed != gameState.gameNumber) {
-    gameState.gameNumber = null;
+  gameModel.startGame(seed);
+
+  if (gameModel.gameNumber && seed != gameModel.gameNumber) {
+    gameModel.gameNumber = null;
     deleteGameNumberFromURL();
   }
 
@@ -1088,7 +1128,7 @@ function startGame(seed = 0) {
 }
 
 function playAgain() {
-  startGame(gameState.seed);
+  startGame(gameModel.seed);
 }
 
 function replayGame() {
@@ -1096,198 +1136,25 @@ function replayGame() {
   replayMaze(0);
 }
 
+
+function replayMazeRecording(indexOrMazeRecording) {
+  const mazeRecording = Number.isFinite(indexOrMazeRecording) ? GameRecorder.selectMaze(indexOrMazeRecording) : indexOrMazeRecording;
+  if (!mazeRecording) return false;
+
+  gameModel.initWithMazeRecording(mazeRecording);
+  startMaze();
+
+  return true;
+}
+
 gameScreen.scoreboardLinks.nextMazeLink.addEventListener("click", goDeeper);
 gameScreen.scoreboardLinks.replayMazeLink.addEventListener("click", () => replayMaze(-1));
 
 const player = new Player(CHARACTERS.player, settings);
+const gameModel = new GameModel(settings, player);
+const characters = new Characters();
+
 settings.highScore = getHighScore();
-
-let grid = null;
-let characters = [];
-
-const gameState = {
-
-  reset() {
-    this.gameOver = false; 
-    this.caveInStarted = false;
-    this.keysNeeded = 0;
-    this.currentLevel = 0;
-    this.currentMaze = 0;
-    this.relicChamberFormation = null;
-    this.playbackSpeed = 1;
-    this.gameResult = null;
-    this.levelRelicFound = false;
-  },
-  
-  get isReplay() {
-    return GameRecorder.isReplaying && GameRecorder.hasNextMaze;
-  },
-
-  get isLastMaze() {
-    return this.currentMaze === settings.mazesPerLevel;
-  },
-
-  get isCaveInThreshold() { 
-    const pathCount = this.caveInStarted ? grid.pathCount + gameState.random() * 10 : grid.pathCount;
-    return pathCount / grid.cellCount > settings.caveInThreshold;
-  },
-
-  get levelRelic() {
-    if (!this.isLastMaze) return null;
-
-    const relicKind = Relic.kindForLevel(this.currentLevel);
-    const relicSymbolDescription = Relic.parse(Grid.symbolFor(relicKind));
-
-    return {kind: relicKind, level: this.currentLevel, points: CHARACTERS.relic.points, symbol: relicSymbolDescription[0], description: relicSymbolDescription[1]};
-  },
-
-  get sequence() {
-    return this.currentLevel * 100 + this.currentMaze;
-  },
-
-  get gameSpeed() {
-    return GameRecorder.isReplaying ? this.playbackSpeed : 1;
-  },
-
-  get gameNumber() {
-    return this._gameNumber;
-  },
-
-  set gameNumber(value) {
-    this._gameNumber = value;
-
-    if (GAME_RNG.isValidGameNumber(value)) {
-      this._gameNumber = value;
-      this.seed = value;
-      GameRecorder.autoSave = true;
-    } else {
-      this._gameNumber = null;
-      GameRecorder.autoSave = false;
-    }
-  },
-
-  onStartGame(seed) {
-    this.reset();
-
-    this.seed = seed;
-    this.randomizer = RNG.randomizer(seed);
-    this.ticks = 0;
-
-    Timer.setStepInterval(settings.gameStepInterval);
-
-    GameRecorder.startGame(GAME_VERSION, seed, settings.gameStepInterval);
-  },
-
-  onGameOver() {
-    this.gameOver = true;
-  },
-    
-  onGameFinished() {
-    this.gameResult = GameRecorder.tagRecording({
-      tick: this.ticks,
-      currentLevel: this.currentLevel,
-      currentMaze: this.currentMaze,
-      randomizerState: this.randomizer.getState(),
-      playerState: player.state,
-      outcome: "finished"
-    });
-  },
-  
-  onMazeExited() {
-    const saveCheckpoint = gameState.isReplay && Keyboard.Special;
-    const checkpoint = {
-      tick: this.ticks,
-      currentLevel: this.currentLevel,
-      currentMaze: this.currentMaze,
-      randomizerState: this.randomizer.getState(),
-      playerState: player.state,
-      outcome: "checkpoint"
-    };
-
-    if (saveCheckpoint) {
-      GameRecorder.saveRecording(checkpoint);
-    } else {
-      GameRecorder.tagRecording(checkpoint);
-    }
-    
-    if (this.isReplay) {
-      const nextRecording = GameRecorder.selectNextMaze();
-      this.replayMazeRecording(nextRecording);
-    }
-  },
-
-  onNextMaze() {
-    this.reset();
-  },
-
-  onMazeStart() {
-    Timer.clear();
-    Keyboard.clear();
-
-    this.random = RNG.randomizer(
-      RNG.deriveSeed(this.randomizer.getState())
-    );
-
-    GameRecorder.startMaze({
-      level: this.currentLevel,
-      maze: this.currentMaze,
-      tick: this.ticks,
-      randomizerState: this.randomizer.getState(),
-      playerState: player.state
-    });
-
-    gameScreen.replayBar.setCurrentTick(this.ticks);
-  },
-
-  onGameStepCompleted(inputMask) {
-    GameRecorder.recordGameStep(
-      this.ticks,
-      inputMask
-    );
-    gameScreen.replayBar.setCurrentTick(this.ticks);
-    this.ticks++;
-  },
-
-  onReplayMaze(index) {
-    return this.replayMazeRecording(GameRecorder.selectMaze(index));
-  },
-
-  replayMazeRecording(mazeRecording) {
-    if (!mazeRecording) return false;
-
-    this.reset();
-
-    this.currentLevel = mazeRecording.level;
-    this.currentMaze = mazeRecording.maze;
-    this.ticks = mazeRecording.startTick;
-    this.playbackSpeed = gameScreen.replayBar.speed;
-    this.randomizer = RNG.randomizer(mazeRecording.randomizerState);
-
-    player.state = mazeRecording.playerState;
-    startMaze();
-
-    return true;
-  },
-
-  updateInputMask() {
-    if (GameRecorder.isReplaying) {
-      const inputMask = GameRecorder.replayInputMask(this.ticks);
-      Keyboard.applyMask(inputMask);
-    }
-  },
-
-  initWithRecording(recording) {
-    this.reset();
-
-    this.seed = recording.seed;
-    this.currentLevel = recording.currentLevel;
-    this.currentMaze = recording.currentMaze;
-    this.ticks = recording.ticks;
-    this.randomizer = RNG.randomizer(recording.randomizerState);
-
-    player.state = recording.playerState;
-  },
-};
 
 gameScreen.startGame = (seed) => gameWindow.setTimeout(startGame, TIMEOUTS.gameOverTrophyTallyInterval, seed);
 gameScreen.playAgain = () => gameWindow.setTimeout(playAgain, TIMEOUTS.gameOverTrophyTallyInterval);
@@ -1295,14 +1162,14 @@ gameScreen.replayGame = () => gameWindow.setTimeout(replayGame, TIMEOUTS.gameOve
 
 gameScreen.replayBarHandler = {
     onSelectMaze(index) {
-      gameState.onReplayMaze(index);
+      replayMazeRecording(index);
     },
 
     onSelectEnd() {
       const recording = GameRecorder.recording;
       if (!recording) return;
 
-      gameState.initWithRecording(recording);
+      gameModel.initWithRecording(recording);
       GameRecorder.selectMaze(-1);
 
       if (recording.outcome === "finished") {
@@ -1313,9 +1180,9 @@ gameScreen.replayBarHandler = {
     },
 
     onPlayPause(playing) {
-      if (gameState.replayPaused === !playing) return false;
+      if (gameModel.replayPaused === !playing) return false;
 
-      gameState.replayPaused = !playing;
+      gameModel.replayPaused = !playing;
       if (playing) {
         gameWindow.requestAnimationFrame(play);
       }
@@ -1328,7 +1195,7 @@ gameScreen.replayBarHandler = {
     },
 
     onSpeedChange(speed) {
-      gameState.playbackSpeed = speed;
+      gameModel.playbackSpeed = speed;
       return speed;
     }
 };
@@ -1356,12 +1223,11 @@ function getGameNumberFromURL() {
     deleteGameNumberFromURL();
     return null;
   }
-
   return gameNumber;
 }
 
 function initGame(gameNumber) {
-  if (gameNumber === null) {
+  if (!GAME_RNG.isValidGameNumber(gameNumber)) {
     gameScreen.newGame();
     return;
   }
@@ -1369,7 +1235,8 @@ function initGame(gameNumber) {
   const savedGame = GameRecorder.load(GAME_VERSION, gameNumber, "checkpoint")
     || GameRecorder.load(GAME_VERSION, gameNumber, "finished");
     
-  gameState.gameNumber = gameNumber;
+  gameModel.gameNumber = gameNumber;
+  GameRecorder.autoSave = true;
 
   if (savedGame) {
     Timer.setStepInterval(savedGame.msPerTick);
@@ -1381,7 +1248,7 @@ function initGame(gameNumber) {
       gameScreen.hideGameMessage();
       gameScreen.showGameUI(true);
     }, TIMEOUTS.loadingMessageDelay);
-  } else if (GAME_RNG.isValidGameNumber(gameNumber)) {
+  } else {
     gameScreen.showGameUI(true);
     gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);
 

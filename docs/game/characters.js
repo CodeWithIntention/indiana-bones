@@ -178,4 +178,8 @@ class Characters {
   forEach(callback) {
     this.#characters.forEach(callback);
   }
+
+  removeAll() {
+    this.#characters = [];
+  }
 }

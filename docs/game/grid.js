@@ -130,6 +130,7 @@ class Grid {
   #pathCount;
   #visitedPathCount;
   #randomizers;
+  #destroyed = false;
 
   constructor(rows, cols, cellSize, randomizers) {
     this.#maze = new Maze(rows, cols, cellSize, randomizers.grid);
@@ -185,6 +186,30 @@ class Grid {
 
   get visitedPathCount() {
     return this.#visitedPathCount;
+  }
+
+  destroy() {
+    if (this.#destroyed) return;
+
+    this.#destroyed = true;
+    const firstCell = this.#cells?.[0]?.[0];
+    const ownsMazeElements = firstCell?.parentNode === Grid.mazeEl;
+
+    /*
+     * Only clear the shared host when it still contains this grid. This
+     * prevents a delayed second cleanup from removing a newer grid.
+     */
+    if (ownsMazeElements) {
+      Grid.mazeEl.replaceChildren();
+      Grid.mazeEl.style.removeProperty("grid-template-columns");
+      Grid.mazeEl.classList.remove("rumble");
+    }
+
+    this.#cells = null;
+    this.#maze = null;
+    this.#randomizers = null;
+    this.#pathCount = 0;
+    this.#visitedPathCount = 0;
   }
 
   canCharacterMoveTo(character, row, col) {

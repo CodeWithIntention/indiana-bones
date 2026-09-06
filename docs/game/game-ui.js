@@ -1,4 +1,4 @@
-import { GAME_VERSION, GAME_RNG, MESSAGES, TIMEOUTS } from "./config.js";
+import { GAME_RNG, MESSAGES, TIMEOUTS } from "./config.js";
 import { Sound } from "./sound.js";
 import { Keyboard } from "./keyboard.js";
 import { Touch } from "./touch.js";

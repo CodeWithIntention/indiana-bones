@@ -730,10 +730,11 @@ export class Game {
       col: position.col,
     });
     const relic = this.createCharacter(CHARACTERS.relic, position);
-    relic.setRelic(this.model.levelRelic);
 
     this.addCharacter(guardian);
     this.addCharacter(relic);
+    
+    relic.setRelic(this.model.levelRelic);
 
     guardian.disable(
       TIMEOUTS.guardianDelay -

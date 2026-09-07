@@ -202,8 +202,10 @@ class Grid {
     if (ownsMazeElements) {
       Grid.mazeEl.replaceChildren();
       Grid.mazeEl.style.removeProperty("grid-template-columns");
-      Grid.mazeEl.classList.remove("rumble");
     }
+
+    // Always restore normal state
+    Grid.mazeEl.classList.remove("rumble");
 
     this.#cells = null;
     this.#maze = null;

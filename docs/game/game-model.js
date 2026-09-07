@@ -13,7 +13,8 @@ export class GameModel {
     this.randomizer = null;
     this.player = new Player(CHARACTERS.player, settings);
     this.characters = new Characters();
-
+    this.highScore = 0;
+    
     this.reset();
   }
 
@@ -27,7 +28,6 @@ export class GameModel {
     this.currentLevel = 0;
     this.currentMaze = 0;
     this.relicChamberFormation = null;
-    this.playbackSpeed = 1;
     this.levelRelicFound = false;
     this.random = null;
     this.grid = null;
@@ -80,6 +80,8 @@ export class GameModel {
     this.seed = seed;
     this.randomizer = RNG.randomizer(seed);
     this.ticks = 0;
+
+    this.player.reset();
   }
 
   gameOver() {

@@ -7,7 +7,6 @@ export { Player }
 class Player extends Character {
   level;
   mazes;
-  points;
   exitMazeTime;
   tnts;
   bonusAwarded;
@@ -215,7 +214,6 @@ class Player extends Character {
     this.score = 0;
     this.level = 1;
     this.mazes = 0;
-    this.points = 0;
     this.tnts = this.config.tnts;
     this.lives = this.config.lives;
     this.bonusAwarded = false;

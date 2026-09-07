@@ -88,6 +88,7 @@ const Timer = {
     },
 
     setStepInterval(stepInterval) {
+        this.reset();
         this.stepInterval = stepInterval;
     },
 

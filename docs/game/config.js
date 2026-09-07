@@ -108,11 +108,11 @@ Object.entries(OBJECTS).forEach(([key, value]) => value.kind = key);
 
 // Character configurations starting at Level 1
 const CHARACTERS = {
-    player:     {points: 0, priority: 2, speed: 75, lives: 3, tnts: 1, qty: () => 0, 
+    player:     {points: NaN, priority: 2, speed: 75, lives: 3, tnts: 1, qty: () => 0, 
                     chompSound: 'chomp',
                     powerUpDuration: 3000, rotationTransform: null},
 
-    ghost:      {points: 0, priority: 3, speed: 65, lives: -1, qty: (level => 0), 
+    ghost:      {points: NaN, priority: 3, speed: 65, lives: -1, qty: (level => 0), 
                     phaseProbability: .50,
                     rotationTransform: null}, 
 
@@ -141,7 +141,7 @@ const CHARACTERS = {
 
     relic:      {points: 10000, priority: 4, speed: 0, lives: 0, qty: () => 0, 
                     isChompable: false, isGrabable: true, isBaggable: false, isRelic: true},
-    label:      {points: 0, priority: 0, speed: 0, lives: 0, qty: () => 0, 
+    label:      {points: NaN, priority: 0, speed: 0, lives: 0, qty: () => 0, 
                     isChompable: false, isGrabable: false},
 };
 

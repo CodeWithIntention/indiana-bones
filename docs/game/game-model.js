@@ -3,7 +3,7 @@ import { Relic } from "./characters.js";
 import { Grid } from "./grid.js";
 import { Characters } from "./characters.js";
 import { Player } from "./player.js";
-import { GAME_RNG, CHARACTERS} from "./config.js";
+import { GAME_RNG, CHARACTERS, GAME_VERSION} from "./config.js";
 
 export class GameModel {
   #gameNumber = null;
@@ -14,7 +14,7 @@ export class GameModel {
     this.player = new Player(CHARACTERS.player, settings);
     this.characters = new Characters();
     this.highScore = 0;
-    
+
     this.reset();
   }
 
@@ -31,6 +31,7 @@ export class GameModel {
     this.levelRelicFound = false;
     this.random = null;
     this.grid = null;
+    this.recordVersion = 0;
   }
 
   get isLastMaze() {
@@ -92,6 +93,7 @@ export class GameModel {
     this.player.restart();
 
     const record = {
+      version: GAME_VERSION,
       level: this.currentLevel,
       maze: this.currentMaze,
       tick: this.ticks,
@@ -138,6 +140,7 @@ export class GameModel {
     this.currentMaze = recording.currentMaze;
     this.ticks = recording.ticks;
     this.randomizer = RNG.randomizer(recording.randomizerState);
+    this.recordVersion = recording.version;
 
     this.player.state = recording.playerState;
   }
@@ -149,6 +152,7 @@ export class GameModel {
     this.currentMaze = mazeRecording.maze;
     this.ticks = mazeRecording.startTick;
     this.randomizer = RNG.randomizer(mazeRecording.randomizerState);
+    this.recordVersion = mazeRecording.version;
 
     this.player.state = mazeRecording.playerState;
   }

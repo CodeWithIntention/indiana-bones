@@ -32,6 +32,7 @@ export const GameRecorder = {
   },
 
   startMaze({
+    version,
     level,
     maze,
     tick,
@@ -43,6 +44,7 @@ export const GameRecorder = {
     this.gameSteps = [];
 
     this.mazeRecording = {
+      version,
       level,
       maze,
       startTick: tick,
@@ -116,6 +118,10 @@ export const GameRecorder = {
     this.replayStepIndex = 0;
     this.replayStep = null;
 
+    if (!Number.isFinite(mazeRecording.version)) {
+      mazeRecording.version = this.recording.version;
+    }
+  
     return mazeRecording;
   },
 

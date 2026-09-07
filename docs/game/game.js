@@ -1,7 +1,4 @@
-import { Timer } from "./util.js";
 import {
-  GAME_VERSION,
-  GAME_RNG,
   CHARACTERS,
   OBJECTS,
   MESSAGES,
@@ -9,423 +6,28 @@ import {
   RELIC_CHAMBERS,
   MAZE_DROPABLES,
 } from "./config.js";
-import { settings } from "./settings.js";
-import { Sound } from "./sound.js";
+import { Timer } from "./util.js";
+import { Relic } from "./characters.js";
 import { Player } from "./player.js";
-import { Rock, Relic } from "./characters.js";
 import { Grid } from "./grid.js";
-import { gameWindow, gameScreen } from "./game-ui.js";
 import { Keyboard } from "./keyboard.js";
+import { Sound } from "./sound.js";
 import { GameRecorder } from "./recorder.js";
-import { GameModel } from "./game-model.js";
-import { GameRules } from "./game-rules.js";
-import { GameView } from "./game-view.js";
-import { GameController } from "./game-controller.js";
 
-function replayMaze(index = -1) {
-  gameScreen.setReplayRecording(GameRecorder.timeline);
-  gameController.playbackPaused = false;
-  replayMazeRecording(index);
-}
-
-function goDeeper() {
-  GameRecorder.resetReplay();
-  gameScreen.hideScoreboard();
-
-  if (game.playerDescend()) {
-    Sound.deeper();
-    gameWindow.setTimeout(game.nextMaze.bind(game), TIMEOUTS.nextMazeDelay);
-  } else {
-    game.nextMaze();
-  }
-}
-
-function playGame() {
-  gameController.playbackSpeed = gameScreen.replayBar.speed;
-  gameController.play();
-}
-
-function setupCharacters() {
-  Object.values(CHARACTERS).forEach(createCharacters);
-  Object.values(MAZE_DROPABLES).forEach(dropItems);
-}
-
-function createCharacters(config) {
-  if (!(config.class && config.qty)) return;
-
-  let count = config.qty(gameModel.player.level);
-
-  while (count-- > 0) {
-    const position = findRandomPathCell(gameModel.randomizer, false);
-    createCharacter(config, position);
-  }
-}
-
-function createCharacter(config, position) {
-  if (!config.class) return;
-
-  const characterType = config.class;
-  const character = new characterType(position);
-  addCharacter(character);
-
-  return character;
-}
-
-function removeCharacter(character) {
-  if (gameModel.characters.remove(character)) {
-    gameModel.grid.removeCharacter(character);
-  }
-}
-
-function addCharacter(character) {
-  if (!gameModel.characters.add(character)) {
-    return false;
-  }
-
-  character.onMoved = (object) => {
-    gameRules.onCharacterMoved(character, object);
-  };
-
-  character.onCollided = (other) => {
-    gameRules.onCharacterCollided(character, other);
-  };
-
-  character.remove = () => {
-    removeCharacter(character);
-  };
-
-  character.disable = (duration) => {
-    if (duration <= 0 || character.disabled) return;
-
-    character.disabled = true;
-    const disabledTime = character.disabledTime;
-
-    Timer.setTimeout(() => {
-      if (disabledTime === character.disabledTime) {
-        character.disabled = false;
-        game.update(character);
-      }
-    }, duration);
-
-    game.update(character);
-  };
-
-  character.addScore = (factor, points) => {
-    addScoreForCharacter(character, factor, points);
-  };
-
-  gameModel.grid.addCharacter(character);
-  return true;
-}
-
-function addScoreForCharacter(character, factor, points) {
-  const basePoints = Number.isFinite(points) ? points : character.points;
-  const score = basePoints * factor;
-  
-  if (Number.isFinite(score) && game.player.isAlive) {
-    // Only half the value is given for chomping
-    game.player.score += score;
-    game.model.grid.addScoreCharacterFor(
-      character,
-      score,
-      TIMEOUTS.characterPointsLabel,
-    );
-  }
-}
-
-function dropItems(config) {
-  if (!config.qty) return;
-
-  let count = config.qty(gameModel.player.level);
-
-  if (config === OBJECTS.key) {
-    gameModel.keysNeeded = count;
-  }
-
-  while (count-- > 0) {
-    const position = findRandomPathCell(gameModel.randomizer, config.inWalls);
-    gameModel.grid.placeObjectAt(position.row, position.col, config);
-  }
-}
-
-function showRelicChamber() {
-  const positions = gameModel.grid.placeObjectFormation(
-    gameModel.relicChamberFormation,
-    OBJECTS.wall,
-    { pulse: true, rock: true },
-  );
-
-  // Where the relic is buried is randomized
-  const positionIndex = Math.floor(gameModel.random() * positions.length);
-  const position = positions[positionIndex];
-
-  // The Guardian is hiding at the same location as the relic, so the
-  // astute will see where the Guardian originated from and dig there.
-  const guardian = createCharacter(CHARACTERS.ghost, {
-    row: position.row,
-    col: position.col,
-  });
-  const relic = createCharacter(CHARACTERS.relic, position);
-  relic.setRelic(gameModel.levelRelic);
-  guardian.disable(
-    TIMEOUTS.guardianDelay -
-      gameModel.player.level * TIMEOUTS.guardianDelayLevelReduction,
-  );
-}
-
-function dropRandomRocks() {
-  const positions = findRandomRockPositions(gameModel.player.level);
-  if (positions.length === 0) return;
-
-  positions.forEach((position) => {
-    const rock = new Rock(position);
-    addCharacter(rock);
-  });
-}
-
-function findRandomRockPositions(count) {
-  function canPlaceRockAt(row, col) {
-    const object = gameModel.grid.objectAt(row, col);
-    return (
-      object &&
-      object.fixed !== true &&
-      object.priority <= CHARACTERS.rock.priority
-    );
-  }
-
-  const positions = [];
-  positions.contains = (position) => {
-    positions.some(
-      (item) => item.row === position.row && item.col === position.col,
-    );
-  };
-
-  let tries = gameModel.random() * 10;
-
-  // When there are enough walls in the maze, try to place rocks in the walls first.
-  while (
-    --tries > 0 &&
-    gameModel.grid.pathCount / gameModel.grid.cellCount <
-      settings.caveInThreshold
-  ) {
-    const position = findRandomPathCell(gameModel.random, true);
-    // There must be a path cell below the wall to place a rock in the wall.
-    if (
-      canPlaceRockAt(position.row + 1, position.col) &&
-      !positions.contains(position)
-    ) {
-      positions.push(position);
-      break;
-    }
-  }
-
-  // If no wall was found, then try to place rocks at top
-  tries = gameModel.grid.cols;
-  while (--tries > 0 && positions.length < count) {
-    const col = Math.floor(gameModel.random() * gameModel.grid.cols);
-    let row = 0;
-
-    // Place rocks at the top if a path cell exists.
-    const position = { row, col };
-    if (canPlaceRockAt(row + 1, col) && !positions.contains(position)) {
-      positions.push(position);
-      continue;
-    }
-
-    // Otherwise place rocks at lowest possible row in the column if a path cell exists.
-    while (++row < gameModel.grid.rows - 1) {
-      const position = { row: row - 1, col };
-      if (canPlaceRockAt(row, col) && !positions.contains(position)) {
-        positions.push(position);
-        break;
-      }
-    }
-  }
-  return positions;
-}
-
-function findRandomPathCell(random, inWalls = false) {
-  while (true) {
-    const row = Math.floor(random() * gameModel.grid.rows);
-    const col = Math.floor(random() * gameModel.grid.cols);
-    const obj = gameModel.grid.objectAt(row, col);
-
-    if (
-      inWalls
-        ? !(obj === OBJECTS.wall || obj === OBJECTS.rock)
-        : obj !== OBJECTS.path
-    )
-      continue;
-    if (row === gameModel.player.row && col === gameModel.player.col) continue;
-    if (gameModel.characters.atRowCol(row, col)) continue;
-
-    return { row, col };
-  }
-}
-
-function startGame(seed = 0) {
-  if (gameModel.gameNumber && seed !== gameModel.gameNumber) {
-    gameModel.gameNumber = null;
-    deleteGameNumberFromURL();
-  }
-
-  settings.setDefaults();
-  Timer.setStepInterval(settings.gameStepInterval);
-  gameModel.startGame(seed);
-
-  GameRecorder.startGame(
-    GAME_VERSION,
-    seed,
-    settings.gameStepInterval,
-    GAME_RNG.isValidGameNumber(gameModel.gameNumber),
-  );
-
-  gameScreen.showGameUI();
-  game.nextMaze();
-}
-
-function playAgain() {
-  startGame(gameModel.seed);
-}
-
-function replayGame() {
-  gameScreen.showGameUI();
-  replayMaze(0);
-}
-
-function replayMazeRecording(indexOrMazeRecording) {
-  const mazeRecording = Number.isFinite(indexOrMazeRecording)
-    ? GameRecorder.selectMaze(indexOrMazeRecording)
-    : indexOrMazeRecording;
-  if (!mazeRecording) return false;
-
-  gameModel.initWithMazeRecording(mazeRecording);
-  game.startMaze();
-
-  return true;
-}
-
-gameScreen.scoreboardLinks.nextMazeLink.addEventListener("click", goDeeper);
-gameScreen.scoreboardLinks.replayMazeLink.addEventListener("click", () =>
-  replayMaze(-1),
-);
-
-gameScreen.startGame = (seed) =>
-  gameWindow.setTimeout(startGame, TIMEOUTS.gameOverTrophyTallyInterval, seed);
-gameScreen.playAgain = () =>
-  gameWindow.setTimeout(playAgain, TIMEOUTS.gameOverTrophyTallyInterval);
-gameScreen.replayGame = () =>
-  gameWindow.setTimeout(replayGame, TIMEOUTS.gameOverTrophyTallyInterval);
-
-gameScreen.replayBarHandler = {
-  onSelectMaze(index) {
-    replayMazeRecording(index);
-  },
-
-  onSelectEnd() {
-    const recording = GameRecorder.recording;
-    if (!recording) return;
-
-    gameModel.initWithRecording(recording);
-    GameRecorder.selectMaze(-1);
-
-    if (recording.outcome === "finished") {
-      game.playerGameOver();
-    } else {
-      game.playerExitMaze();
-    }
-  },
-
-  onPlayPause(playing) {
-    if (gameController.playbackPaused === !playing) return false;
-
-    gameController.playbackPaused = !playing;
-    if (playing) {
-      gameController.play();
-    }
-    return playing;
-  },
-
-  onStop() {
-    this.onPlayPause(false);
-    this.onSelectMaze(0);
-  },
-
-  onSpeedChange(speed) {
-    gameController.playbackSpeed = speed;
-    return speed;
-  },
-};
-
-const GAME_NUMBER_PARAM = "game";
-
-function deleteGameNumberFromURL() {
-  const url = new URL(gameWindow.location.href);
-  const value = url.searchParams.get(GAME_NUMBER_PARAM);
-
-  if (value) {
-    url.searchParams.delete(GAME_NUMBER_PARAM);
-    gameWindow.history.replaceState(null, "", url);
-  }
-}
-
-function getGameNumberFromURL() {
-  const params = new URLSearchParams(gameWindow.location.search);
-  const value = params.get(GAME_NUMBER_PARAM);
-
-  // Game numbers must be positive whole numbers.
-  const gameNumber = Number(value);
-
-  if (!GAME_RNG.isValidGameNumber(gameNumber)) {
-    deleteGameNumberFromURL();
-    return null;
-  }
-  return gameNumber;
-}
-
-function initGame(gameNumber) {
-  if (!GAME_RNG.isValidGameNumber(gameNumber)) {
-    gameScreen.newGame();
-    return;
-  }
-
-  const savedGame =
-    GameRecorder.load(GAME_VERSION, gameNumber, "checkpoint") ||
-    GameRecorder.load(GAME_VERSION, gameNumber, "finished");
-
-  gameModel.gameNumber = gameNumber;
-  GameRecorder.autoSave = true;
-
-  if (savedGame) {
-    Timer.setStepInterval(savedGame.msPerTick);
-
-    gameScreen.replayBarHandler.onSelectEnd();
-    gameScreen.showGameMessage(MESSAGES.loading);
-
-    gameWindow.setTimeout(() => {
-      gameScreen.hideGameMessage();
-      gameScreen.showGameUI(true);
-    }, TIMEOUTS.loadingMessageDelay);
-  } else {
-    gameScreen.showGameUI(true);
-    gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);
-
-    gameScreen.gameInfoContent.gameNumber = gameNumber;
-    gameScreen.gameInfoContent.textContent = MESSAGES.gameNotYetPlayed;
-    gameScreen.gameInfoLinks.replayGameLink.hidden = true;
-    gameScreen.gameInfoLinks.newGameLink.hidden = true;
-    gameScreen.gameInfoLinks.playAgainLink.textContent = MESSAGES.playGame;
-  }
-}
-
-class Game {
-  constructor(model, view) {
+export class Game {
+  constructor(model, view, { playGame, replayMazeRecording, createCharacter }) {
     this.model = model;
     this.view = view;
 
+    this.playGame = playGame;
+    this.replayMazeRecording = replayMazeRecording;
+    this.createCharacter = createCharacter;
+
     this.player.addScore = (factor, points) => {
-      addScoreForCharacter(this.player, factor, points);
-    }
+      this.addScoreForCharacter(this.player, factor, points);
+    };
+
+    this.model.highScore = this.getHighScore();
   }
 
   get player() {
@@ -439,7 +41,10 @@ class Game {
 
   saveHighScore() {
     this.updateHighScore();
-    localStorage.setItem("indiana-bones-high-score", String(this.model.highScore));
+    localStorage.setItem(
+      "indiana-bones-high-score",
+      String(this.model.highScore),
+    );
   }
 
   getHighScore() {
@@ -463,7 +68,7 @@ class Game {
         Timer.clear(caveInInterval);
         return;
       }
-      dropRandomRocks();
+      this.dropRandomRocks();
     }, TIMEOUTS.caveInInterval);
   }
 
@@ -513,7 +118,7 @@ class Game {
         this.getPlayerAcheivements();
 
       this.tallyTrophyBonus();
-    }
+    };
     this.view.gameWindow.setTimeout(gameOver, TIMEOUTS.gameOverDelay);
   }
 
@@ -552,7 +157,10 @@ class Game {
           Sound.portal();
 
           if (this.model.isLastMaze) {
-            Timer.setTimeout(showRelicChamber, TIMEOUTS.caveInInterval);
+            Timer.setTimeout(
+              this.showRelicChamber.bind(this),
+              TIMEOUTS.caveInInterval,
+            );
           } else {
             this.model.grid.ensureExit();
           }
@@ -563,7 +171,7 @@ class Game {
         attributes.buried = true;
       }
       if (this.model.isCaveInThreshold) {
-        game.startCaveIn();
+        this.startCaveIn();
       }
     }
     this.model.grid.setCharacterAttributes(reason, attributes);
@@ -750,7 +358,7 @@ class Game {
           if (GameRecorder.hasNextMaze) {
             this.view.gameWindow.setTimeout(() => {
               this.endMaze(Keyboard.Special);
-              replayMazeRecording(GameRecorder.selectNextMaze());
+              this.replayMazeRecording(GameRecorder.selectNextMaze());
             }, TIMEOUTS.nextMazeReplayDelay);
           } else {
             this.endMaze();
@@ -774,7 +382,7 @@ class Game {
 
       const record = this.model.createTagRecord("finished");
       GameRecorder.tagRecording(record);
-    }
+    };
 
     if (this.player.trophiesAwarded <= 0) {
       updateFinalScore();
@@ -782,7 +390,8 @@ class Game {
     }
 
     const trophySymbol = Grid.symbolFor("maze-trophy");
-    const gameOverAchievementsHtml = this.view.gameScreen.gameInfoContent.innerHTML;
+    const gameOverAchievementsHtml =
+      this.view.gameScreen.gameInfoContent.innerHTML;
     let trophies = 0;
 
     const nextTrophy = () => {
@@ -827,7 +436,7 @@ class Game {
           TIMEOUTS.gameOverTrophyTallyInterval,
         );
       }
-    }
+    };
     nextTrophy();
   }
 
@@ -836,8 +445,7 @@ class Game {
 
     this.model.reset();
     this.model.currentLevel =
-      Math.floor(this.player.mazes / this.model.settings.mazesPerLevel) +
-      1;
+      Math.floor(this.player.mazes / this.model.settings.mazesPerLevel) + 1;
     this.model.currentMaze =
       (this.player.mazes % this.model.settings.mazesPerLevel) + 1;
 
@@ -905,7 +513,7 @@ class Game {
       );
     }
 
-    setupCharacters();
+    this.setupCharacters();
 
     if (this.model.isLastMaze) {
       this.model.grid.placeObjectFormation(
@@ -928,26 +536,208 @@ class Game {
     this.view.gameWindow.focus();
     this.view.render();
     this.update(this.player);
-    playGame();
+    this.playGame();
+  }
+
+  dropRandomRocks() {
+    const positions = this.findRandomRockPositions(this.player.level);
+    if (positions.length === 0) return;
+
+    positions.forEach((position) => {
+      const rock = this.createCharacter(CHARACTERS.rock, position);
+      this.addCharacter(rock);
+    });
+  }
+
+  findRandomRockPositions(count) {
+    const gameModel = this.model;
+
+    function canPlaceRockAt(row, col) {
+      const object = gameModel.grid.objectAt(row, col);
+      return (
+        object &&
+        object.fixed !== true &&
+        object.priority <= CHARACTERS.rock.priority
+      );
+    }
+
+    const positions = [];
+    positions.contains = (position) => positions.some(item => item.row === position.row && item.col === position.col);
+
+    let tries = gameModel.random() * 10;
+
+    // When there are enough walls in the maze, try to place rocks in the walls first.
+    while (
+      --tries > 0 &&
+      gameModel.grid.pathCount / gameModel.grid.cellCount <
+        gameModel.settings.caveInThreshold
+    ) {
+      const position = this.findRandomPathCell(gameModel.random, true);
+      // There must be a path cell below the wall to place a rock in the wall.
+      if (canPlaceRockAt(position.row + 1, position.col) && !positions.contains(position)) {
+        positions.push(position);
+        break;
+      }
+    }
+
+    // If no wall was found, then try to place rocks at top
+    tries = gameModel.grid.cols;
+    while (--tries > 0 && positions.length < count) {
+      const col = Math.floor(gameModel.random() * gameModel.grid.cols);
+      let row = 0;
+
+      // Place rocks at the top if a path cell exists.
+      const position = { row, col };
+      if (canPlaceRockAt(row + 1, col) && !positions.contains(position)) {
+        positions.push(position);
+        continue;
+      }
+
+      // Otherwise place rocks at lowest possible row in the column if a path cell exists.
+      while (++row < gameModel.grid.rows - 1) {
+        const position = { row: row - 1, col };
+        if (canPlaceRockAt(row, col) && !positions.contains(position)) {
+          positions.push(position);
+          break;
+        }
+      }
+    }
+    return positions;
+  }
+
+  dropItems(config) {
+    if (!config.qty) return;
+
+    let count = config.qty(this.player.level);
+
+    if (config === OBJECTS.key) {
+      this.model.keysNeeded = count;
+    }
+
+    while (count-- > 0) {
+      const position = this.findRandomPathCell(
+        this.model.randomizer,
+        config.inWalls,
+      );
+      this.model.grid.placeObjectAt(position.row, position.col, config);
+    }
+  }
+
+  findRandomPathCell(random, inWalls = false) {
+    while (true) {
+      const row = Math.floor(random() * this.model.grid.rows);
+      const col = Math.floor(random() * this.model.grid.cols);
+      const obj = this.model.grid.objectAt(row, col);
+
+      if (
+        inWalls
+          ? !(obj === OBJECTS.wall || obj === OBJECTS.rock)
+          : obj !== OBJECTS.path
+      )
+        continue;
+
+      if (row === this.player.row && col === this.player.col)
+        continue;
+
+      if (this.model.characters.atRowCol(row, col)) continue;
+
+      return { row, col };
+    }
+  }
+
+  setupCharacters() {
+    Object.values(CHARACTERS).forEach(this.createCharacters.bind(this));
+    Object.values(MAZE_DROPABLES).forEach(this.dropItems.bind(this));
+  }
+
+  createCharacters(config) {
+    if (!(config.class && config.qty)) return;
+
+    let count = config.qty(this.player.level);
+
+    while (count-- > 0) {
+      const position = this.findRandomPathCell(this.model.randomizer, false);
+      const character = this.createCharacter(config, position);
+      this.addCharacter(character);
+    }
+  }
+
+  addCharacter(character) {
+    if (!this.model.characters.add(character)) {
+      return false;
+    }
+
+    character.remove = () => {
+      if (this.model.characters.remove(character)) {
+        this.model.grid.removeCharacter(character);
+      }
+    };
+
+    character.disable = (duration) => {
+      if (duration <= 0 || character.disabled) return;
+
+      character.disabled = true;
+      const disabledTime = character.disabledTime;
+
+      Timer.setTimeout(() => {
+        if (disabledTime === character.disabledTime) {
+          character.disabled = false;
+          this.update(character);
+        }
+      }, duration);
+
+      this.update(character);
+    };
+
+    character.addScore = (factor, points) => {
+      this.addScoreForCharacter(character, factor, points);
+    };
+
+    this.model.grid.addCharacter(character);
+    return true;
+  }
+
+  addScoreForCharacter(character, factor, points) {
+    const basePoints = Number.isFinite(points) ? points : character.points;
+    const score = basePoints * factor;
+
+    if (Number.isFinite(score) && this.player.isAlive) {
+      // Only half the value is given for chomping
+      this.player.score += score;
+      this.model.grid.addScoreCharacterFor(
+        character,
+        score,
+        TIMEOUTS.characterPointsLabel,
+      );
+    }
+  }
+
+  showRelicChamber() {
+    const positions = this.model.grid.placeObjectFormation(
+      this.model.relicChamberFormation,
+      OBJECTS.wall,
+      { pulse: true, rock: true },
+    );
+
+    // Where the relic is buried is randomized
+    const positionIndex = Math.floor(this.model.random() * positions.length);
+    const position = positions[positionIndex];
+
+    // The Guardian is hiding at the same location as the relic, so the
+    // astute will see where the Guardian originated from and dig there.
+    const guardian = this.createCharacter(CHARACTERS.ghost, {
+      row: position.row,
+      col: position.col,
+    });
+    const relic = this.createCharacter(CHARACTERS.relic, position);
+    relic.setRelic(this.model.levelRelic);
+
+    this.addCharacter(guardian);
+    this.addCharacter(relic);
+
+    guardian.disable(
+      TIMEOUTS.guardianDelay -
+        this.player.level * TIMEOUTS.guardianDelayLevelReduction,
+    );
   }
 }
-
-// Configure object dependencies
-const gameModel = new GameModel(settings);
-const gameView = new GameView(gameModel, gameWindow, gameScreen);
-const game = new Game(gameModel, gameView);
-const gameRules = new GameRules(game);
-const gameController = new GameController(gameRules);
-
-gameModel.highScore = game.getHighScore();
-
-// Select the initial screen from the URL.
-(() => {
-  const gameNumber = getGameNumberFromURL();
-
-  if (gameNumber === null) {
-    gameScreen.showBio();
-  } else {
-    initGame(gameNumber);
-  }
-})();

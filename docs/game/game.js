@@ -626,7 +626,7 @@ function tallyScore() {
 
           if (GameRecorder.hasNextMaze) {
             setTimeout(() => {
-              endMaze();
+              endMaze(Keyboard.Special);
               replayMazeRecording(GameRecorder.selectNextMaze());
             }, TIMEOUTS.nextMazeReplayDelay);
           } else {

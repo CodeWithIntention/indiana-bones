@@ -1,10 +1,12 @@
 import {
+  GAME_VERSION,
+  GAME_RNG,
   CHARACTERS,
   OBJECTS,
   MESSAGES,
   TIMEOUTS,
   RELIC_CHAMBERS,
-  MAZE_DROPABLES,
+  MAZE_DROPABLES
 } from "./config.js";
 import { Timer } from "./util.js";
 import { Relic } from "./characters.js";
@@ -15,12 +17,11 @@ import { Sound } from "./sound.js";
 import { GameRecorder } from "./recorder.js";
 
 export class Game {
-  constructor(model, view, { playGame, replayMazeRecording, createCharacter }) {
+  constructor(model, view, { playGame, createCharacter }) {
     this.model = model;
     this.view = view;
 
     this.playGame = playGame;
-    this.replayMazeRecording = replayMazeRecording;
     this.createCharacter = createCharacter;
 
     this.player.addScore = (factor, points) => {
@@ -51,6 +52,61 @@ export class Game {
     return Number(localStorage.getItem("indiana-bones-high-score")) || 0;
   }
 
+  load(gameNumber) {
+    if (!GAME_RNG.isValidGameNumber(gameNumber)) {
+      this.view.gameScreen.newGame();
+      return;
+    }
+
+    const savedGame =
+      GameRecorder.load(GAME_VERSION, gameNumber, "checkpoint") ||
+      GameRecorder.load(GAME_VERSION, gameNumber, "finished");
+
+    this.model.gameNumber = gameNumber;
+    GameRecorder.autoSave = true;
+
+    if (savedGame) {
+      Timer.setStepInterval(savedGame.msPerTick);
+
+      this.replayEndOfRecording();
+      this.view.gameScreen.showGameMessage(MESSAGES.loading);
+      
+      this.view.gameWindow.setTimeout(() => {
+        this.view.gameScreen.hideGameMessage();
+        this.view.gameScreen.showGameUI(true);
+      }, TIMEOUTS.loadingMessageDelay);
+    } else {
+      this.view.gameScreen.showGameUI(true);
+      this.view.gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);
+
+      this.view.gameScreen.gameInfoContent.gameNumber = gameNumber;
+      this.view.gameScreen.gameInfoContent.textContent =
+        MESSAGES.gameNotYetPlayed;
+      this.view.gameScreen.gameInfoLinks.replayGameLink.hidden = true;
+      this.view.gameScreen.gameInfoLinks.newGameLink.hidden = true;
+      this.view.gameScreen.gameInfoLinks.playAgainLink.textContent =
+        MESSAGES.playGame;
+    }
+  }
+
+  start(seed) {
+    this.model.settings.setDefaults();
+
+    Timer.setStepInterval(this.model.settings.gameStepInterval);
+
+    this.model.startGame(seed);
+    this.view.gameScreen.showGameUI();
+
+    GameRecorder.startGame(
+      GAME_VERSION,
+      seed,
+      this.model.settings.gameStepInterval,
+      GAME_RNG.isValidGameNumber(this.model.gameNumber),
+    );
+
+    this.nextMaze();
+  }
+
   startCaveIn() {
     if (this.model.caveInStarted) return;
 
@@ -73,7 +129,18 @@ export class Game {
   }
 
   playerDescend() {
-    if (!(this.model.grid && this.player.isAlive)) return false;
+    GameRecorder.resetReplay();
+
+    if (!(this.model.grid && this.player.isAlive)) {
+      this.nextMaze();
+      return false;
+    }
+
+    Sound.deeper();
+    this.view.gameWindow.setTimeout(
+      this.nextMaze.bind(this),
+      TIMEOUTS.nextMazeDelay,
+    );
 
     this.player.row = this.model.grid.rows - 1;
     this.player.col = this.model.grid.cols - 1;
@@ -440,6 +507,37 @@ export class Game {
     nextTrophy();
   }
 
+  replayMaze(index = -1) {
+    this.view.gameScreen.setReplayRecording(GameRecorder.timeline);
+    this.replayMazeRecording(index);
+  }
+
+  replayMazeRecording(indexOrMazeRecording) {
+    const mazeRecording = Number.isFinite(indexOrMazeRecording)
+      ? GameRecorder.selectMaze(indexOrMazeRecording)
+      : indexOrMazeRecording;
+    if (!mazeRecording) return false;
+
+    this.model.initWithMazeRecording(mazeRecording);
+    this.startMaze();
+
+    return true;
+  }
+
+  replayEndOfRecording() {
+    const recording = GameRecorder.recording;
+    if (!recording) return;
+
+    this.model.initWithRecording(recording);
+    GameRecorder.selectMaze(-1);
+
+    if (recording.outcome === "finished") {
+      this.playerGameOver();
+    } else {
+      this.playerExitMaze();
+    }
+  }
+
   nextMaze() {
     this.view.gameScreen.hideReplayBar();
 
@@ -562,7 +660,10 @@ export class Game {
     }
 
     const positions = [];
-    positions.contains = (position) => positions.some(item => item.row === position.row && item.col === position.col);
+    positions.contains = (position) =>
+      positions.some(
+        (item) => item.row === position.row && item.col === position.col,
+      );
 
     let tries = gameModel.random() * 10;
 
@@ -574,7 +675,10 @@ export class Game {
     ) {
       const position = this.findRandomPathCell(gameModel.random, true);
       // There must be a path cell below the wall to place a rock in the wall.
-      if (canPlaceRockAt(position.row + 1, position.col) && !positions.contains(position)) {
+      if (
+        canPlaceRockAt(position.row + 1, position.col) &&
+        !positions.contains(position)
+      ) {
         positions.push(position);
         break;
       }
@@ -636,8 +740,7 @@ export class Game {
       )
         continue;
 
-      if (row === this.player.row && col === this.player.col)
-        continue;
+      if (row === this.player.row && col === this.player.col) continue;
 
       if (this.model.characters.atRowCol(row, col)) continue;
 
@@ -733,7 +836,9 @@ export class Game {
 
     this.addCharacter(guardian);
     this.addCharacter(relic);
-    
+
+    // This call needs to be done after adding the Relic character
+    // so the grid can be updated with the relic symbol.
     relic.setRelic(this.model.levelRelic);
 
     guardian.disable(

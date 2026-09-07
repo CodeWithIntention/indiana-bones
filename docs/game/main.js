@@ -1,14 +1,9 @@
-import { Timer } from "./util.js";
 import {
-  GAME_VERSION,
   GAME_RNG,
-  MESSAGES,
   TIMEOUTS,
 } from "./config.js";
 import { settings } from "./settings.js";
-import { Sound } from "./sound.js";
 import { gameWindow, gameScreen } from "./game-ui.js";
-import { GameRecorder } from "./recorder.js";
 import { GameModel } from "./game-model.js";
 import { GameRules } from "./game-rules.js";
 import { GameView } from "./game-view.js";
@@ -16,21 +11,13 @@ import { GameController } from "./game-controller.js";
 import { Game } from "./game.js";
 
 function replayMaze(index = -1) {
-  gameScreen.setReplayRecording(GameRecorder.timeline);
   gameController.playbackPaused = false;
-  replayMazeRecording(index);
+  game.replayMaze(index);
 }
 
 function goDeeper() {
-  GameRecorder.resetReplay();
   gameScreen.hideScoreboard();
-
-  if (game.playerDescend()) {
-    Sound.deeper();
-    gameWindow.setTimeout(game.nextMaze.bind(game), TIMEOUTS.nextMazeDelay);
-  } else {
-    game.nextMaze();
-  }
+  game.playerDescend();
 }
 
 function playGame() {
@@ -60,20 +47,7 @@ function startGame(seed = 0) {
     gameModel.gameNumber = null;
     deleteGameNumberFromURL();
   }
-
-  settings.setDefaults();
-  Timer.setStepInterval(settings.gameStepInterval);
-  gameModel.startGame(seed);
-
-  GameRecorder.startGame(
-    GAME_VERSION,
-    seed,
-    settings.gameStepInterval,
-    GAME_RNG.isValidGameNumber(gameModel.gameNumber),
-  );
-
-  gameScreen.showGameUI();
-  game.nextMaze();
+  game.start(seed);
 }
 
 function playAgain() {
@@ -83,18 +57,6 @@ function playAgain() {
 function replayGame() {
   gameScreen.showGameUI();
   replayMaze(0);
-}
-
-function replayMazeRecording(indexOrMazeRecording) {
-  const mazeRecording = Number.isFinite(indexOrMazeRecording)
-    ? GameRecorder.selectMaze(indexOrMazeRecording)
-    : indexOrMazeRecording;
-  if (!mazeRecording) return false;
-
-  gameModel.initWithMazeRecording(mazeRecording);
-  game.startMaze();
-
-  return true;
 }
 
 gameScreen.scoreboardLinks.nextMazeLink.addEventListener("click", goDeeper);
@@ -111,21 +73,11 @@ gameScreen.replayGame = () =>
 
 gameScreen.replayBarHandler = {
   onSelectMaze(index) {
-    replayMazeRecording(index);
+    game.replayMazeRecording(index);
   },
 
   onSelectEnd() {
-    const recording = GameRecorder.recording;
-    if (!recording) return;
-
-    gameModel.initWithRecording(recording);
-    GameRecorder.selectMaze(-1);
-
-    if (recording.outcome === "finished") {
-      game.playerGameOver();
-    } else {
-      game.playerExitMaze();
-    }
+    game.replayEndOfRecording();
   },
 
   onPlayPause(playing) {
@@ -175,47 +127,11 @@ function getGameNumberFromURL() {
   return gameNumber;
 }
 
-function initGame(gameNumber) {
-  if (!GAME_RNG.isValidGameNumber(gameNumber)) {
-    gameScreen.newGame();
-    return;
-  }
-
-  const savedGame =
-    GameRecorder.load(GAME_VERSION, gameNumber, "checkpoint") ||
-    GameRecorder.load(GAME_VERSION, gameNumber, "finished");
-
-  gameModel.gameNumber = gameNumber;
-  GameRecorder.autoSave = true;
-
-  if (savedGame) {
-    Timer.setStepInterval(savedGame.msPerTick);
-
-    gameScreen.replayBarHandler.onSelectEnd();
-    gameScreen.showGameMessage(MESSAGES.loading);
-
-    gameWindow.setTimeout(() => {
-      gameScreen.hideGameMessage();
-      gameScreen.showGameUI(true);
-    }, TIMEOUTS.loadingMessageDelay);
-  } else {
-    gameScreen.showGameUI(true);
-    gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);
-
-    gameScreen.gameInfoContent.gameNumber = gameNumber;
-    gameScreen.gameInfoContent.textContent = MESSAGES.gameNotYetPlayed;
-    gameScreen.gameInfoLinks.replayGameLink.hidden = true;
-    gameScreen.gameInfoLinks.newGameLink.hidden = true;
-    gameScreen.gameInfoLinks.playAgainLink.textContent = MESSAGES.playGame;
-  }
-}
-
 // Configure object dependencies
 const gameModel = new GameModel(settings);
 const gameView = new GameView(gameModel, gameWindow, gameScreen);
 const game = new Game(gameModel, gameView, {
       playGame,
-      replayMazeRecording,
       createCharacter,
     });
 const gameRules = new GameRules(game);
@@ -228,6 +144,6 @@ const gameController = new GameController(gameRules);
   if (gameNumber === null) {
     gameScreen.showBio();
   } else {
-    initGame(gameNumber);
+    game.load(gameNumber);
   }
 })();

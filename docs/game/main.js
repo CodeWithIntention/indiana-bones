@@ -16,7 +16,6 @@ function replayMaze(index = -1) {
 }
 
 function goDeeper() {
-  gameScreen.hideScoreboard();
   game.playerDescend();
 }
 
@@ -55,7 +54,6 @@ function playAgain() {
 }
 
 function replayGame() {
-  gameScreen.showGameUI();
   replayMaze(0);
 }
 

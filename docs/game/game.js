@@ -130,6 +130,7 @@ export class Game {
 
   playerDescend() {
     GameRecorder.resetReplay();
+    this.view.gameScreen.hideScoreboard();
 
     if (!(this.model.grid && this.player.isAlive)) {
       this.nextMaze();
@@ -509,6 +510,7 @@ export class Game {
 
   replayMaze(index = -1) {
     this.view.gameScreen.setReplayRecording(GameRecorder.timeline);
+    this.view.gameScreen.showGameUI();
     this.replayMazeRecording(index);
   }
 

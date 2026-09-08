@@ -51,10 +51,8 @@ class Settings {
     this.cols = 11;
 
     this.pointsPerPath = 100;
-    this.pointsPerFreeLife = 10000;
-    this.freeTNTsWithLife = 5;
     this.maxLives = 5;
-    this.maxTnts = 50;
+    this.maxAwardedTNTs = 50;
     this.mazeClearedBonusPoints = 5000;
     this.caveInThreshold = .80;
 
@@ -69,7 +67,10 @@ class Settings {
     this.collisionThreshold = 0.55;
     this.positionThreshold = 0.05;
 
-    this.pointsPerTrophy = 100_000;
+    this.freeTNTsPerAward = 5;
+    this.pointsPerTNTAward = 10_000;
+    this.pointsPerLifeAward = 50_000;
+    this.pointsPerTrophyAward = 100_000;
   }
 }
 

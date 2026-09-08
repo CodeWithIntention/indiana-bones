@@ -21,7 +21,8 @@ class Player extends Character {
   #exitMaze;
   #exitMazeScore;
   #score;
-  #lastFreeLifeScore;
+  #lastAwardedLifeScore;
+  #lastAwardedTNTScore;
 
   constructor(config, settings) {
     super(config, 0, 0);
@@ -47,7 +48,9 @@ class Player extends Character {
 
   // Override to enhande speed during powerup
   get speed() {
-    return this.powerUp ? this.#settings.powerUpSpeedBoost * super.speed : super.speed;
+    return this.powerUp
+      ? this.#settings.powerUpSpeedBoost * super.speed
+      : super.speed;
   }
 
   set speed(value) {
@@ -61,33 +64,41 @@ class Player extends Character {
   set score(value) {
     if (!(Number.isFinite(value) && this.#score !== value)) return;
 
+    this.#score = value;
+
+    // Do not award bonuses for points received after death.
+    if (!this.#alive) return;
+
     let lifeCount = this.lives;
     let tntCount = this.tnts;
 
-    this.#score = value;
+    const lifeIntervals = Math.floor(
+      (value - this.#lastAwardedLifeScore) / this.#settings.pointsPerLifeAward,
+    );
 
-    // No awards if score was award after death
-    if (!this.#alive) return;
+    if (lifeIntervals > 0) {
+      this.#lastAwardedLifeScore +=
+        lifeIntervals * this.#settings.pointsPerLifeAward;
 
-    if (value >= this.#lastFreeLifeScore + this.#settings.pointsPerFreeLife) {
-      const freeLives = Math.floor((value - this.#lastFreeLifeScore) / this.#settings.pointsPerFreeLife);
-
-      // Transfer excess lives to TNT adward
-      lifeCount += freeLives;
-      if (lifeCount > this.#settings.maxLives) {
-        const excessLives = lifeCount - this.#settings.maxLives;
-        lifeCount = this.#settings.maxLives;
-        tntCount += excessLives * this.#settings.freeTNTsWithLife;
-      }
-
-      // Only award more TNT if current count has not exceed max
-      if (this.tnts < this.#settings.maxTnts) {
-        tntCount = Math.min(tntCount + freeLives * this.#settings.freeTNTsWithLife, this.#settings.maxTnts);
-      } else {
-        tntCount = this.tnts;
-      }
-      this.#lastFreeLifeScore += freeLives * this.#settings.pointsPerFreeLife;
+      lifeCount = Math.min(this.#settings.maxLives, lifeCount + lifeIntervals);
     }
+
+    const tntIntervals = Math.floor(
+      (value - this.#lastAwardedTNTScore) / this.#settings.pointsPerTNTAward,
+    );
+
+    if (tntIntervals > 0) {
+      this.#lastAwardedTNTScore +=
+        tntIntervals * this.#settings.pointsPerTNTAward;
+
+      if (tntCount < this.#settings.maxAwardedTNTs) {
+        tntCount = Math.min(
+          this.#settings.maxAwardedTNTs,
+          tntCount + tntIntervals * this.#settings.freeTNTsPerAward,
+        );
+      }
+    }
+
     if (lifeCount !== this.lives || tntCount !== this.tnts) {
       this.lives = lifeCount;
       this.tnts = tntCount;
@@ -126,7 +137,7 @@ class Player extends Character {
 
   set exitMaze(bool) {
     this.#exitMaze = bool === true;
-    this.exitMazeTime = this.#exitMaze ? Date.now() : 0
+    this.exitMazeTime = this.#exitMaze ? Date.now() : 0;
     this.#exitMazeScore = this.#exitMaze ? this.#score : 0;
   }
 
@@ -137,25 +148,38 @@ class Player extends Character {
   get state() {
     const baggedObjects = {};
 
-    [...Object.values(OBJECTS), ...Object.values(CHARACTERS)].forEach(object => {
-      const items = this.findInBag(object);
+    [...Object.values(OBJECTS), ...Object.values(CHARACTERS)].forEach(
+      (object) => {
+        const items = this.findInBag(object);
 
-      if (items.length > 0) {
-        baggedObjects[object.kind] = items.length;
-      }
-    });
+        if (items.length > 0) {
+          baggedObjects[object.kind] = items.length;
+        }
+      },
+    );
 
     return {
-      score: this.#score, lastFreeLifeScore: this.#lastFreeLifeScore, 
-      alive: this.#alive, exitMaze: this.#exitMaze, exitMazeScore: this.#exitMazeScore,
-      lives: this.lives, tnts: this.tnts, trophiesAwarded: this.trophiesAwarded, 
-      isMazeCleared: this.isMazeCleared, mazeBonus: this.mazeBonus,
-      level: this.level, mazes: this.mazes, baggedObjects: baggedObjects};
+      score: this.#score,
+      lastAwardedLifeScore: this.#lastAwardedLifeScore,
+      lastAwardedTNTScore: this.#lastAwardedTNTScore,
+      alive: this.#alive,
+      exitMaze: this.#exitMaze,
+      exitMazeScore: this.#exitMazeScore,
+      lives: this.lives,
+      tnts: this.tnts,
+      trophiesAwarded: this.trophiesAwarded,
+      isMazeCleared: this.isMazeCleared,
+      mazeBonus: this.mazeBonus,
+      level: this.level,
+      mazes: this.mazes,
+      baggedObjects: baggedObjects,
+    };
   }
 
   set state(value) {
     this.#score = value.score;
-    this.#lastFreeLifeScore = value.lastFreeLifeScore;
+    this.#lastAwardedLifeScore = value.lastAwardedLifeScore;
+    this.#lastAwardedTNTScore = value.lastAwardedTNTScore;
     this.#alive = value.alive;
     this.#exitMaze = value.exitMaze;
     this.#exitMazeScore = value.exitMazeScore;
@@ -163,8 +187,8 @@ class Player extends Character {
     this.lives = value.lives;
     this.tnts = value.tnts;
     this.trophiesAwarded = value.trophiesAwarded;
-    this.isMazeCleared = value.isMazeCleared,
-    this.mazeBonus = value.mazeBonus;
+    ((this.isMazeCleared = value.isMazeCleared),
+      (this.mazeBonus = value.mazeBonus));
     this.level = value.level;
     this.mazes = value.mazes;
 
@@ -181,15 +205,15 @@ class Player extends Character {
     let count = 0;
 
     for (const item of this.#bag) {
-        if (item === obj) {
-            count++;
-        }
+      if (item === obj) {
+        count++;
+      }
     }
     return count;
   }
 
   findInBag(obj) {
-    return this.#bag.filter(item => item === obj || item === obj.kind);
+    return this.#bag.filter((item) => item === obj || item === obj.kind);
   }
 
   grab(obj) {
@@ -218,8 +242,9 @@ class Player extends Character {
     this.lives = this.config.lives;
     this.bonusAwarded = false;
     this.trophiesAwarded = 0;
-    
-    this.#lastFreeLifeScore = 0;
+
+    this.#lastAwardedLifeScore = 0;
+    this.#lastAwardedTNTScore = 0;
 
     this.restart();
   }

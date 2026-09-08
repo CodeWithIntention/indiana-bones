@@ -774,7 +774,7 @@ export class Game {
 
     character.remove = () => {
       if (this.model.characters.remove(character)) {
-        this.model.grid.removeCharacter(character);
+        this.model.grid.detachCharacter(character);
       }
     };
 
@@ -798,7 +798,7 @@ export class Game {
       this.addScoreForCharacter(character, factor, points);
     };
 
-    this.model.grid.addCharacter(character);
+    this.model.grid.attachCharacter(character);
     return true;
   }
 

@@ -106,7 +106,7 @@ export class GameModel {
     );
 
     this.grid = new Grid(rows, cols, this.settings.cellSize, {grid: this.randomizer, game: this.random});
-    this.grid.addCharacter(this.player);
+    this.grid.attachCharacter(this.player);
 
     return record;
   }

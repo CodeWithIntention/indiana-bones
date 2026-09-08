@@ -374,11 +374,11 @@ class Grid {
     if (!((character instanceof Character) && html)) return;
     
     const label = new Label(character.row, character.col);
-    this.addCharacter(label, character.top, character.left);
+    this.attachCharacter(label, character.top, character.left);
     label.gridCell.innerHTML = html;
     
     if (duration > 0) {
-      Timer.setTimeout(this.removeCharacter, duration, label);
+      Timer.setTimeout(this.detachCharacter, duration, label);
     }
   }
 
@@ -388,7 +388,7 @@ class Grid {
     
     const label = new Label(character.row, character.col);
     const cellRect = this.cellAtRowCol(character.row, character.col);
-    this.addCharacter(label, character.top || cellRect.top, character.left || cellRect.left);
+    this.attachCharacter(label, character.top || cellRect.top, character.left || cellRect.left);
     this.applyAnimationFor(label, effects, true);
   }
 
@@ -405,7 +405,7 @@ class Grid {
 
     character.gridCell.addEventListener("animationend", () => {
       if (removeCharacterAfter) {
-        this.removeCharacter(character);
+        this.detachCharacter(character);
       } else {
         for (const [key, value] of Object.entries(effects)) {
           if (value === true) {
@@ -416,7 +416,7 @@ class Grid {
     }, { once: true });
   }
 
-  addCharacter(character, top, left) {
+  attachCharacter(character, top, left) {
     if (!(character instanceof Character)) return;
     if (character.gridCell && character.gridCell.parent === Grid.mazeEl) return;
 
@@ -426,7 +426,7 @@ class Grid {
     this.placeCharacter(character, top, left);
   }
 
-  removeCharacter(character) {
+  detachCharacter(character) {
     if (!(character instanceof Character)) return;
 
     const characterCell = character.gridCell;

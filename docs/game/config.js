@@ -1,6 +1,6 @@
 import { Direction } from "./util.js";
 
-const GAME_VERSION = 1.1;
+const GAME_VERSION = 1.2;
 
 const GAME_RNG = {
     min: 1_000,
@@ -23,7 +23,7 @@ export { GAME_VERSION, GAME_RNG, OBJECTS, CHARACTERS, MESSAGES, TIMEOUTS, RELIC_
 
 const MESSAGES = {
   gameOverTitle: "GAME OVER",
-  gameInfoTitle: "GAME #",
+  gameInfoTitle: (gameNumber) => `GAME #${gameNumber} - v${GAME_VERSION}`,
   mazeClearedMessage: "Cave Bonus",
   mazeNotClearedMessage: "Cave NOT emptied!",
   nextMazeLinkText: "Go Deeper",
@@ -37,8 +37,9 @@ const MESSAGES = {
   playAgain: "Play Again",
   playGame: "Play Game",
   loading:  "Loading...",
-  gameNotYetPlayed: "This game has not yet been played.",
+  gameNotYetPlayed: `Version ${GAME_VERSION} of this game has not yet been played.`,
   levelCompleted: (level, maze) => `LEVEL ${level}.${maze} COMPLETED`,
+  levelReached: (level, maze) => `LEVEL ${level}.${maze} REACHED`,
   none: "NONE!"
 }
 

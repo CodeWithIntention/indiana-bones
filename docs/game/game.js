@@ -77,7 +77,7 @@ export class Game {
       }, TIMEOUTS.loadingMessageDelay);
     } else {
       this.view.gameScreen.showGameUI(true);
-      this.view.gameScreen.showGameInfo(MESSAGES.gameInfoTitle + gameNumber);
+      this.view.gameScreen.showGameInfo(MESSAGES.gameInfoTitle(gameNumber));
 
       this.view.gameScreen.gameInfoContent.gameNumber = gameNumber;
       this.view.gameScreen.gameInfoContent.textContent =
@@ -178,7 +178,7 @@ export class Game {
     const gameOver = () => {
       const isGameNumber = Number.isFinite(this.model.gameNumber);
       const title = isGameNumber
-        ? MESSAGES.gameInfoTitle + this.model.gameNumber
+        ? MESSAGES.gameInfoTitle(this.model.gameNumber)
         : MESSAGES.gameOverTitle;
 
       this.view.gameScreen.showGameInfo(title);
@@ -248,6 +248,8 @@ export class Game {
 
   getPlayerAcheivements() {
     const list = [];
+
+    list.push(`<div>${MESSAGES.levelReached(this.model.currentLevel, this.model.currentMaze)}</div>`);
 
     if (this.player.level <= 1) {
       list.push(
@@ -397,11 +399,11 @@ export class Game {
           );
 
           const trophiesAwarded = Math.floor(
-            totalScore / this.model.settings.pointsPerTrophy,
+            totalScore / this.model.settings.pointsPerTrophyAward,
           );
           const pointsNeeded =
-            this.model.settings.pointsPerTrophy -
-            (totalScore % this.model.settings.pointsPerTrophy);
+            this.model.settings.pointsPerTrophyAward -
+            (totalScore % this.model.settings.pointsPerTrophyAward);
           const trophySymbol = Grid.symbolFor("maze-trophy");
 
           if (trophiesAwarded === 0) {
@@ -441,7 +443,7 @@ export class Game {
     const updateFinalScore = () => {
       this.player.score =
         this.player.exitMazeScore +
-        this.model.settings.pointsPerTrophy * this.player.trophiesAwarded;
+        this.model.settings.pointsPerTrophyAward * this.player.trophiesAwarded;
 
       this.view.update();
       this.view.gameScreen.gameInfoContent.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${this.player.score}</div>`;
@@ -480,7 +482,7 @@ export class Game {
         ];
 
         // Tally each trophy
-        const bonusPoints = this.model.settings.pointsPerTrophy * ++trophies;
+        const bonusPoints = this.model.settings.pointsPerTrophyAward * ++trophies;
         for (let i = Math.floor(trophies / 10); i > 0; i--) {
           // Break up into rows of 10 trophies for display
           list.push(`<div class='icon'>${trophySymbol.repeat(10)}</div>`);

@@ -40,7 +40,8 @@ const MESSAGES = {
   gameNotYetPlayed: `Version ${GAME_VERSION} of this game has not yet been played.`,
   levelCompleted: (level, maze) => `LEVEL ${level}.${maze} COMPLETED`,
   levelReached: (level, maze) => `LEVEL ${level}.${maze} REACHED`,
-  none: "NONE!"
+  none: "NONE!",
+  gameHighscoreLabel: (gameNumber) => Number.isFinite(gameNumber) ? `GAME #${gameNumber} HIGH SCORE` : 'HIGH SCORE',
 }
 
 const TIMEOUTS = {

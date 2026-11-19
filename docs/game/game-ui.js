@@ -8,7 +8,7 @@ import { ReplayBar } from "./replaybar.js";
 
 export { gameWindow, gameScreen }
 
-function showGameUI(show = true) {
+function showGameUI(show = true, gameNumber = null) {
   const hide = !show;
 
   gameScreen.hidden = hide;
@@ -21,6 +21,10 @@ function showGameUI(show = true) {
   relicStatusLine.style.display = show ? 'flex' : 'none';
   trophyStatusLine.style.display = show ? 'flex' : 'none';
   dashboard.style.display = show ? 'flex' : 'none';
+
+  if (show && gameNumber) {
+    gameScreen.highScoreLabel.textContent = MESSAGES.gameHighscoreLabel(gameNumber);
+  }
 }
 
 let startingGame = false;
@@ -155,6 +159,7 @@ const bioMessage = gameWindow.document.getElementById("bio");
 
 const playerStatusLine = gameWindow.document.getElementById("playerStatusLine");
 const highScoreStatusLine = gameWindow.document.getElementById("highScoreStatusLine");
+const highScoreLabel = gameWindow.document.getElementById("highScoreLabel");
 const scoreStatusLine = gameWindow.document.getElementById("scoreStatusLine");
 const mazeStatusLine = gameWindow.document.getElementById("mazeStatusLine");
 const bagStatusLine = gameWindow.document.getElementById("bagStatusLine");
@@ -206,6 +211,7 @@ gameScreen.dismissInstructionsLink = dismissInstructionsLink;
 gameScreen.gameInfoContent = gameInfoContent;
 gameScreen.gameInfoTitle = gameInfoTitle;
 gameScreen.gameReplayBarPanel = gameReplayBarPanel;
+gameScreen.highScoreLabel = highScoreLabel;
 
 gameScreen.showGameUI = showGameUI;
 gameScreen.showGameMessage = showGameMessage;

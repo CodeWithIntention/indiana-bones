@@ -63,6 +63,7 @@ export class Game {
       GameRecorder.load(GAME_VERSION, gameNumber, "finished");
 
     this.model.gameNumber = gameNumber;
+    this.model.highScore = savedGame?.highScore || 0;
     GameRecorder.autoSave = true;
 
     if (savedGame) {
@@ -73,10 +74,10 @@ export class Game {
       
       this.view.gameWindow.setTimeout(() => {
         this.view.gameScreen.hideGameMessage();
-        this.view.gameScreen.showGameUI(true);
+        this.view.gameScreen.showGameUI(true, gameNumber);
       }, TIMEOUTS.loadingMessageDelay);
     } else {
-      this.view.gameScreen.showGameUI(true);
+      this.view.gameScreen.showGameUI(true, gameNumber);
       this.view.gameScreen.showGameInfo(MESSAGES.gameInfoTitle(gameNumber));
 
       this.view.gameScreen.gameInfoContent.gameNumber = gameNumber;
@@ -95,7 +96,7 @@ export class Game {
     Timer.setStepInterval(this.model.settings.gameStepInterval);
 
     this.model.startGame(seed);
-    this.view.gameScreen.showGameUI();
+    this.view.gameScreen.showGameUI(true, this.model.gameNumber);
 
     GameRecorder.startGame(
       GAME_VERSION,

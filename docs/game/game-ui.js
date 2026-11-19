@@ -13,6 +13,7 @@ function showGameUI(show = true) {
 
   gameScreen.hidden = hide;
   playerStatusLine.hidden = hide;
+  highScoreStatusLine.hidden = hide;
   scoreStatusLine.hidden = hide;
   mazeStatusLine.hidden = hide;
 

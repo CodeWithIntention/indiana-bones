@@ -34,6 +34,15 @@
     z-index: 2;
 }
 
+#grid #highScoreStatusLine {
+    position: absolute;
+    top: 0px;
+    left: 50%;
+    padding: 0px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
 #grid #scoreStatusLine {
     position: absolute;
     top: 0px;
@@ -144,11 +153,6 @@
 
 #dashboard .label {
     padding-top: 8px;
-    font-weight: bold;
-    font-size: var(--medium-font-size);
-}
-
-#dashboard .score {
     font-weight: bold;
     font-size: var(--medium-font-size);
 }

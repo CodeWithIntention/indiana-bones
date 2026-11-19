@@ -101,7 +101,7 @@ function getJoystickDirection(gamepad) {
 }
 
 function updatePrimaryButton(gamepad) {
-  const isPressed = isButtonPressed(gamepad, BUTTON_A);
+  const isPressed = isButtonPressed(gamepad, BUTTON_A) || Keyboard.Space;
 
   // Generate one Space press when the primary button is initially pressed.
   // The game handles clearing Keyboard.Space after consuming the action.

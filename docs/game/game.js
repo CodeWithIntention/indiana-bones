@@ -72,7 +72,7 @@ export class Game {
         this.view.gameScreen.showGameUI(true, gameNumber);
       }, TIMEOUTS.loadingMessageDelay);
 
-      this.model.highScore = Math.max(savedGame.highScore, this.player.score);
+      this.model.highScore = Math.max(savedGame.highScore || 0, this.player.score);
     } else {
       this.view.gameScreen.showGameUI(true, gameNumber);
       this.view.gameScreen.showGameInfo(MESSAGES.gameInfoTitle(gameNumber));

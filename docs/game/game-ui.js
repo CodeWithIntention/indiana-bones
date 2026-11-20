@@ -22,7 +22,7 @@ function showGameUI(show = true, gameNumber = null) {
   trophyStatusLine.style.display = show ? 'flex' : 'none';
   dashboard.style.display = show ? 'flex' : 'none';
 
-  if (show && gameNumber) {
+  if (show) {
     gameScreen.highScoreLabel.textContent = MESSAGES.gameHighscoreLabel(gameNumber);
   }
 }

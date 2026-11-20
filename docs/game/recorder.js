@@ -12,23 +12,32 @@ export const GameRecorder = {
   autoSave: false,
 
   startGame(version, seed, msPerTick, autoSave) {
+    const highScore = this.recording?.highScore || 0;
+
     this.resetReplay();
 
     this.recording = {
       version,
       seed,
       msPerTick,
+      highScore,
       ticks: 0,
       currentLevel: 0,
       currentMaze: 0,
       playerState: null,
       outcome: null,
-      mazeRecordings: []
+      mazeRecordings: [],
     };
 
     this.mazeRecording = null;
     this.gameSteps = [];
     this.autoSave = autoSave === true;
+
+    const savedGame = this.load(version, seed);
+    if (savedGame) {
+      this.recording.highScore = savedGame.highScore;
+    }
+    return this.recording;
   },
 
   startMaze({
@@ -88,6 +97,7 @@ export const GameRecorder = {
         this.recording.randomizerState = randomizerState;
         this.recording.playerState = playerState;
         this.recording.outcome = outcome;
+        this.recording.highScore = Math.max(this.recording.highScore || 0, playerState.score);
     }
    
     if (this.mazeRecording) {
@@ -261,6 +271,7 @@ export const GameRecorder = {
       randomizerState,
       playerState,
       outcome,
+      highScore: Math.max(recording.highScore || 0, playerState.score),
       mazeRecordings: this.recording.mazeRecordings.slice(0, this.replayMazeIndex + 1),
     };
 

@@ -28,7 +28,7 @@ export class Game {
       this.addScoreForCharacter(this.player, factor, points);
     };
 
-    this.model.highScore = this.getHighScore();
+    this.model.highScore = Math.max(this.loadHighScore(), this.model.player.score);
   }
 
   get player() {
@@ -36,19 +36,15 @@ export class Game {
   }
 
   updateHighScore() {
-    const highScore = Math.max(this.model.highScore, this.model.player.score);
-    this.model.highScore = highScore;
+    if (this.player.score > this.loadHighScore()) {
+      localStorage.setItem("indiana-bones-high-score", String(this.player.score));
+    }
+    if (this.player.score > this.model.highScore) {
+      this.model.highScore = this.player.score;
+    }
   }
 
-  saveHighScore() {
-    this.updateHighScore();
-    localStorage.setItem(
-      "indiana-bones-high-score",
-      String(this.model.highScore),
-    );
-  }
-
-  getHighScore() {
+  loadHighScore() {
     return Number(localStorage.getItem("indiana-bones-high-score")) || 0;
   }
 
@@ -63,7 +59,6 @@ export class Game {
       GameRecorder.load(GAME_VERSION, gameNumber, "finished");
 
     this.model.gameNumber = gameNumber;
-    this.model.highScore = savedGame?.highScore || 0;
     GameRecorder.autoSave = true;
 
     if (savedGame) {
@@ -76,6 +71,8 @@ export class Game {
         this.view.gameScreen.hideGameMessage();
         this.view.gameScreen.showGameUI(true, gameNumber);
       }, TIMEOUTS.loadingMessageDelay);
+
+      this.model.highScore = Math.max(savedGame.highScore, this.player.score);
     } else {
       this.view.gameScreen.showGameUI(true, gameNumber);
       this.view.gameScreen.showGameInfo(MESSAGES.gameInfoTitle(gameNumber));
@@ -95,15 +92,17 @@ export class Game {
 
     Timer.setStepInterval(this.model.settings.gameStepInterval);
 
-    this.model.startGame(seed);
-    this.view.gameScreen.showGameUI(true, this.model.gameNumber);
-
-    GameRecorder.startGame(
+    const isValidGameNumber = GAME_RNG.isValidGameNumber(seed);
+    const recording = GameRecorder.startGame(
       GAME_VERSION,
       seed,
       this.model.settings.gameStepInterval,
-      GAME_RNG.isValidGameNumber(this.model.gameNumber),
+      isValidGameNumber,
     );
+
+    this.model.highScore = isValidGameNumber ? recording.highScore : this.loadHighScore();
+    this.model.startGame(seed);
+    this.view.gameScreen.showGameUI(true, this.model.gameNumber);
 
     this.nextMaze();
   }
@@ -449,7 +448,7 @@ export class Game {
       this.view.update();
       this.view.gameScreen.gameInfoContent.innerHTML += `<div>&nbsp;</div><div class='label'>${MESSAGES.finalScore}</div><div class="banner shadowGlow pulse">${this.player.score}</div>`;
 
-      this.saveHighScore();
+      this.updateHighScore();
 
       const record = this.model.createTagRecord("finished");
       GameRecorder.tagRecording(record);
